@@ -26,7 +26,7 @@ import java.io.IOException;
  * limitations under the License.
  */
 
-public class MatchCollector extends Collector implements IntervalCollector {
+public class QueryMatchCollector extends Collector implements IntervalCollector {
 
     protected Scorer scorer;
     private IntervalIterator positions;
@@ -34,7 +34,7 @@ public class MatchCollector extends Collector implements IntervalCollector {
     private QueryMatch matches = null;
     private final MonitorQuery mq;
 
-    public MatchCollector(MonitorQuery mq) {
+    public QueryMatchCollector(MonitorQuery mq) {
         this.mq = mq;
     }
 

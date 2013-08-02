@@ -18,18 +18,16 @@ import java.util.List;
  * limitations under the License.
  */
 
-public class MatchResponse {
+public class DocumentMatches {
 
     private final String id;
     private final List<QueryMatch> matches;
-    private final int qcount;
     private final MatchStats stats;
 
-    public MatchResponse(String docId, List<QueryMatch> matches, int qcount, MatchStats matchStats) {
+    public DocumentMatches(String docId, List<QueryMatch> matches, int qcount, long preptime, long querytime) {
         this.id = docId;
         this.matches = matches;
-        this.qcount = qcount;
-        this.stats = matchStats;
+        this.stats = new MatchStats(qcount, preptime, querytime);
     }
 
     public String docId() {
@@ -40,11 +38,20 @@ public class MatchResponse {
         return matches;
     }
 
-    public int appliedQueryCount() {
-        return qcount;
-    }
-
     public MatchStats getMatchStats() {
         return stats;
+    }
+
+    public static class MatchStats {
+
+        public final long preptime;
+        public final long querytime;
+        public final int querycount;
+
+        public MatchStats(int querycount, long preptime, long querytime) {
+            this.querycount = querycount;
+            this.preptime = preptime;
+            this.querytime = querytime;
+        }
     }
 }

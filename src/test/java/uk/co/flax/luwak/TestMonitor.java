@@ -56,7 +56,7 @@ public class TestMonitor {
         InputDocument doc = new BasicInputDocument("doc1", document);
 
         Monitor monitor = new Monitor(mq);
-        MatchResponse response = monitor.match(doc);
+        DocumentMatches response = monitor.match(doc);
 
         assertThat(response.docId()).isEqualTo("doc1");
         assertThat(response.matches()).hasSize(1);

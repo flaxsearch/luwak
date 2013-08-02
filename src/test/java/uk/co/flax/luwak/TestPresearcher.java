@@ -84,13 +84,13 @@ public class TestPresearcher {
         Monitor monitor = new Monitor(query1, query2);
 
         InputDocument doc = new PresearcherInputDocument("doc1", "this is a test document", "pub1");
-        MatchResponse response = monitor.match(doc);
+        DocumentMatches response = monitor.match(doc);
 
         assertThat(response.matches()).hasSize(1);
         assertThat(response.matches().get(0).getQueryId()).isEqualTo("1");
 
         InputDocument doc2 = new AnalyzedInputDocument("doc2", "this is a test document");
-        MatchResponse response2 = monitor.match(doc2);
+        DocumentMatches response2 = monitor.match(doc2);
         assertThat(response2.matches()).hasSize(2);
 
     }

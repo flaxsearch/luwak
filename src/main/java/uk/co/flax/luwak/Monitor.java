@@ -121,22 +121,24 @@ public class Monitor {
         }
     }
 
-    public MatchResponse match(final InputDocument document) {
+    public DocumentMatches match(final InputDocument document) {
         try {
             lock.readLock().lock();
 
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
-            MatchResponseCollector collector = new MatchResponseCollector(queries, document);
-            Query swQuery = document.getPresearcherQuery();
+            MonitorQueryCollector collector = new MonitorQueryCollector(queries, document);
+            Query presearcherQuery = document.getPresearcherQuery();
+
             tick = System.currentTimeMillis();
             prebuild = tick - starttime;
             starttime = tick;
 
-            searcher.search(swQuery, collector);
+            searcher.search(presearcherQuery, collector);
+
             monitor = System.currentTimeMillis() - starttime;
 
-            return collector.getMatchResponse(new MatchStats(prebuild, monitor));
+            return collector.getMatches(prebuild, monitor);
 
         }
         catch (IOException e) {

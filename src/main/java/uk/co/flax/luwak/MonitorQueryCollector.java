@@ -31,13 +31,13 @@ import java.util.Map;
  * limitations under the License.
  */
 
-public class MatchResponseCollector extends Collector {
+public class MonitorQueryCollector extends Collector {
 
     static {
         BooleanQuery.setMaxClauseCount(10000);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(MatchResponseCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(MonitorQueryCollector.class);
 
     //private final String docId;
     private final InputDocument doc;
@@ -52,7 +52,7 @@ public class MatchResponseCollector extends Collector {
 
     private int queryCount;
 
-    public MatchResponseCollector(Map<String, MonitorQuery> queries, final InputDocument doc) {
+    public MonitorQueryCollector(Map<String, MonitorQuery> queries, final InputDocument doc) {
         this.doc = doc;
         this.queries = queries;
         this.withinDocSearcher = doc.getDocumentIndex().createSearcher();
@@ -69,7 +69,7 @@ public class MatchResponseCollector extends Collector {
         idField.get(doc, idRef);
         final MonitorQuery mq = queries.get(idRef.utf8ToString());
 
-        MatchCollector mc = new MatchCollector(mq);
+        QueryMatchCollector mc = new QueryMatchCollector(mq);
         try {
             withinDocSearcher.search(mq.getQuery(), mc);
             QueryMatch newMatches = mc.getMatches();
@@ -94,8 +94,8 @@ public class MatchResponseCollector extends Collector {
         return true;
     }
 
-    public MatchResponse getMatchResponse(MatchStats matchStats) {
-        return new MatchResponse(this.doc.getId(), this.matches, this.queryCount, matchStats);
+    public DocumentMatches getMatches(long preptime, long querytime) {
+        return new DocumentMatches(this.doc.getId(), this.matches, this.queryCount, preptime, querytime);
     }
 
 }
