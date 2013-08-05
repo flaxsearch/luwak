@@ -7,8 +7,6 @@ import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.util.BytesRef;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,9 +35,6 @@ public class MonitorQueryCollector extends Collector {
         BooleanQuery.setMaxClauseCount(10000);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(MonitorQueryCollector.class);
-
-    //private final String docId;
     private final InputDocument doc;
     private final Map<String, MonitorQuery> queries;
 
@@ -72,16 +67,17 @@ public class MonitorQueryCollector extends Collector {
         QueryMatchCollector mc = new QueryMatchCollector(mq);
         try {
             withinDocSearcher.search(mq.getQuery(), mc);
-            QueryMatch newMatches = mc.getMatches();
-            if (newMatches != null)
-                this.matches.add(newMatches);
-            queryCount++;
         }
         catch (Exception e) {
-            logger.error("Error while running query {} against document {}: {}",
-                    mq.getId(), this.doc.getId(), e.toString());
-            e.printStackTrace();
+            throw new RuntimeException("Error running query " + mq.getId() + " against document "
+                                            + this.doc.getId(), e);
         }
+
+        QueryMatch newMatches = mc.getMatches();
+        if (newMatches != null)
+            this.matches.add(newMatches);
+        queryCount++;
+
     }
 
     @Override

@@ -8,8 +8,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,8 +31,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 
 public class Monitor {
-
-    private static final Logger log = LoggerFactory.getLogger(Monitor.class);
 
     public static final List<MonitorQuery> EMPTY_QUERY_LIST = new ArrayList<>();
 
@@ -96,8 +92,6 @@ public class Monitor {
     public void update(List<MonitorQuery> queriesToAdd, List<MonitorQuery> queriesToDelete) {
         try {
             lock.writeLock().lock();
-            log.info("Adding {} queries, deleting {} queries",
-                            queriesToAdd.size(), queriesToDelete.size());
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
                 writer.addDocument(mq.asIndexableDocument());
@@ -110,7 +104,6 @@ public class Monitor {
             writer.commit();
             writer.close();
             openSearcher();
-            log.info("Update completed");
         }
         catch (IOException e) {
             // Shouldn't happen, because we're using a RAMDirectory...
