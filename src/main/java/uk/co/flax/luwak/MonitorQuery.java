@@ -31,11 +31,6 @@ import org.apache.lucene.util.BytesRef;
  */
 public class MonitorQuery {
 
-    public static class FIELDS {
-        public static final String idField = "id";
-        public static final String delField = "del_id";
-    }
-
     private final String id;
     private final Query query;
 
@@ -52,13 +47,13 @@ public class MonitorQuery {
 
     public final Document asIndexableDocument() {
         addFields();
-        indexDoc.add(new StringField(FIELDS.delField, id, Field.Store.NO));
-        indexDoc.add(new SortedDocValuesField(FIELDS.idField, new BytesRef(id.getBytes())));
+        indexDoc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
+        indexDoc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));
         return indexDoc;
     }
 
     public final Query getDeletionQuery() {
-        return new TermQuery(new Term(FIELDS.delField, id));
+        return new TermQuery(new Term(Monitor.FIELDS.del_id, id));
     }
 
     public Query getQuery() {
