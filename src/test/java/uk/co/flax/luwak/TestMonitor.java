@@ -36,11 +36,6 @@ public class TestMonitor {
             super(id, textfield, text, new WhitespaceAnalyzer(Version.LUCENE_50));
         }
 
-        @Override
-        public Query getPresearcherQuery() {
-            return new MatchAllDocsQuery();
-        }
-
     }
 
     static final String textfield = "textfield";

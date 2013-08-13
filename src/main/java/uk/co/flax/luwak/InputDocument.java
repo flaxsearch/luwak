@@ -1,6 +1,10 @@
 package uk.co.flax.luwak;
 
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 /**
@@ -19,16 +23,21 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
-public abstract class InputDocument {
+public class InputDocument {
 
     private final String id;
+    private final PresearcherQueryFactory queryFactory;
+
     protected final MemoryIndex index = new MemoryIndex(true);
 
-    public InputDocument(String id) {
+    public InputDocument(String id, PresearcherQueryFactory queryFactory) {
         this.id = id;
+        this.queryFactory = queryFactory;
     }
 
-    public abstract Query getPresearcherQuery();
+    public final Query getPresearcherQuery() {
+        return queryFactory.buildQuery(this);
+    }
 
     public String getId() {
         return id;
@@ -38,4 +47,7 @@ public abstract class InputDocument {
         return index;
     }
 
+    public AtomicReader asAtomicReader() {
+        return index.createSearcher().getIndexReader().leaves().get(0).reader();
+    }
 }

@@ -4,11 +4,13 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.presearcher.MatchAllDocsQueryFactory;
+import uk.co.flax.luwak.presearcher.TermFilteredMonitorQuery;
+import uk.co.flax.luwak.presearcher.TermPresearcherQueryFactory;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -34,36 +36,35 @@ public class TestPresearcher {
 
     static class AnalyzedInputDocument extends SingleFieldInputDocument {
 
-        public AnalyzedInputDocument(String id, String text) {
-            super(id, TEXTFIELD, text, new WhitespaceAnalyzer(Version.LUCENE_50));
+        public AnalyzedInputDocument(String id, String text, PresearcherQueryFactory qf) {
+            super(id, TEXTFIELD, text, new WhitespaceAnalyzer(Version.LUCENE_50), qf);
         }
 
-        @Override
-        public Query getPresearcherQuery() {
-            return new MatchAllDocsQuery();
+        public AnalyzedInputDocument(String id, String text) {
+            this(id, text, new MatchAllDocsQueryFactory());
         }
+
     }
 
-    static class PresearcherInputDocument extends AnalyzedInputDocument {
+    static class FilterTermPresearcherQueryFactory implements PresearcherQueryFactory {
 
-        public final String filter;
+        final String filter;
 
-        public PresearcherInputDocument(String id, String text, String filter) {
-            super(id, text);
+        FilterTermPresearcherQueryFactory(String filter) {
             this.filter = filter;
         }
 
         @Override
-        public Query getPresearcherQuery() {
+        public Query buildQuery(InputDocument doc) {
             return new TermQuery(new Term(FILTERFIELD, filter));
         }
     }
 
-    static class PresearcherMonitorQuery extends MonitorQuery {
+    static class FilterFieldMonitorQuery extends MonitorQuery {
 
         public final String filter;
 
-        public PresearcherMonitorQuery(String id, Query query, String filter) {
+        public FilterFieldMonitorQuery(String id, Query query, String filter) {
             super(id, query);
             this.filter = filter;
         }
@@ -77,13 +78,14 @@ public class TestPresearcher {
     @Test
     public void presearcherFiltersOutQueries() {
 
-        PresearcherMonitorQuery query1
-                = new PresearcherMonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "this")), "pub1");
-        PresearcherMonitorQuery query2
-                = new PresearcherMonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")), "pub2");
+        FilterFieldMonitorQuery query1
+                = new FilterFieldMonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "this")), "pub1");
+        FilterFieldMonitorQuery query2
+                = new FilterFieldMonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")), "pub2");
         Monitor monitor = new Monitor(query1, query2);
 
-        InputDocument doc = new PresearcherInputDocument("doc1", "this is a test document", "pub1");
+        InputDocument doc = new AnalyzedInputDocument("doc1", "this is a test document",
+                new FilterTermPresearcherQueryFactory("pub1"));
         DocumentMatches response = monitor.match(doc);
 
         assertThat(response.matches()).hasSize(1);
@@ -92,6 +94,24 @@ public class TestPresearcher {
         InputDocument doc2 = new AnalyzedInputDocument("doc2", "this is a test document");
         DocumentMatches response2 = monitor.match(doc2);
         assertThat(response2.matches()).hasSize(2);
+
+    }
+
+    @Test
+    public void filtersOnTermQueries() {
+
+        TermFilteredMonitorQuery query1
+                = new TermFilteredMonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "furble")));
+        TermFilteredMonitorQuery query2
+                = new TermFilteredMonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")));
+        Monitor monitor = new Monitor(query1, query2);
+
+        InputDocument doc = new AnalyzedInputDocument("doc1", "this is a test document",
+                new TermPresearcherQueryFactory());
+        DocumentMatches response = monitor.match(doc);
+
+        assertThat(response.matches()).hasSize(1);
+        assertThat(response.getMatchStats().querycount).isEqualTo(1);
 
     }
 

@@ -31,8 +31,8 @@ import org.apache.lucene.util.BytesRef;
  */
 public class MonitorQuery {
 
-    private final String id;
-    private final Query query;
+    protected final String id;
+    protected final Query query;
 
     protected final Document indexDoc = new Document();
 

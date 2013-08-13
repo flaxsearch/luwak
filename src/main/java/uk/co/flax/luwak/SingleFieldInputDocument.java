@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
+import uk.co.flax.luwak.presearcher.MatchAllDocsQueryFactory;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -22,10 +23,16 @@ public abstract class SingleFieldInputDocument extends InputDocument {
     public final String text;
     public final String field;
 
-    public SingleFieldInputDocument(String id, String field, String text, Analyzer analyzer) {
-        super(id);
+    public SingleFieldInputDocument(String id, String field, String text,
+                                    Analyzer analyzer, PresearcherQueryFactory qf) {
+        super(id, qf);
         index.addField(field, text, analyzer);
         this.text = text;
         this.field = field;
     }
+
+    public SingleFieldInputDocument(String id, String field, String text, Analyzer analyzer) {
+        this(id, field, text, analyzer, new MatchAllDocsQueryFactory());
+    }
+
 }
