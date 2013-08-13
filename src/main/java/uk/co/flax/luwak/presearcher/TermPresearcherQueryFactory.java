@@ -17,6 +17,8 @@ package uk.co.flax.luwak.presearcher;/*
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.PresearcherQueryFactory;
@@ -27,9 +29,15 @@ public class TermPresearcherQueryFactory implements PresearcherQueryFactory {
 
     @Override
     public Query buildQuery(InputDocument doc) {
-        AtomicReader reader = doc.asAtomicReader();
         try {
-            return TermsEnumBooleanQuery.createFrom(reader);
+            AtomicReader reader = doc.asAtomicReader();
+            BooleanQuery bq = new BooleanQuery();
+            for (String field : reader.fields()) {
+                TermsEnum te = reader.terms(field).iterator(null);
+                TokenStream ts = new TermsEnumTokenStream(te);
+                bq.add(TokenStreamBooleanQuery.fromTokenStream(field, ts), BooleanClause.Occur.SHOULD);
+            }
+            return bq;
         }
         catch (IOException e) {
             // We're a MemoryIndex, so this shouldn't happen...

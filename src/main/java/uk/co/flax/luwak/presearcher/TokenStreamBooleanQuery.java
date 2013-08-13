@@ -17,7 +17,6 @@ package uk.co.flax.luwak.presearcher;/*
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardFilterFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.AbstractAnalysisFactory;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.Term;
@@ -34,32 +33,15 @@ import java.util.Map;
 
 import static org.apache.lucene.analysis.util.AbstractAnalysisFactory.LUCENE_MATCH_VERSION_PARAM;
 
-public class TermsEnumBooleanQuery {
+public class TokenStreamBooleanQuery {
 
-    private static final Map<String, String> STD_VERSION_PARAMS = new HashMap<>();
-    static {
-        STD_VERSION_PARAMS.put(LUCENE_MATCH_VERSION_PARAM, Version.LUCENE_50.toString());
-    }
-
-    private static final TokenFilterFactory PASS_THROUGH_FILTER_FACTORY
-            = new StandardFilterFactory(STD_VERSION_PARAMS);
-
-    public static Query createFrom(AtomicReader reader) throws IOException {
-        return createFrom(reader, PASS_THROUGH_FILTER_FACTORY);
-    }
-
-    public static Query createFrom(AtomicReader reader, TokenFilterFactory tfFactory) throws IOException {
+    public static Query fromTokenStream(String field, TokenStream ts) throws IOException {
 
         BooleanQuery bq = new BooleanQuery();
 
-        for (String field : reader.fields()) {
-            TermsEnum te = reader.terms(field).iterator(null);
-            TokenStream ts = new DuplicateRemovalTokenFilter(
-                    tfFactory.create(new TermsEnumTokenStream(te)));
-            final CharTermAttribute cht = ts.addAttribute(CharTermAttribute.class);
-            while (ts.incrementToken()) {
-                bq.add(new TermQuery(new Term(field, cht.toString())), BooleanClause.Occur.SHOULD);
-            }
+        final CharTermAttribute cht = ts.addAttribute(CharTermAttribute.class);
+        while (ts.incrementToken()) {
+            bq.add(new TermQuery(new Term(field, cht.toString())), BooleanClause.Occur.SHOULD);
         }
 
         return bq;
