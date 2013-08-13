@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.presearcher;/*
+package uk.co.flax.luwak;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,10 @@ package uk.co.flax.luwak.presearcher;/*
  */
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.util.StringSetTokenStream;
 
-import java.io.IOException;
 import java.util.*;
 
 public class QueryTermExtractor {

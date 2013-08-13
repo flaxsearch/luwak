@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.presearcher;/*
+package uk.co.flax.luwak.util;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");

@@ -8,9 +8,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.MatchAllDocsQueryFactory;
-import uk.co.flax.luwak.presearcher.TermFilteredMonitorQuery;
-import uk.co.flax.luwak.presearcher.TermPresearcherQueryFactory;
+import uk.co.flax.luwak.impl.MatchAllDocsQueryFactory;
+import uk.co.flax.luwak.impl.SingleFieldInputDocument;
+import uk.co.flax.luwak.impl.TermFilteredMonitorQuery;
+import uk.co.flax.luwak.impl.TermFilteredPresearcherQueryFactory;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -107,7 +108,7 @@ public class TestPresearcher {
         Monitor monitor = new Monitor(query1, query2);
 
         InputDocument doc = new AnalyzedInputDocument("doc1", "this is a test document",
-                new TermPresearcherQueryFactory());
+                new TermFilteredPresearcherQueryFactory());
         DocumentMatches response = monitor.match(doc);
 
         assertThat(response.matches()).hasSize(1);

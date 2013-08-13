@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.presearcher;/*
+package uk.co.flax.luwak.impl;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +14,10 @@ package uk.co.flax.luwak.presearcher;/*
  * limitations under the License.
  */
 
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.MonitorQuery;
-
-import java.util.HashSet;
-import java.util.Set;
+import uk.co.flax.luwak.QueryTermExtractor;
 
 public class TermFilteredMonitorQuery extends MonitorQuery {
 

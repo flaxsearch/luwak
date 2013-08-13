@@ -1,7 +1,9 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.impl;
 
 import org.apache.lucene.analysis.Analyzer;
-import uk.co.flax.luwak.presearcher.MatchAllDocsQueryFactory;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.PresearcherQueryFactory;
+import uk.co.flax.luwak.impl.MatchAllDocsQueryFactory;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
