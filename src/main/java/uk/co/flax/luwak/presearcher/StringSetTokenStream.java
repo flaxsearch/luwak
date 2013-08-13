@@ -1,4 +1,6 @@
-package uk.co.flax.luwak.presearcher;/*
+package uk.co.flax.luwak.presearcher;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +18,27 @@ package uk.co.flax.luwak.presearcher;/*
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
-public class QueryTermExtractor {
+public class StringSetTokenStream extends TokenStream {
 
-    private final Map<String, List<String>> terms = new HashMap<>();
+    private final List<String> terms;
 
-    public QueryTermExtractor(Query query) {
-        Set<Term> qterms = new HashSet<>();
-        query.extractTerms(qterms);
-        for (Term term : qterms) {
-            if (!terms.containsKey(term.field()))
-                terms.put(term.field(), new ArrayList<String>());
-            terms.get(term.field()).add(term.text());
-        }
+    public StringSetTokenStream(List<String> terms) {
+        this.terms = terms;
     }
 
-    public Set<String> getFields() {
-        return terms.keySet();
-    }
+    final CharTermAttribute chTerm = addAttribute(CharTermAttribute.class);
+    private int index = 0;
 
-    public TokenStream getTokenStream(final String field) {
-        return new StringSetTokenStream(terms.get(field));
+    @Override
+    public final boolean incrementToken() throws IOException {
+        if (index >= terms.size())
+            return false;
+        chTerm.setEmpty();
+        chTerm.append(terms.get(index++));
+        return true;
     }
 }
