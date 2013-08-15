@@ -1,10 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 /**

@@ -11,6 +11,7 @@ import uk.co.flax.luwak.impl.SingleFieldInputDocument;
 import java.util.List;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.fest.assertions.api.Assertions.fail;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -66,6 +67,14 @@ public class TestMonitor {
         assertThat(hit.startPosition).isEqualTo(3);
         assertThat(hit.endPosition).isEqualTo(3);
 
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void monitorWithNoQueriesThrowsException() {
+        Monitor monitor = new Monitor();
+        InputDocument doc = new BasicInputDocument("doc1", "test");
+        monitor.match(doc);
+        fail("Monitor with no queries should have thrown an IllegalStateException");
     }
 
 }

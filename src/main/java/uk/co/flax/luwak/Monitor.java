@@ -118,6 +118,9 @@ public class Monitor {
         try {
             lock.readLock().lock();
 
+            if (searcher == null)
+                throw new IllegalStateException("Monitor has no registered queries!");
+
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
             MonitorQueryCollector collector = new MonitorQueryCollector(queries, document);
