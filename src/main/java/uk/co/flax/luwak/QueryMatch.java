@@ -32,7 +32,7 @@ public class QueryMatch {
     }
 
     public void addInterval(Interval interval) {
-        hits.add(new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
+        hits.add(new Hit(interval.field, interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
     }
 
     public String getQueryId() {
@@ -49,13 +49,31 @@ public class QueryMatch {
         public final int startOffset;
         public final int endPosition;
         public final int endOffset;
+        public final String field;
 
-        Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
+        Hit(String field, int startPosition, int startOffset, int endPosition, int endOffset) {
+            this.field = field;
             this.startPosition = startPosition;
             this.startOffset = startOffset;
             this.endPosition = endPosition;
             this.endOffset = endOffset;
         }
 
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof Hit))
+                return false;
+            Hit other = (Hit) obj;
+            return this.field == other.field &&
+                    this.startOffset == other.startOffset &&
+                    this.endOffset == other.endOffset &&
+                    this.startPosition == other.startPosition &&
+                    this.endPosition == other.endPosition;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s:%d(%d)->%d(%d)", field, startPosition, startOffset, endPosition, endOffset);
+        }
     }
 }

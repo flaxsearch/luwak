@@ -2,16 +2,17 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.impl.MatchAllDocsQueryFactory;
 import uk.co.flax.luwak.impl.SingleFieldInputDocument;
 
-import java.util.List;
-
-import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
+import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -54,18 +55,12 @@ public class TestMonitor {
         Monitor monitor = new Monitor(mq);
         DocumentMatches response = monitor.match(doc);
 
-        assertThat(response.docId()).isEqualTo("doc1");
-        assertThat(response.matches()).hasSize(1);
-
-        QueryMatch match = response.matches().get(0);
-        assertThat(match.getQueryId()).isEqualTo("query1");
-
-        List<QueryMatch.Hit> hits = match.getHits();
-        assertThat(hits).hasSize(1);
-
-        QueryMatch.Hit hit = hits.get(0);
-        assertThat(hit.startPosition).isEqualTo(3);
-        assertThat(hit.endPosition).isEqualTo(3);
+        assertThat(monitor.match(doc))
+                .matches("doc1")
+                .hasMatchCount(1)
+                .matchesQuery("query1")
+                    .withHitCount(1)
+                    .withHit(new QueryMatch.Hit(textfield, 3, 10, 3, 14));
 
     }
 
@@ -75,6 +70,38 @@ public class TestMonitor {
         InputDocument doc = new BasicInputDocument("doc1", "test");
         monitor.match(doc);
         fail("Monitor with no queries should have thrown an IllegalStateException");
+    }
+
+    static class MultiFieldInputDocument extends InputDocument {
+
+        public MultiFieldInputDocument(String id) {
+            super(id, new MatchAllDocsQueryFactory());
+        }
+
+        public void addField(String field, String text) {
+            index.addField(field, text, new WhitespaceAnalyzer(Version.LUCENE_50));
+        }
+
+    }
+
+    @Test
+    public void multiFieldQueryMatches() {
+
+        MultiFieldInputDocument doc = new MultiFieldInputDocument("doc1");
+        doc.addField("field1", "this is a test of field one");
+        doc.addField("field2", "and this is an additional test");
+
+        BooleanQuery bq = new BooleanQuery();
+        bq.add(new TermQuery(new Term("field1", "test")), BooleanClause.Occur.SHOULD);
+        bq.add(new TermQuery(new Term("field2", "test")), BooleanClause.Occur.SHOULD);
+        MonitorQuery mq = new MonitorQuery("query1", bq);
+
+        Monitor monitor = new Monitor(mq);
+        assertThat(monitor.match(doc))
+                .matchesQuery("query1")
+                    .withHit(new QueryMatch.Hit("field1", 3, 10, 3, 14))
+                    .withHit(new QueryMatch.Hit("field2", 5, 26, 5, 30));
+
     }
 
 }

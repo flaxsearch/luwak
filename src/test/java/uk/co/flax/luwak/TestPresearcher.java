@@ -13,7 +13,7 @@ import uk.co.flax.luwak.impl.SingleFieldInputDocument;
 import uk.co.flax.luwak.impl.TermFilteredMonitorQuery;
 import uk.co.flax.luwak.impl.TermFilteredPresearcherQueryFactory;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -87,14 +87,13 @@ public class TestPresearcher {
 
         InputDocument doc = new AnalyzedInputDocument("doc1", "this is a test document",
                 new FilterTermPresearcherQueryFactory("pub1"));
-        DocumentMatches response = monitor.match(doc);
-
-        assertThat(response.matches()).hasSize(1);
-        assertThat(response.matches().get(0).getQueryId()).isEqualTo("1");
+        assertThat(monitor.match(doc))
+                        .hasMatchCount(1)
+                        .matchesQuery("1");
 
         InputDocument doc2 = new AnalyzedInputDocument("doc2", "this is a test document");
-        DocumentMatches response2 = monitor.match(doc2);
-        assertThat(response2.matches()).hasSize(2);
+        assertThat(monitor.match(doc2))
+                        .hasMatchCount(2);
 
     }
 
@@ -109,10 +108,10 @@ public class TestPresearcher {
 
         InputDocument doc = new AnalyzedInputDocument("doc1", "this is a test document",
                 new TermFilteredPresearcherQueryFactory());
-        DocumentMatches response = monitor.match(doc);
 
-        assertThat(response.matches()).hasSize(1);
-        assertThat(response.getMatchStats().querycount).isEqualTo(1);
+        assertThat(monitor.match(doc))
+                        .hasMatchCount(1)
+                        .hasQueriesRunCount(1);
 
     }
 
