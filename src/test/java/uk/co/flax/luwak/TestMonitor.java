@@ -60,7 +60,8 @@ public class TestMonitor {
                 .hasMatchCount(1)
                 .matchesQuery("query1")
                     .withHitCount(1)
-                    .withHit(new QueryMatch.Hit(textfield, 3, 10, 3, 14));
+                    .inField(textfield)
+                        .withHit(new QueryMatch.Hit(3, 10, 3, 14));
 
     }
 
@@ -99,8 +100,10 @@ public class TestMonitor {
         Monitor monitor = new Monitor(mq);
         assertThat(monitor.match(doc))
                 .matchesQuery("query1")
-                    .withHit(new QueryMatch.Hit("field1", 3, 10, 3, 14))
-                    .withHit(new QueryMatch.Hit("field2", 5, 26, 5, 30));
+                    .inField("field1")
+                        .withHit(new QueryMatch.Hit(3, 10, 3, 14))
+                    .inField("field2")
+                        .withHit(new QueryMatch.Hit(5, 26, 5, 30));
 
     }
 
