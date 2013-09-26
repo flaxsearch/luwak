@@ -12,6 +12,8 @@
     <properties>
         <lucene.version>5.0.0-intervals-1.1-SNAPSHOT</lucene.version>
         <slf4j.version>1.7.2</slf4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <dependencies>
