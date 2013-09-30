@@ -53,7 +53,7 @@ public class Monitor {
         directory = new RAMDirectory();
     }
 
-    public Monitor(List<MonitorQuery> queries) {
+    public Monitor(List<? extends MonitorQuery> queries) {
         this();
         update(queries);
     }
@@ -85,13 +85,14 @@ public class Monitor {
         }
     }
 
-    public void update(List<MonitorQuery> queriesToAdd) {
+    public void update(List<? extends MonitorQuery> queriesToAdd) {
         update(queriesToAdd, EMPTY_QUERY_LIST);
     }
 
-    public void update(List<MonitorQuery> queriesToAdd, List<MonitorQuery> queriesToDelete) {
+    public void update(List<? extends MonitorQuery> queriesToAdd, List<? extends MonitorQuery> queriesToDelete) {
         try {
             lock.writeLock().lock();
+            IndexWriterConfig iwc = this.iwc.clone();
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
                 writer.addDocument(mq.asIndexableDocument());
@@ -144,6 +145,10 @@ public class Monitor {
         finally {
             lock.readLock().unlock();
         }
+    }
+
+    public MonitorQuery getQuery(String queryId) {
+        return queries.get(queryId);
     }
 
 }
