@@ -53,7 +53,7 @@ public class Monitor {
         directory = new RAMDirectory();
     }
 
-    public Monitor(List<? extends MonitorQuery> queries) {
+    public Monitor(Iterable<? extends MonitorQuery> queries) {
         this();
         update(queries);
     }
@@ -85,11 +85,11 @@ public class Monitor {
         }
     }
 
-    public void update(List<? extends MonitorQuery> queriesToAdd) {
+    public void update(Iterable<? extends MonitorQuery> queriesToAdd) {
         update(queriesToAdd, EMPTY_QUERY_LIST);
     }
 
-    public void update(List<? extends MonitorQuery> queriesToAdd, List<? extends MonitorQuery> queriesToDelete) {
+    public void update(Iterable<? extends MonitorQuery> queriesToAdd, Iterable<? extends MonitorQuery> queriesToDelete) {
         try {
             lock.writeLock().lock();
             IndexWriterConfig iwc = this.iwc.clone();
