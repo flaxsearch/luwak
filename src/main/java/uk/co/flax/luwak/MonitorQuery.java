@@ -34,8 +34,6 @@ public class MonitorQuery {
     protected final String id;
     protected final Query query;
 
-    protected final Document indexDoc = new Document();
-
     public MonitorQuery(String id, Query query) {
         this.id = id;
         this.query = query;
@@ -46,10 +44,11 @@ public class MonitorQuery {
     }
 
     public final Document asIndexableDocument() {
-        addFields();
-        indexDoc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
-        indexDoc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));
-        return indexDoc;
+        Document doc = new Document();
+        addFields(doc);
+        doc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
+        doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));
+        return doc;
     }
 
     public final Query getDeletionQuery() {
@@ -60,7 +59,7 @@ public class MonitorQuery {
         return query;
     }
 
-    protected void addFields() {
+    protected void addFields(Document doc) {
 
     }
 }

@@ -14,6 +14,7 @@ package uk.co.flax.luwak.impl;/*
  * limitations under the License.
  */
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.MonitorQuery;
@@ -26,10 +27,10 @@ public class TermFilteredMonitorQuery extends MonitorQuery {
     }
 
     @Override
-    protected void addFields() {
+    protected void addFields(Document doc) {
         QueryTermExtractor extractor = new QueryTermExtractor(query);
         for (String field : extractor.getFields()) {
-            indexDoc.add(new TextField(field, extractor.getTokenStream(field)));
+            doc.add(new TextField(field, extractor.getTokenStream(field)));
         }
     }
 }

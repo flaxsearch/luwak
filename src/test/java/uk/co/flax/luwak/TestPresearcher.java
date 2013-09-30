@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Term;
@@ -71,8 +72,8 @@ public class TestPresearcher {
         }
 
         @Override
-        protected void addFields() {
-            indexDoc.add(new StringField(FILTERFIELD, filter, Field.Store.NO));
+        protected void addFields(Document doc) {
+            doc.add(new StringField(FILTERFIELD, filter, Field.Store.NO));
         }
     }
 

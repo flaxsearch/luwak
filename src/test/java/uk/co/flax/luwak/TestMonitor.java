@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -7,9 +8,12 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
+import org.fest.assertions.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.MatchAllDocsQueryFactory;
 import uk.co.flax.luwak.impl.SingleFieldInputDocument;
+
+import java.util.List;
 
 import static org.fest.assertions.api.Assertions.fail;
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
@@ -53,7 +57,6 @@ public class TestMonitor {
         InputDocument doc = new BasicInputDocument("doc1", document);
 
         Monitor monitor = new Monitor(mq);
-        DocumentMatches response = monitor.match(doc);
 
         assertThat(monitor.match(doc))
                 .matches("doc1")
@@ -104,6 +107,25 @@ public class TestMonitor {
                         .withHit(new QueryMatch.Hit(3, 10, 3, 14))
                     .inField("field2")
                         .withHit(new QueryMatch.Hit(5, 26, 5, 30));
+
+    }
+
+    @Test
+    public void canAddMonitorQuerySubclasses() {
+
+        class TestQuery extends MonitorQuery {
+            public TestQuery(String id, String query) {
+                super(id, new TermQuery(new Term("field", query)));
+            }
+        };
+
+        List<TestQuery> queries = ImmutableList.of(new TestQuery("1", "foo"), new TestQuery("2", "bar"));
+        Monitor monitor = new Monitor(queries);
+        monitor.update(queries);
+
+        Assertions.assertThat(monitor.getQuery("1"))
+                .isNotNull()
+                .isInstanceOf(TestQuery.class);
 
     }
 
