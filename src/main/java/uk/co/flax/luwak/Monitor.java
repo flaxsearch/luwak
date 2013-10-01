@@ -151,4 +151,8 @@ public class Monitor {
         return queries.get(queryId);
     }
 
+    public long getQueryCount() {
+        return queries.size();
+    }
+
 }
