@@ -32,10 +32,10 @@ public class QueryMatchCollector extends Collector implements IntervalCollector 
     private IntervalIterator positions;
 
     private QueryMatch matches = null;
-    private final MonitorQuery mq;
+    private final String id;
 
-    public QueryMatchCollector(MonitorQuery mq) {
-        this.mq = mq;
+    public QueryMatchCollector(String id) {
+        this.id = id;
     }
 
     public QueryMatch getMatches() {
@@ -45,7 +45,7 @@ public class QueryMatchCollector extends Collector implements IntervalCollector 
     @Override
     public void collect(int doc) throws IOException {
         // consume any remaining positions the scorer didn't report
-        matches = new QueryMatch(this.mq.getId());
+        matches = new QueryMatch(this.id);
         positions.scorerAdvanced(doc);
         while(positions.next() != null) {
             positions.collect(this);

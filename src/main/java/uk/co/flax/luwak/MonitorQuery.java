@@ -33,10 +33,16 @@ public class MonitorQuery {
 
     protected final String id;
     protected final Query query;
+    protected final Query highlightQuery;
 
-    public MonitorQuery(String id, Query query) {
+    public MonitorQuery(String id, Query query, Query highlightQuery) {
         this.id = id;
         this.query = query;
+        this.highlightQuery = highlightQuery;
+    }
+
+    public MonitorQuery(String id, Query query) {
+        this(id, query, null);
     }
 
     public String getId() {
@@ -61,5 +67,9 @@ public class MonitorQuery {
 
     protected void addFields(Document doc) {
 
+    }
+
+    public Query getHighlightQuery() {
+        return highlightQuery;
     }
 }

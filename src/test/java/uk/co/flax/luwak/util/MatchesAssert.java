@@ -56,4 +56,11 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches
         Assertions.assertThat(actual.getMatchStats().querycount).isEqualTo(count);
         return this;
     }
+
+    public MatchesAssert doesNotMatchQuery(String queryId) {
+        for (QueryMatch match : actual.matches()) {
+            Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
+        }
+        return this;
+    }
 }

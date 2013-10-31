@@ -64,7 +64,7 @@ public class MonitorQueryCollector extends Collector {
         idField.get(doc, idRef);
         final MonitorQuery mq = queries.get(idRef.utf8ToString());
 
-        QueryMatchCollector mc = new QueryMatchCollector(mq);
+        QueryMatchCollector mc = new QueryMatchCollector(mq.getId());
         try {
             withinDocSearcher.search(mq.getQuery(), mc);
         }
@@ -74,8 +74,25 @@ public class MonitorQueryCollector extends Collector {
         }
 
         QueryMatch newMatches = mc.getMatches();
-        if (newMatches != null)
+        if (newMatches != null) {
+            // If we get a match, then we run an optionally provided highlight query
+            // to get those results, otherwise just use the matches already retrieved.
+            if (mq.getHighlightQuery() != null) {
+                mc = new QueryMatchCollector(mq.getId());
+                try {
+                    withinDocSearcher.search(mq.getHighlightQuery(), mc);
+                }
+                catch (Exception e) {
+                    throw new RuntimeException("Error running highlight query " + mq.getId() +
+                            " against document " + this.doc.getId(), e);
+                }
+                // If the highlighter query returned no matches, fall back to the matches
+                // already retrieved
+                if (mc.getMatches() != null)
+                    newMatches = mc.getMatches();
+            }
             this.matches.add(newMatches);
+        }
         queryCount++;
 
     }
