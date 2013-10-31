@@ -1,13 +1,16 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.index.*;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.Version;
+import uk.co.flax.luwak.util.WhitelistTokenFilter;
 
 import java.io.IOException;
 import java.util.*;
@@ -37,6 +40,7 @@ public class Monitor {
     private Directory directory;
     private DirectoryReader reader = null;
     private IndexSearcher searcher = null;
+    private SetMultimap<String, String> terms = null;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -53,21 +57,12 @@ public class Monitor {
         directory = new RAMDirectory();
     }
 
-    public Monitor(Iterable<? extends MonitorQuery> queries) {
-        this();
-        update(queries);
-    }
-
-    public Monitor(MonitorQuery... queries) {
-        this();
-        update(Arrays.asList(queries));
-    }
-
     private void openSearcher() throws IOException {
         if (reader != null)
             reader.close();
         reader = DirectoryReader.open(directory);
         searcher = new IndexSearcher(reader);
+        buildTokenSet();
     }
 
     public void reset() {
@@ -87,6 +82,10 @@ public class Monitor {
 
     public void update(Iterable<? extends MonitorQuery> queriesToAdd) {
         update(queriesToAdd, EMPTY_QUERY_LIST);
+    }
+
+    public void update(MonitorQuery... queries) {
+        update(Arrays.asList(queries));
     }
 
     public void update(Iterable<? extends MonitorQuery> queriesToAdd, Iterable<? extends MonitorQuery> queriesToDelete) {
@@ -153,6 +152,24 @@ public class Monitor {
 
     public long getQueryCount() {
         return queries.size();
+    }
+
+    public TokenStream filterTokenStream(String field, TokenStream ts) {
+        return new WhitelistTokenFilter(ts, terms.get(field));
+    }
+
+    private void buildTokenSet() throws IOException {
+        SetMultimap<String, String> terms = HashMultimap.create();
+        BytesRef termBytes;
+        for (AtomicReaderContext ctx : reader.leaves()) {
+            for (String field : ctx.reader().fields()) {
+                TermsEnum te = ctx.reader().terms(field).iterator(null);
+                while ((termBytes = te.next()) != null) {
+                    terms.put(field, termBytes.utf8ToString());
+                }
+            }
+        }
+        this.terms = terms;
     }
 
 }

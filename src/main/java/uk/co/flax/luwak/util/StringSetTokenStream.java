@@ -20,14 +20,16 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class StringSetTokenStream extends TokenStream {
 
     private final List<String> terms;
 
-    public StringSetTokenStream(List<String> terms) {
-        this.terms = terms;
+    public StringSetTokenStream(Collection<String> terms) {
+        this.terms = new ArrayList<>(terms);
     }
 
     final CharTermAttribute chTerm = addAttribute(CharTermAttribute.class);

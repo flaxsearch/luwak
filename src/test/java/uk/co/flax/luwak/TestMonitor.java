@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -9,9 +10,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.fest.assertions.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.impl.MatchAllDocsQueryFactory;
-import uk.co.flax.luwak.impl.SingleFieldInputDocument;
+import uk.co.flax.luwak.impl.MatchAllPresearcher;
 
 import java.util.List;
 
@@ -36,15 +37,14 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 public class TestMonitor {
 
-    static class BasicInputDocument extends SingleFieldInputDocument {
-
-        BasicInputDocument(String id, String text) {
-            super(id, textfield, text, new WhitespaceAnalyzer(Version.LUCENE_50));
-        }
-
-    }
-
     static final String textfield = "textfield";
+
+    private final Monitor monitor = new Monitor();
+
+    @Before
+    public void setUp() {
+        monitor.reset();
+    }
 
     @Test
     public void singleTermQueryMatchesSingleDocument() {
@@ -52,11 +52,13 @@ public class TestMonitor {
         String document = "This is a test document";
 
         Query query = new TermQuery(new Term(textfield, "test"));
-        MonitorQuery mq = new MonitorQuery("query1", query);
+        MonitorQuery mq = new MonitorQuery("query1", query, MatchAllPresearcher.INSTANCE);
 
-        InputDocument doc = new BasicInputDocument("doc1", document);
+        InputDocument doc = InputDocument.builder("doc1", MatchAllPresearcher.INSTANCE)
+                .addField(textfield, document, WHITESPACE)
+                .build();
 
-        Monitor monitor = new Monitor(mq);
+        monitor.update(mq);
 
         assertThat(monitor.match(doc))
                 .matches("doc1")
@@ -70,37 +72,27 @@ public class TestMonitor {
 
     @Test(expected = IllegalStateException.class)
     public void monitorWithNoQueriesThrowsException() {
-        Monitor monitor = new Monitor();
-        InputDocument doc = new BasicInputDocument("doc1", "test");
+        InputDocument doc = InputDocument.builder("doc1", MatchAllPresearcher.INSTANCE).build();
         monitor.match(doc);
         fail("Monitor with no queries should have thrown an IllegalStateException");
     }
 
-    static class MultiFieldInputDocument extends InputDocument {
-
-        public MultiFieldInputDocument(String id) {
-            super(id, new MatchAllDocsQueryFactory());
-        }
-
-        public void addField(String field, String text) {
-            index.addField(field, text, new WhitespaceAnalyzer(Version.LUCENE_50));
-        }
-
-    }
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
     @Test
     public void multiFieldQueryMatches() {
 
-        MultiFieldInputDocument doc = new MultiFieldInputDocument("doc1");
-        doc.addField("field1", "this is a test of field one");
-        doc.addField("field2", "and this is an additional test");
+        InputDocument doc = InputDocument.builder("doc1", MatchAllPresearcher.INSTANCE)
+                .addField("field1", "this is a test of field one", WHITESPACE)
+                .addField("field2", "and this is an additional test", WHITESPACE)
+                .build();
 
         BooleanQuery bq = new BooleanQuery();
         bq.add(new TermQuery(new Term("field1", "test")), BooleanClause.Occur.SHOULD);
         bq.add(new TermQuery(new Term("field2", "test")), BooleanClause.Occur.SHOULD);
-        MonitorQuery mq = new MonitorQuery("query1", bq);
+        MonitorQuery mq = new MonitorQuery("query1", bq, new MatchAllPresearcher());
 
-        Monitor monitor = new Monitor(mq);
+        monitor.update(mq);
         assertThat(monitor.match(doc))
                 .matchesQuery("query1")
                     .inField("field1")
@@ -110,17 +102,25 @@ public class TestMonitor {
 
     }
 
+    public static InputDocument buildDoc(String id, String text) {
+        return InputDocument.builder(id)
+                .addField(textfield, text, WHITESPACE)
+                .build();
+    }
+
     @Test
     public void testHighlighterQuery() {
 
-        InputDocument docWithMatch = new BasicInputDocument("1", "this is a test document");
-        InputDocument docWithNoMatch = new BasicInputDocument("2", "this is a document");
-        InputDocument docWithNoHighlighterMatch = new BasicInputDocument("3", "this is a test");
+        InputDocument docWithMatch = buildDoc("1", "this is a test document");
+        InputDocument docWithNoMatch = buildDoc("2", "this is a document");
+        InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
 
         MonitorQuery mq = new MonitorQuery("1", new TermQuery(new Term(textfield, "test")),
-                                                new TermQuery(new Term(textfield, "document")));
+                                                new TermQuery(new Term(textfield, "document")),
+                new MatchAllPresearcher());
 
-        Monitor monitor = new Monitor(mq);
+        monitor.update(mq);
+
         assertThat(monitor.match(docWithMatch))
                 .matchesQuery("1")
                     .inField(textfield)
@@ -138,12 +138,12 @@ public class TestMonitor {
 
         class TestQuery extends MonitorQuery {
             public TestQuery(String id, String query) {
-                super(id, new TermQuery(new Term("field", query)));
+                super(id, new TermQuery(new Term("field", query)), MatchAllPresearcher.INSTANCE);
             }
         };
 
         List<TestQuery> queries = ImmutableList.of(new TestQuery("1", "foo"), new TestQuery("2", "bar"));
-        Monitor monitor = new Monitor(queries);
+
         monitor.update(queries);
 
         Assertions.assertThat(monitor.getQuery("1"))

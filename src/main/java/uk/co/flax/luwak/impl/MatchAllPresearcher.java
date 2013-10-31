@@ -15,22 +15,22 @@ package uk.co.flax.luwak.impl;/*
  */
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryTermExtractor;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Presearcher;
 
-public class TermFilteredMonitorQuery extends MonitorQuery {
+public class MatchAllPresearcher implements Presearcher {
 
-    public TermFilteredMonitorQuery(String id, Query query) {
-        super(id, query);
+    public static final MatchAllPresearcher INSTANCE = new MatchAllPresearcher();
+
+    @Override
+    public Query buildQuery(InputDocument doc) {
+        return new MatchAllDocsQuery();
     }
 
     @Override
-    protected void addFields(Document doc) {
-        QueryTermExtractor extractor = new QueryTermExtractor(query);
-        for (String field : extractor.getFields()) {
-            doc.add(new TextField(field, extractor.getTokenStream(field)));
-        }
+    public void indexQuery(Document doc, Query query) {
+        // no-op
     }
 }

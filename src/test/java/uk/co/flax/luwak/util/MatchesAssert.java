@@ -53,7 +53,10 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches
     }
 
     public MatchesAssert hasQueriesRunCount(int count) {
-        Assertions.assertThat(actual.getMatchStats().querycount).isEqualTo(count);
+        Assertions.assertThat(actual.getMatchStats().querycount)
+                .overridingErrorMessage("Expecting %d queries to be run, but was %d",
+                        count, actual.getMatchStats().querycount)
+                .isEqualTo(count);
         return this;
     }
 
