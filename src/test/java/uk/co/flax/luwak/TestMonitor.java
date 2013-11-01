@@ -111,6 +111,29 @@ public class TestMonitor {
     }
 
     @Test
+    public void testHighlighterQuery() {
+
+        InputDocument docWithMatch = new BasicInputDocument("1", "this is a test document");
+        InputDocument docWithNoMatch = new BasicInputDocument("2", "this is a document");
+        InputDocument docWithNoHighlighterMatch = new BasicInputDocument("3", "this is a test");
+
+        MonitorQuery mq = new MonitorQuery("1", new TermQuery(new Term(textfield, "test")),
+                                                new TermQuery(new Term(textfield, "document")));
+
+        Monitor monitor = new Monitor(mq);
+        assertThat(monitor.match(docWithMatch))
+                .matchesQuery("1")
+                    .inField(textfield)
+                        .withHit(new QueryMatch.Hit(4, 15, 4, 23));
+        assertThat(monitor.match(docWithNoMatch))
+                .doesNotMatchQuery("1");
+        assertThat(monitor.match(docWithNoHighlighterMatch))
+                .matchesQuery("1").inField(textfield)
+                    .withHit(new QueryMatch.Hit(3, 10, 3, 14));
+
+    }
+
+    @Test
     public void canAddMonitorQuerySubclasses() {
 
         class TestQuery extends MonitorQuery {
