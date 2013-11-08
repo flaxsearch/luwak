@@ -19,10 +19,20 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
-public interface Presearcher {
+public abstract class Presearcher {
 
-    public Query buildQuery(InputDocument inputDocument);
+    protected final Monitor monitor;
 
-    public void indexQuery(Document doc, Query query);
+    public Presearcher(Monitor monitor) {
+        this.monitor = monitor;
+    }
+
+    public abstract Query buildQuery(InputDocument inputDocument);
+
+    public abstract void indexQuery(Document doc, Query query);
+
+    public Monitor getMonitor() {
+        return monitor;
+    }
 
 }

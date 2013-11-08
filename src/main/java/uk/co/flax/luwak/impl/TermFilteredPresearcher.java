@@ -35,10 +35,9 @@ import uk.co.flax.luwak.util.TokenStreamBooleanQuery;
 
 import java.io.IOException;
 
-public class TermFilteredPresearcher implements Presearcher {
+public class TermFilteredPresearcher extends Presearcher {
 
     private final QueryTermExtractor extractor;
-    private final Monitor monitor;
 
     private final String ANYTOKEN = "__ANYTOKEN__";
 
@@ -47,7 +46,7 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     public TermFilteredPresearcher(Monitor monitor, QueryTermExtractor extractor) {
-        this.monitor = monitor;
+        super(monitor);
         this.extractor = extractor;
     }
 

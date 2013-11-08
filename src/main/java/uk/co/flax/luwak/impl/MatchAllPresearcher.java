@@ -18,11 +18,14 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.Presearcher;
 
-public class MatchAllPresearcher implements Presearcher {
+public class MatchAllPresearcher extends Presearcher {
 
-    public static final MatchAllPresearcher INSTANCE = new MatchAllPresearcher();
+    public MatchAllPresearcher(Monitor monitor) {
+        super(monitor);
+    }
 
     @Override
     public Query buildQuery(InputDocument doc) {

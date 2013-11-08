@@ -41,24 +41,56 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
             }
         }
         else if (checker.isConjunctionQuery()) {
-            List<QueryTerm> subTerms = new ArrayList<>();
+            List<QueryTerm> bestTerms = null;
             for (Query subquery : checker.getConjunctions()) {
+                List<QueryTerm> subTerms = new ArrayList<>();
                 queryTermExtractor.extractTerms(subquery, subTerms);
+                bestTerms = selectBestTerms(bestTerms, subTerms);
             }
-            terms.add(bestTerm(subTerms));
+            terms.addAll(bestTerms);
         }
     }
 
-    protected QueryTerm bestTerm(List<QueryTerm> terms) {
-        for (QueryTerm term : terms) {
-            if (term.type == QueryTerm.Type.EXACT)
-                return term;
+    private int compareTypeCounts(List<QueryTerm> first, List<QueryTerm> second, QueryTerm.Type type) {
+        int firstCount = countType(first, type);
+        int secondCount = countType(second, type);
+        if (firstCount == 0 && secondCount > 0)
+            return -1;
+        if (secondCount == 0 && firstCount > 0)
+            return 1;
+        return 0;
+    }
+
+    protected List<QueryTerm> selectBestTerms(List<QueryTerm> first, List<QueryTerm> second) {
+        if (first == null)
+            return second;
+
+        // If either termlist contains no ANY terms, and the other one does contain some
+        // return the list with none.
+        switch (compareTypeCounts(first, second, QueryTerm.Type.ANY)) {
+            case -1: return first;
+            case 1: return second;
         }
-        for (QueryTerm term : terms) {
-            if (term.type == QueryTerm.Type.WILDCARD)
-                return term;
+
+        // If either termlist contains no wildcard terms, and the other does contains some
+        // return the list with none
+        switch (compareTypeCounts(first, second, QueryTerm.Type.WILDCARD)) {
+            case -1: return first;
+            case 1: return second;
         }
-        return terms.get(0);
+
+        if (second.size() < first.size())
+            return second;
+
+        return first;
+    }
+
+    private int countType(List<QueryTerm> terms, QueryTerm.Type type) {
+        int c = 0;
+        for (QueryTerm term : terms) {
+            if (term.type == type) c++;
+        }
+        return c;
     }
 
     public static class Analyzer {

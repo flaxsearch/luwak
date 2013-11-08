@@ -4,7 +4,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -52,10 +51,6 @@ public class InputDocument {
 
     public static Builder builder(String id, Presearcher presearcher) {
         return new Builder(id, presearcher);
-    }
-
-    public static Builder builder(String id) {
-        return builder(id, MatchAllPresearcher.INSTANCE);
     }
 
     static class Builder {
