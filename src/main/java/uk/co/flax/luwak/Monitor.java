@@ -94,7 +94,12 @@ public class Monitor {
             IndexWriterConfig iwc = this.iwc.clone();
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
-                writer.addDocument(mq.asIndexableDocument());
+                try {
+                    writer.addDocument(mq.asIndexableDocument());
+                }
+                catch (Exception e) {
+                    throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
+                }
                 queries.put(mq.getId(), mq);
             }
             for (MonitorQuery mq : queriesToDelete) {

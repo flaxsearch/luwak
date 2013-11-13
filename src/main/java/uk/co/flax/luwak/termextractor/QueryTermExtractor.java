@@ -30,6 +30,7 @@ public class QueryTermExtractor {
             new IntervalFilterQueryExtractor(),
             new NonOverlappingQueryExtractor(),
             new FieldedConjunctionQueryExtractor(),
+            new FieldedBooleanQueryExtractor(),
             new BooleanTermExtractor(),
             new NumericRangeExtractor(),
             new RegexpAnyTermExtractor(),

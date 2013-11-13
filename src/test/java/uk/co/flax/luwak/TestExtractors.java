@@ -2,7 +2,9 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
+import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
@@ -58,6 +60,18 @@ public class TestExtractors {
     }
 
     @Test
+    public void testUnorderedNearExtractor() {
+        QueryTermExtractor qte = new QueryTermExtractor();
+        UnorderedNearQuery q = new UnorderedNearQuery(0,
+                new TermQuery(new Term("field1", "term1")),
+                new TermQuery(new Term("field1", "term2")));
+
+        Set<QueryTerm> terms = qte.extract(q);
+
+        assertThat(terms).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+    }
+
+    @Test
     public void testOrderedNearWithWildcardExtractor() {
         QueryTermExtractor qte = new QueryTermExtractor();
         OrderedNearQuery q = new OrderedNearQuery(0,
@@ -82,5 +96,18 @@ public class TestExtractors {
 
         terms = qte.extract(bq);
         assertThat(terms).containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
+    }
+
+    @Test
+    public void testFieldedBooleanQuery() {
+        QueryTermExtractor qte = new QueryTermExtractor();
+        BooleanQuery bq = new BooleanQuery();
+        bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.MUST);
+        bq.add(new TermQuery(new Term("field1", "term2")), BooleanClause.Occur.MUST);
+        FieldedBooleanQuery q = new FieldedBooleanQuery(bq);
+
+        Set<QueryTerm> terms = qte.extract(q);
+
+        assertThat(terms).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
 }
