@@ -25,24 +25,23 @@ import org.apache.lucene.util.BytesRef;
  * limitations under the License.
  */
 
-/**
- * To implement presearcher filtering, override addFields() to add new
- * fields that will be matched by a query returned by InputDocument#getPresearcherQuery()
- */
 public class MonitorQuery {
 
     protected final String id;
     protected final Query query;
     protected final Query highlightQuery;
 
-    public MonitorQuery(String id, Query query, Query highlightQuery) {
+    protected final Presearcher presearcher;
+
+    public MonitorQuery(String id, Query query, Query highlightQuery, Presearcher presearcher) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
+        this.presearcher = presearcher;
     }
 
-    public MonitorQuery(String id, Query query) {
-        this(id, query, null);
+    public MonitorQuery(String id, Query query, Presearcher presearcher) {
+        this(id, query, null, presearcher);
     }
 
     public String getId() {
@@ -51,7 +50,7 @@ public class MonitorQuery {
 
     public final Document asIndexableDocument() {
         Document doc = new Document();
-        addFields(doc);
+        presearcher.indexQuery(doc, query);
         doc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
         doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));
         return doc;
@@ -65,11 +64,8 @@ public class MonitorQuery {
         return query;
     }
 
-    protected void addFields(Document doc) {
-
-    }
-
     public Query getHighlightQuery() {
         return highlightQuery;
     }
+
 }

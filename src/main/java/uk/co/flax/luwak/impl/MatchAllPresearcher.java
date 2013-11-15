@@ -1,4 +1,4 @@
-package uk.co.flax.luwak;/*
+package uk.co.flax.luwak.impl;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,26 @@ package uk.co.flax.luwak;/*
  * limitations under the License.
  */
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.Presearcher;
 
-public interface PresearcherQueryFactory {
+public class MatchAllPresearcher extends Presearcher {
 
-    public Query buildQuery(InputDocument doc);
+    public MatchAllPresearcher(Monitor monitor) {
+        super(monitor);
+    }
 
+    @Override
+    public Query buildQuery(InputDocument doc) {
+        return new MatchAllDocsQuery();
+    }
+
+    @Override
+    public void indexQuery(Document doc, Query query) {
+        // no-op
+    }
 }

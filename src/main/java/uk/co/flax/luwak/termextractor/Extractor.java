@@ -1,4 +1,10 @@
-package uk.co.flax.luwak.impl;/*
+package uk.co.flax.luwak.termextractor;
+
+import org.apache.lucene.search.Query;
+
+import java.util.List;
+
+/**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,15 +20,16 @@ package uk.co.flax.luwak.impl;/*
  * limitations under the License.
  */
 
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.PresearcherQueryFactory;
+public abstract class Extractor<T extends Query> {
 
-public class MatchAllDocsQueryFactory implements PresearcherQueryFactory {
+    public final Class<T> cls;
 
-    @Override
-    public Query buildQuery(InputDocument doc) {
-        return new MatchAllDocsQuery();
+    protected Extractor(Class<T> cls) {
+        this.cls = cls;
     }
+
+    public abstract void extract(T query, List<QueryTerm> terms,
+                                    QueryTermExtractor queryTermExtractor);
+
+
 }

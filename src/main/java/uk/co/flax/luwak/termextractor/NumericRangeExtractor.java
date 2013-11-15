@@ -1,4 +1,10 @@
-package uk.co.flax.luwak.impl;/*
+package uk.co.flax.luwak.termextractor;
+
+import org.apache.lucene.search.NumericRangeQuery;
+
+import java.util.List;
+
+/**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,23 +20,15 @@ package uk.co.flax.luwak.impl;/*
  * limitations under the License.
  */
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryTermExtractor;
+public class NumericRangeExtractor extends Extractor<NumericRangeQuery> {
 
-public class TermFilteredMonitorQuery extends MonitorQuery {
-
-    public TermFilteredMonitorQuery(String id, Query query) {
-        super(id, query);
+    public NumericRangeExtractor() {
+        super(NumericRangeQuery.class);
     }
 
     @Override
-    protected void addFields(Document doc) {
-        QueryTermExtractor extractor = new QueryTermExtractor(query);
-        for (String field : extractor.getFields()) {
-            doc.add(new TextField(field, extractor.getTokenStream(field)));
-        }
+    public void extract(NumericRangeQuery query, List<QueryTerm> terms,
+                        QueryTermExtractor queryTermExtractor) {
+        terms.add(new QueryTerm(query.getField(), "", QueryTerm.Type.ANY));
     }
 }
