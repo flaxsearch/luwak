@@ -33,6 +33,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * limitations under the License.
  */
 
+/**
+ * A Monitor matches {@link uk.co.flax.luwak.InputDocument}s to registered
+ * {@link uk.co.flax.luwak.MonitorQuery} objects.
+ */
 public class Monitor {
 
     public static final List<MonitorQuery> EMPTY_QUERY_LIST = new ArrayList<>();
@@ -65,6 +69,9 @@ public class Monitor {
         buildTokenSet();
     }
 
+    /**
+     * Remove all currently registered queries from the monitor
+     */
     public void reset() {
         lock.writeLock().lock();
         try {
@@ -80,14 +87,27 @@ public class Monitor {
         }
     }
 
+    /**
+     * Register new queries with the monitor
+     * @param queriesToAdd an {@link Iterable} of {@link MonitorQuery} objects
+     */
     public void update(Iterable<? extends MonitorQuery> queriesToAdd) {
         update(queriesToAdd, EMPTY_QUERY_LIST);
     }
 
+    /**
+     * Register new queries with the monitor
+     * @param queries an array of {@link MonitorQuery} objects
+     */
     public void update(MonitorQuery... queries) {
         update(Arrays.asList(queries));
     }
 
+    /**
+     * Register new queries and delete existing queries from the the monitor
+     * @param queriesToAdd an {@link Iterable} of {@link MonitorQuery} objects to add
+     * @param queriesToDelete an {@link Iterable} of {@link MonitorQuery} objects to remove
+     */
     public void update(Iterable<? extends MonitorQuery> queriesToAdd, Iterable<? extends MonitorQuery> queriesToDelete) {
         try {
             lock.writeLock().lock();
@@ -119,6 +139,11 @@ public class Monitor {
         }
     }
 
+    /**
+     * Match an {@link InputDocument} against the queries registered in this monitor
+     * @param document the Document to match
+     * @return a {@link DocumentMatches} object describing the queries that matched
+     */
     public DocumentMatches match(final InputDocument document) {
         try {
             lock.readLock().lock();
@@ -151,14 +176,31 @@ public class Monitor {
         }
     }
 
+    /**
+     * Get the query registered under a specific ID, or null if there is no corresponding query
+     * @param queryId the id of the MonitorQuery
+     * @return the query with the passed in ID
+     */
     public MonitorQuery getQuery(String queryId) {
         return queries.get(queryId);
     }
 
+    /**
+     * Get the number of queries registered in the monitor
+     * @return the number of queries registered in the monitor
+     */
     public long getQueryCount() {
         return queries.size();
     }
 
+    /**
+     * Create a new {@link TokenStream} that removes any tokens in its input that are not present
+     * in the monitor's internal index.  Used by {@link Presearcher#buildQuery(InputDocument)} to
+     * trim the BooleanQuery created from an InputDocument.
+     * @param field the field this TokenStream is for
+     * @param ts the input TokenStream
+     * @return a filtered TokenStream
+     */
     public TokenStream filterTokenStream(String field, TokenStream ts) {
         return new WhitelistTokenFilter(ts, terms.get(field));
     }
