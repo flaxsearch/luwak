@@ -23,11 +23,15 @@ import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
 
+/**
+ * A TokenStream created from a {@link org.apache.lucene.index.TermsEnum}
+ */
 public class TermsEnumTokenStream extends TokenStream {
 
     private final TermsEnum termsEnum;
     private final CharTermAttribute charTerm = addAttribute(CharTermAttribute.class);
 
+    /** Create a new TermsEnumTokenStream using a TermsEnum */
     public TermsEnumTokenStream(TermsEnum termsEnum) {
         this.termsEnum = termsEnum;
     }

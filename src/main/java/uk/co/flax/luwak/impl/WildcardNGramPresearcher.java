@@ -5,6 +5,7 @@ import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.util.Version;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
+import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -30,7 +31,9 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        return super.filterInputDocumentTokens(field,
-                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE));
+        TokenStream ngramTs = new DuplicateRemovalTokenFilter(
+                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE)
+        );
+        return super.filterInputDocumentTokens(field, ngramTs);
     }
 }

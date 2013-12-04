@@ -1,4 +1,6 @@
-package uk.co.flax.luwak.util;/*
+package uk.co.flax.luwak.util;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +17,31 @@ package uk.co.flax.luwak.util;/*
  */
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardFilterFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.TokenFilterFactory;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.Version;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
-import static org.apache.lucene.analysis.util.AbstractAnalysisFactory.LUCENE_MATCH_VERSION_PARAM;
-
+/**
+ * Create a disjunction query from all values in a TokenStream
+ */
 public class TokenStreamBooleanQuery {
 
+    static {
+        BooleanQuery.setMaxClauseCount(10000);
+    }
+
+    /**
+     * Create a new Query from a TokenStream
+     * @param field the field to create the query for
+     * @param ts the TokenStream
+     * @return a BooleanQuery using all values from the TokenStream
+     * @throws IOException if an exception is encountered iterating over the TokenStream
+     */
     public static Query fromTokenStream(String field, TokenStream ts) throws IOException {
 
         BooleanQuery bq = new BooleanQuery();
