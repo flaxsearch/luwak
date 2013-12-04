@@ -23,10 +23,35 @@ import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
  * limitations under the License.
  */
 
+/**
+ * A Presearcher implementation that matches Wildcard queries by indexing regex
+ * terms by their longest static substring, and generates ngrams from InputDocument
+ * tokens to match them.
+ *
+ * This implementation will filter out more wildcard queries than TermFilteredPresearcher,
+ * at the expense of longer document build times.  Which one is more performant will depend
+ * on the type and number of queries registered in the Monitor, and the size of documents
+ * to be monitored.  Profiling is recommended.
+ */
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
+    /**
+     * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
+     */
     public WildcardNGramPresearcher() {
         super(new QueryTermExtractor(new RegexpNGramTermExtractor()));
+    }
+
+    /**
+     * Create a new WildcardNGramPresearcher with a customer QueryTermExtractor.
+     *
+     * The custom extractor should use RegexpNGramTermExtractor to extract terms
+     * from RegexpQueries.
+     *
+     * @param extractor the custom QueryTermExtractor to use
+     */
+    public WildcardNGramPresearcher(QueryTermExtractor extractor) {
+        super(extractor);
     }
 
     @Override

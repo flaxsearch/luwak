@@ -24,6 +24,8 @@ import java.util.Set;
 
 public class QueryTermExtractor {
 
+    private final String ANYTOKEN = "__ANYTOKEN__";
+
     private final List<Extractor<?>> extractors = new ArrayList<>();
 
     public static final ImmutableList<Extractor<?>> DEFAULT_EXTRACTORS = ImmutableList.of(
@@ -69,4 +71,7 @@ public class QueryTermExtractor {
         }
     }
 
+    public String getAnyToken() {
+        return ANYTOKEN;
+    }
 }

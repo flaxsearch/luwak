@@ -1,4 +1,6 @@
-package uk.co.flax.luwak.impl;/*
+package uk.co.flax.luwak.impl;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +20,12 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.Presearcher;
 
+/**
+ * A simple Presearcher implementation that runs all queries in a Monitor against
+ * each supplied InputDocument.
+ */
 public class MatchAllPresearcher extends Presearcher {
 
     public MatchAllPresearcher() {
