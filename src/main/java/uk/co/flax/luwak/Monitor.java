@@ -4,8 +4,10 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.*;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -38,9 +40,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * {@link uk.co.flax.luwak.MonitorQuery} objects.
  *
  * MonitorQueries are stored in an internal index, their representation
- * being determined by a {@link uk.co.flax.luwak.Presearcher}.  Incoming documents
- * are converted by the Presearcher to queries and run against this index using
- * a {@link uk.co.flax.luwak.MonitorQueryCollector}.
+ * being determined by a {@link uk.co.flax.luwak.Presearcher}.  An incoming {@link InputDocument}
+ * is converted by the Presearcher to a query and run against this index using
+ * a specialized Collector, which extracts the stored query for each hit and runs
+ * it against the document.
  */
 public class Monitor {
 
@@ -166,7 +169,7 @@ public class Monitor {
 
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
-            MonitorQueryCollector collector = new MonitorQueryCollector(queries, document);
+            MonitorQueryCollector collector = new MonitorQueryCollector(document);
             Query presearcherQuery = presearcher.buildQuery(document);
 
             tick = System.currentTimeMillis();
@@ -232,4 +235,55 @@ public class Monitor {
         this.terms = terms;
     }
 
+    // A specialized Collector run against the Monitor's internal index, that for
+    // each hit extracts the related query and runs it against the InputDocument
+    class MonitorQueryCollector extends Collector {
+
+        private final InputDocument doc;
+
+        private final List<QueryMatch> matches = new ArrayList<QueryMatch>();
+
+        SortedDocValues idField;
+        final BytesRef idRef = new BytesRef();
+
+        private int queryCount;
+
+        public MonitorQueryCollector(final InputDocument doc) {
+            this.doc = doc;
+        }
+
+        @Override
+        public void setScorer(Scorer scorer) throws IOException {
+            // no impl
+        }
+
+        @Override
+        public void collect(final int docnum) throws IOException {
+
+            idField.get(docnum, idRef);
+            final MonitorQuery mq = queries.get(idRef.utf8ToString());
+
+            QueryMatch matches = doc.search(mq);
+            if (matches != null)
+                this.matches.add(matches);
+
+            queryCount++;
+
+        }
+
+        @Override
+        public void setNextReader(AtomicReaderContext context) throws IOException {
+            idField = context.reader().getSortedDocValues(FIELDS.id);
+        }
+
+        @Override
+        public boolean acceptsDocsOutOfOrder() {
+            return true;
+        }
+
+        public DocumentMatches getMatches(long preptime, long querytime) {
+            return new DocumentMatches(this.doc.getId(), this.matches, this.queryCount, preptime, querytime);
+        }
+
+    }
 }

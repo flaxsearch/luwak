@@ -18,6 +18,10 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Summary of all matches for an individual {@link uk.co.flax.luwak.InputDocument} run
+ * against a Monitor.
+ */
 public class DocumentMatches {
 
     private final String id;
@@ -30,24 +34,42 @@ public class DocumentMatches {
         this.stats = new MatchStats(qcount, preptime, querytime);
     }
 
+    /**
+     * @return the id of the {@link InputDocument} this object is for
+     */
     public String docId() {
         return id;
     }
 
+    /**
+     * @return a list of {@link QueryMatch} objects, one for each query that matched the document
+     */
     public List<QueryMatch> matches() {
         return matches;
     }
 
+    /**
+     * @return the {@link MatchStats} for this run
+     */
     public MatchStats getMatchStats() {
         return stats;
     }
 
+    /**
+     * Statistics for a {@link Monitor#match(InputDocument)} call
+     */
     public static class MatchStats {
 
+        /** Time taken to prepare the document for searching */
         public final long preptime;
+
+        /** Total time taken running queries against the document */
         public final long querytime;
+
+        /** Total number of queries run against the document */
         public final int querycount;
 
+        /** Constructs a new MatchStats instance */
         public MatchStats(int querycount, long preptime, long querytime) {
             this.querycount = querycount;
             this.preptime = preptime;

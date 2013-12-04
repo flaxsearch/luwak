@@ -24,40 +24,75 @@ import java.util.Set;
  * limitations under the License.
  */
 
+/**
+ * Summary of the matches for an individual Query run against an InputDocument
+ */
 public class QueryMatch {
 
     private final String queryId;
     private final Multimap<String, Hit> hits = TreeMultimap.<String, Hit>create();
 
+    /**
+     * Create a new QueryMatch object for a query
+     * @param queryId the ID of the query
+     */
     public QueryMatch(String queryId) {
         this.queryId = queryId;
     }
 
+    /**
+     * Add a new {@link uk.co.flax.luwak.QueryMatch.Hit}
+     * @param interval
+     */
     public void addInterval(Interval interval) {
         hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
     }
 
+    /**
+     * @return the id of the query for this object
+     */
     public String getQueryId() {
         return this.queryId;
     }
 
+    /**
+     * @return the fields in which matches have been found
+     */
     public Set<String> getFields() {
         return hits.keySet();
     }
 
+    /**
+     * Get the hits for a specific field
+     * @param field the field
+     * @return the Hits found in this field
+     */
     public Collection<Hit> getHits(String field) {
         return Collections.unmodifiableCollection(hits.get(field));
     }
 
+    /**
+     * @return the total number of hits for the query
+     */
     public int getHitCount() {
         return hits.keys().size();
     }
 
+    /**
+     * Represents an individual hit
+     */
     public static class Hit implements Comparable<Hit> {
 
+        /** The start position */
         public final int startPosition;
+
+        /** The start offset */
         public final int startOffset;
+
+        /** The end positions */
         public final int endPosition;
+
+        /** The end offset */
         public final int endOffset;
 
         Hit(int startPosition, int startOffset, int endPosition, int endOffset) {

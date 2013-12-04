@@ -2,9 +2,14 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.*;
+import org.apache.lucene.search.intervals.Interval;
+import org.apache.lucene.search.intervals.IntervalCollector;
+import org.apache.lucene.search.intervals.IntervalIterator;
+
+import java.io.IOException;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -137,5 +142,64 @@ public class InputDocument {
             doc.finish();
             return doc;
         }
+    }
+
+    // a specialized Collector that uses an {@link IntervalIterator} to collect
+    // match positions from a Scorer.
+    static class QueryMatchCollector extends Collector implements IntervalCollector {
+
+        protected Scorer scorer;
+        private IntervalIterator positions;
+
+        private QueryMatch matches = null;
+        private final String queryId;
+
+        public QueryMatchCollector(String queryId) {
+            this.queryId = queryId;
+        }
+
+        public QueryMatch getMatches() {
+            return matches;
+        }
+
+        @Override
+        public void collect(int doc) throws IOException {
+            // consume any remaining positions the scorer didn't report
+            matches = new QueryMatch(this.queryId);
+            positions.scorerAdvanced(doc);
+            while(positions.next() != null) {
+                positions.collect(this);
+            }
+        }
+
+        public boolean acceptsDocsOutOfOrder() {
+            return false;
+        }
+
+        public void setScorer(Scorer scorer) throws IOException {
+            this.scorer = scorer;
+            positions = scorer.intervals(true);
+            // If we want to visit the other scorers, we can, here...
+        }
+
+        public void setNextReader(AtomicReaderContext context) throws IOException {
+        }
+
+        @Override
+        public Weight.PostingFeatures postingFeatures() {
+            return Weight.PostingFeatures.OFFSETS;
+        }
+
+        @Override
+        public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
+            matches.addInterval(interval);
+        }
+
+        @Override
+        public void collectComposite(Scorer scorer, Interval interval,
+                                     int docID) {
+            //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+        }
+
     }
 }
