@@ -3,7 +3,6 @@ package uk.co.flax.luwak.impl;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.util.Version;
-import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 
@@ -25,8 +24,8 @@ import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
-    public WildcardNGramPresearcher(Monitor monitor) {
-        super(monitor, new QueryTermExtractor(new RegexpNGramTermExtractor()));
+    public WildcardNGramPresearcher() {
+        super(new QueryTermExtractor(new RegexpNGramTermExtractor()));
     }
 
     @Override

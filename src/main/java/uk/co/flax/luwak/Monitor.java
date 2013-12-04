@@ -52,13 +52,17 @@ public class Monitor {
 
     private final Map<String, MonitorQuery> queries = new HashMap<>();
 
+    private final Presearcher presearcher;
+
     public static class FIELDS {
         public static final String id = "id";
         public static final String del_id = "del_id";
     }
 
-    public Monitor() {
+    public Monitor(Presearcher presearcher) {
         directory = new RAMDirectory();
+        this.presearcher = presearcher;
+        presearcher.setMonitor(this);
     }
 
     private void openSearcher() throws IOException {
@@ -115,7 +119,7 @@ public class Monitor {
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
                 try {
-                    writer.addDocument(mq.asIndexableDocument());
+                    writer.addDocument(mq.asIndexableDocument(presearcher));
                 }
                 catch (Exception e) {
                     throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
@@ -154,7 +158,7 @@ public class Monitor {
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
             MonitorQueryCollector collector = new MonitorQueryCollector(queries, document);
-            Query presearcherQuery = document.getPresearcherQuery();
+            Query presearcherQuery = presearcher.buildQuery(document);
 
             tick = System.currentTimeMillis();
             prebuild = tick - starttime;

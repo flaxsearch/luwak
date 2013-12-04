@@ -31,12 +31,12 @@ public class TestTermPresearcher extends PresearcherTestBase {
     public void filtersOnTermQueries() {
 
         MonitorQuery query1
-                = new MonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "furble")), presearcher);
+                = new MonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "furble")));
         MonitorQuery query2
-                = new MonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")), presearcher);
+                = new MonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")));
         monitor.update(query1, query2);
 
-        InputDocument doc = InputDocument.builder("doc1", presearcher)
+        InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
@@ -53,9 +53,9 @@ public class TestTermPresearcher extends PresearcherTestBase {
         bq.add(new TermQuery(new Term(TEXTFIELD, "document")), BooleanClause.Occur.SHOULD);
         bq.add(new TermQuery(new Term(TEXTFIELD, "test")), BooleanClause.Occur.MUST_NOT);
 
-        monitor.update(new MonitorQuery("1", bq, presearcher));
+        monitor.update(new MonitorQuery("1", bq));
 
-        InputDocument doc1 = InputDocument.builder("doc1", presearcher)
+        InputDocument doc1 = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
@@ -63,7 +63,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .hasMatchCount(0)
                 .hasQueriesRunCount(1);
 
-        InputDocument doc2 = InputDocument.builder("doc2", presearcher)
+        InputDocument doc2 = InputDocument.builder("doc2")
                 .addField(TEXTFIELD, "weeble sclup test", WHITESPACE)
                 .build();
 
@@ -75,9 +75,9 @@ public class TestTermPresearcher extends PresearcherTestBase {
     @Test
     public void matchesAnyQueries() {
 
-        monitor.update(new MonitorQuery("1", new RegexpQuery(new Term(TEXTFIELD, "hell?")), presearcher));
+        monitor.update(new MonitorQuery("1", new RegexpQuery(new Term(TEXTFIELD, "hell?"))));
 
-        InputDocument doc = InputDocument.builder("doc1", presearcher)
+        InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "whatever", WHITESPACE)
                 .build();
 
@@ -89,6 +89,6 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(monitor);
+        return new TermFilteredPresearcher();
     }
 }

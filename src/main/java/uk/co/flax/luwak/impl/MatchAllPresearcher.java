@@ -23,8 +23,8 @@ import uk.co.flax.luwak.Presearcher;
 
 public class MatchAllPresearcher extends Presearcher {
 
-    public MatchAllPresearcher(Monitor monitor) {
-        super(monitor);
+    public MatchAllPresearcher() {
+        super();
     }
 
     @Override

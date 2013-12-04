@@ -23,14 +23,14 @@ import org.junit.Before;
 
 public abstract class PresearcherTestBase {
 
-    protected final Monitor monitor = new Monitor();
+    protected Monitor monitor;
 
     protected Presearcher presearcher;
 
     @Before
     public void setUp() {
-        monitor.reset();
         presearcher = createPresearcher();
+        monitor = new Monitor(presearcher);
     }
 
     protected abstract Presearcher createPresearcher();

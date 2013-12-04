@@ -3,7 +3,6 @@ package uk.co.flax.luwak;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.Query;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -24,17 +23,11 @@ import org.apache.lucene.search.Query;
 public class InputDocument {
 
     private final String id;
-    private final Presearcher presearcher;
 
     protected final MemoryIndex index = new MemoryIndex(true);
 
-    public InputDocument(String id, Presearcher presearcher) {
+    protected InputDocument(String id) {
         this.id = id;
-        this.presearcher = presearcher;
-    }
-
-    public final Query getPresearcherQuery() {
-        return presearcher.buildQuery(this);
     }
 
     public String getId() {
@@ -49,16 +42,16 @@ public class InputDocument {
         return index.createSearcher().getIndexReader().leaves().get(0).reader();
     }
 
-    public static Builder builder(String id, Presearcher presearcher) {
-        return new Builder(id, presearcher);
+    public static Builder builder(String id) {
+        return new Builder(id);
     }
 
-    static class Builder {
+    public static class Builder {
 
         private final InputDocument doc;
 
-        public Builder(String id, Presearcher presearcher) {
-            this.doc = new InputDocument(id, presearcher);
+        public Builder(String id) {
+            this.doc = new InputDocument(id);
         }
 
         public Builder addField(String field, String text, Analyzer analyzer) {

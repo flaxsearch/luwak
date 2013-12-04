@@ -26,7 +26,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
@@ -41,12 +40,11 @@ public class TermFilteredPresearcher extends Presearcher {
 
     private final String ANYTOKEN = "__ANYTOKEN__";
 
-    public TermFilteredPresearcher(Monitor monitor) {
-        this(monitor, new QueryTermExtractor());
+    public TermFilteredPresearcher() {
+        this(new QueryTermExtractor());
     }
 
-    public TermFilteredPresearcher(Monitor monitor, QueryTermExtractor extractor) {
-        super(monitor);
+    public TermFilteredPresearcher(QueryTermExtractor extractor) {
         this.extractor = extractor;
     }
 
