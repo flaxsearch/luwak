@@ -3,6 +3,8 @@ package uk.co.flax.luwak;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.memory.MemoryIndex;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -20,46 +22,119 @@ import org.apache.lucene.index.memory.MemoryIndex;
  * limitations under the License.
  */
 
+/**
+ * An InputDocument represents a document to be run against registered queries
+ * in the Monitor.  It should be constructed using the static #builder() method.
+ */
 public class InputDocument {
 
-    private final String id;
-
-    protected final MemoryIndex index = new MemoryIndex(true);
-
-    protected InputDocument(String id) {
-        this.id = id;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public MemoryIndex getDocumentIndex() {
-        return index;
-    }
-
-    public AtomicReader asAtomicReader() {
-        return index.createSearcher().getIndexReader().leaves().get(0).reader();
-    }
-
+    /**
+     * Create a new fluent {@link uk.co.flax.luwak.InputDocument.Builder} object.
+     * @param id the id
+     * @return a Builder
+     */
     public static Builder builder(String id) {
         return new Builder(id);
     }
 
+    private final String id;
+
+    private final MemoryIndex index = new MemoryIndex(true);
+    private IndexSearcher searcher;
+
+    // private constructor - use a Builder to create objects
+    private InputDocument(String id) {
+        this.id = id;
+    }
+
+    private void finish() {
+        searcher = index.createSearcher();
+    }
+
+    /**
+     * Get the document's ID
+     * @return the document's ID
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Run a MonitorQuery against this document.  If there are matches, and the MonitorQuery
+     * has a non-null highlight query, the highlight query is then also run.  Matches are
+     * returned from the highlight query, or from the original query if there are no highlight
+     * matches.
+     * @param mq the MonitorQuery to run
+     * @return a {@link QueryMatch} object, or null if no matches are found.
+     */
+    public QueryMatch search(MonitorQuery mq) {
+
+        QueryMatch matches = search(mq.getId(), "", mq.getQuery());
+        if (matches == null)
+            return null;
+
+        QueryMatch highlightMatches = search(mq.getId(), "highlight ", mq.getHighlightQuery());
+        if (highlightMatches == null)
+            return matches;
+
+        return highlightMatches;
+
+    }
+
+    private QueryMatch search(String id, String type, Query query) {
+        if (query == null)
+            return null;
+        QueryMatchCollector mc = new QueryMatchCollector(id);
+        try {
+            searcher.search(query, mc);
+            return mc.getMatches();
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Error running " + type + "query " + id + " against document " + this.id, e);
+        }
+    }
+
+    /**
+     * Get an atomic reader over the internal index
+     * @return an {@link org.apache.lucene.index.AtomicReader} over the internal index
+     */
+    public AtomicReader asAtomicReader() {
+        return index.createSearcher().getIndexReader().leaves().get(0).reader();
+    }
+
+    /**
+     * Fluent interface to construct a new InputDocument
+     */
     public static class Builder {
 
         private final InputDocument doc;
 
+        /**
+         * Create a new Builder for an InputDocument with the given id
+         * @param id the id of the InputDocument
+         */
         public Builder(String id) {
             this.doc = new InputDocument(id);
         }
 
+        /**
+         * Add a field to the InputDocument
+         * @param field the field name
+         * @param text the text content of the field
+         * @param analyzer the {@link Analyzer} to use for this field
+         * @return the Builder object
+         */
         public Builder addField(String field, String text, Analyzer analyzer) {
             doc.index.addField(field, text, analyzer);
             return this;
         }
 
+        /**
+         * Build the InputDocument
+         * @return the InputDocument
+         */
         public InputDocument build() {
+            doc.finish();
             return doc;
         }
     }

@@ -36,6 +36,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A Monitor matches {@link uk.co.flax.luwak.InputDocument}s to registered
  * {@link uk.co.flax.luwak.MonitorQuery} objects.
+ *
+ * MonitorQueries are stored in an internal index, their representation
+ * being determined by a {@link uk.co.flax.luwak.Presearcher}.  Incoming documents
+ * are converted by the Presearcher to queries and run against this index using
+ * a {@link uk.co.flax.luwak.MonitorQueryCollector}.
  */
 public class Monitor {
 
@@ -59,6 +64,10 @@ public class Monitor {
         public static final String del_id = "del_id";
     }
 
+    /**
+     * Create a new Monitor
+     * @param presearcher the Presearcher to use to store queries
+     */
     public Monitor(Presearcher presearcher) {
         directory = new RAMDirectory();
         this.presearcher = presearcher;

@@ -4,7 +4,6 @@ import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.util.BytesRef;
 
@@ -43,14 +42,13 @@ public class MonitorQueryCollector extends Collector {
     SortedDocValues idField;
     final BytesRef idRef = new BytesRef();
 
-    IndexSearcher withinDocSearcher;
+    //IndexSearcher withinDocSearcher;
 
     private int queryCount;
 
     public MonitorQueryCollector(Map<String, MonitorQuery> queries, final InputDocument doc) {
         this.doc = doc;
         this.queries = queries;
-        this.withinDocSearcher = doc.getDocumentIndex().createSearcher();
     }
 
     @Override
@@ -59,40 +57,15 @@ public class MonitorQueryCollector extends Collector {
     }
 
     @Override
-    public void collect(final int doc) throws IOException {
+    public void collect(final int docnum) throws IOException {
 
-        idField.get(doc, idRef);
+        idField.get(docnum, idRef);
         final MonitorQuery mq = queries.get(idRef.utf8ToString());
 
-        QueryMatchCollector mc = new QueryMatchCollector(mq.getId());
-        try {
-            withinDocSearcher.search(mq.getQuery(), mc);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Error running query " + mq.getId() + " against document "
-                                            + this.doc.getId(), e);
-        }
+        QueryMatch matches = doc.search(mq);
+        if (matches != null)
+            this.matches.add(matches);
 
-        QueryMatch newMatches = mc.getMatches();
-        if (newMatches != null) {
-            // If we get a match, then we run an optionally provided highlight query
-            // to get those results, otherwise just use the matches already retrieved.
-            if (mq.getHighlightQuery() != null) {
-                mc = new QueryMatchCollector(mq.getId());
-                try {
-                    withinDocSearcher.search(mq.getHighlightQuery(), mc);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException("Error running highlight query " + mq.getId() +
-                            " against document " + this.doc.getId(), e);
-                }
-                // If the highlighter query returned no matches, fall back to the matches
-                // already retrieved
-                if (mc.getMatches() != null)
-                    newMatches = mc.getMatches();
-            }
-            this.matches.add(newMatches);
-        }
         queryCount++;
 
     }
