@@ -41,7 +41,7 @@ public abstract class Presearcher {
 
     public abstract Query buildQuery(InputDocument inputDocument);
 
-    public abstract void indexQuery(Document doc, Query query);
+    public abstract Document indexQuery(Query query);
 
     public Monitor getMonitor() {
         return monitor;

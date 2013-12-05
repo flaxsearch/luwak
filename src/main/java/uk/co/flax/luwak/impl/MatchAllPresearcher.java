@@ -38,7 +38,7 @@ public class MatchAllPresearcher extends Presearcher {
     }
 
     @Override
-    public void indexQuery(Document doc, Query query) {
-        // no-op
+    public Document indexQuery(Query query) {
+        return new Document();
     }
 }

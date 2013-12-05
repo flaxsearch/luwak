@@ -75,12 +75,14 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     @Override
-    public final void indexQuery(Document doc, Query query) {
+    public final Document indexQuery(Query query) {
+        Document doc = new Document();
         for (QueryTerm queryTerm : extractor.extract(query)) {
             if (queryTerm.type == QueryTerm.Type.ANY)
                 doc.add(new StringField(queryTerm.field, extractor.getAnyToken(), Field.Store.NO));
             else
                 doc.add(new StringField(queryTerm.field, queryTerm.term, Field.Store.NO));
         }
+        return doc;
     }
 }
