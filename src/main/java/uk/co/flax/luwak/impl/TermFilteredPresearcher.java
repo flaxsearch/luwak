@@ -27,6 +27,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.util.TermsEnumTokenStream;
@@ -45,12 +46,8 @@ public class TermFilteredPresearcher extends Presearcher {
 
     private final QueryTermExtractor extractor;
 
-    public TermFilteredPresearcher() {
-        this(new QueryTermExtractor());
-    }
-
-    public TermFilteredPresearcher(QueryTermExtractor extractor) {
-        this.extractor = extractor;
+    public TermFilteredPresearcher(Extractor... extractors) {
+        extractor = new QueryTermExtractor(extractors);
     }
 
     @Override

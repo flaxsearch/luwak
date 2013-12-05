@@ -1,9 +1,10 @@
 package uk.co.flax.luwak.impl;
 
+import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.util.Version;
-import uk.co.flax.luwak.termextractor.QueryTermExtractor;
+import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
 
@@ -38,20 +39,9 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher() {
-        super(new QueryTermExtractor(new RegexpNGramTermExtractor()));
-    }
+    public WildcardNGramPresearcher(Extractor... extractors) {
+        super(ObjectArrays.concat(extractors, new RegexpNGramTermExtractor()));
 
-    /**
-     * Create a new WildcardNGramPresearcher with a customer QueryTermExtractor.
-     *
-     * The custom extractor should use RegexpNGramTermExtractor to extract terms
-     * from RegexpQueries.
-     *
-     * @param extractor the custom QueryTermExtractor to use
-     */
-    public WildcardNGramPresearcher(QueryTermExtractor extractor) {
-        super(extractor);
     }
 
     @Override
