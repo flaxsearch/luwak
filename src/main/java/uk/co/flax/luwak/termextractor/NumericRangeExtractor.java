@@ -20,6 +20,11 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Extract terms from a NumericRangeQuery
+ *
+ * Currently just returns QueryTerm.Type.ANY
+ */
 public class NumericRangeExtractor extends Extractor<NumericRangeQuery> {
 
     public NumericRangeExtractor() {
@@ -28,7 +33,7 @@ public class NumericRangeExtractor extends Extractor<NumericRangeQuery> {
 
     @Override
     public void extract(NumericRangeQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+                        List<Extractor<?>> extractors) {
         terms.add(new QueryTerm(query.getField(), "", QueryTerm.Type.ANY));
     }
 }

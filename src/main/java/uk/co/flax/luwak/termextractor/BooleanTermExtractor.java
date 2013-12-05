@@ -23,6 +23,12 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Extract terms from a BooleanQuery, recursing into the BooleanClauses
+ *
+ * If the query is a pure conjunction, then this extractor will select the best
+ * matching term from all the clauses and only extract that.
+ */
 public class BooleanTermExtractor extends Extractor<BooleanQuery> {
 
     public BooleanTermExtractor() {
@@ -30,21 +36,20 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
     }
 
     @Override
-    public void extract(BooleanQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+    public void extract(BooleanQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
 
         Analyzer checker = new Analyzer(query);
 
         if (checker.isDisjunctionQuery()) {
             for (Query subquery : checker.getDisjunctions()) {
-                queryTermExtractor.extractTerms(subquery, terms);
+                extractTerms(subquery, terms, extractors);
             }
         }
         else if (checker.isConjunctionQuery()) {
             List<QueryTerm> bestTerms = null;
             for (Query subquery : checker.getConjunctions()) {
                 List<QueryTerm> subTerms = new ArrayList<>();
-                queryTermExtractor.extractTerms(subquery, subTerms);
+                extractTerms(subquery, subTerms, extractors);
                 bestTerms = selectBestTerms(bestTerms, subTerms);
             }
             terms.addAll(bestTerms);

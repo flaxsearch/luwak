@@ -20,6 +20,13 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Abstract base class for extracting terms from a query.
+ *
+ * Subclasses should pass in their own types as a parameter to super().
+ *
+ * @param <T> the type of the Query to extract terms from
+ */
 public abstract class Extractor<T extends Query> {
 
     public final Class<T> cls;
@@ -28,8 +35,33 @@ public abstract class Extractor<T extends Query> {
         this.cls = cls;
     }
 
-    public abstract void extract(T query, List<QueryTerm> terms,
-                                    QueryTermExtractor queryTermExtractor);
+    /**
+     * Extract terms from this query, adding them to a list of terms
+     * @param query the Query to extract terms from
+     * @param terms the List to add the extracted terms to
+     * @param extractors a list of Extractors to use if the Extractor needs to recurse into the query tree
+     */
+    public abstract void extract(T query, List<QueryTerm> terms, List<Extractor<?>> extractors);
+
+    /**
+     * Extract terms from a query using the first matching Extractor in a list.
+     * @param query the query to extract terms from
+     * @param terms the List to add the extracted terms to
+     * @param extractors the list of extractors to check
+     */
+    @SuppressWarnings("unchecked")
+    protected static final void extractTerms(Query query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+        int termcount = terms.size();
+        for (Extractor extractor : extractors) {
+            if (extractor.cls.isAssignableFrom(query.getClass())) {
+                extractor.extract(query, terms, extractors);
+                if (terms.size() == termcount) {
+                    // TODO: Empty queries - ANYTERM token?
+                }
+                return;
+            }
+        }
+    }
 
 
 }

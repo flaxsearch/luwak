@@ -22,6 +22,9 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Extracts terms from a NonOverlappingQuery
+ */
 public class NonOverlappingQueryExtractor extends Extractor<NonOverlappingQuery> {
 
     public NonOverlappingQueryExtractor() {
@@ -29,13 +32,12 @@ public class NonOverlappingQueryExtractor extends Extractor<NonOverlappingQuery>
     }
 
     @Override
-    public void extract(NonOverlappingQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+    public void extract(NonOverlappingQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         try {
             Field field = NonOverlappingQuery.class.getDeclaredField("minuend");
             field.setAccessible(true);
             Query innerQuery = (Query) field.get(query);
-            queryTermExtractor.extractTerms(innerQuery, terms);
+            extractTerms(innerQuery, terms, extractors);
         }
         catch (Exception e) {
             throw new RuntimeException(e);

@@ -16,19 +16,40 @@ package uk.co.flax.luwak.termextractor;
  * limitations under the License.
  */
 
+/**
+ * Represents information about an extracted term
+ */
 public class QueryTerm {
 
+    /** The field of this term */
     public final String field;
+
+    /** The term value */
     public final String term;
+
+    /** The term type */
     public final Type type;
 
+    /** Construct a new QueryTerm */
     public QueryTerm(String field, String term, Type type) {
         this.field = field;
         this.term = term;
         this.type = type;
     }
 
-    public enum Type { EXACT, WILDCARD, ANY }
+    /**
+     * Type of a term
+     */
+    public enum Type {
+        /** Queries will match against the exact term */
+        EXACT,
+
+        /** The term contains wildcards */
+        WILDCARD,
+
+        /** The term will match any document */
+        ANY
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -23,6 +23,9 @@ import java.util.Set;
  * limitations under the License.
  */
 
+/**
+ * Extracts terms from a generic Query using {@link Query#extractTerms(java.util.Set)}
+ */
 public class GenericTermExtractor extends Extractor<Query> {
 
     public GenericTermExtractor() {
@@ -30,8 +33,7 @@ public class GenericTermExtractor extends Extractor<Query> {
     }
 
     @Override
-    public void extract(Query query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+    public void extract(Query query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         Set<Term> termSet = new HashSet<>();
         try {
             query.extractTerms(termSet);

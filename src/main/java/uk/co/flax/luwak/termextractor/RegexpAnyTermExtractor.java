@@ -31,7 +31,7 @@ public class RegexpAnyTermExtractor extends Extractor<RegexpQuery> {
 
     @Override
     public void extract(RegexpQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+                        List<Extractor<?>> extractors) {
         terms.add(new QueryTerm(query.getField(), "", QueryTerm.Type.ANY));
     }
 }

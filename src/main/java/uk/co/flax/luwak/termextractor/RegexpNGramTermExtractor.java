@@ -27,6 +27,8 @@ import java.util.regex.Pattern;
 /**
  * Extracts longest exact substring from a regular expression, to then be matched
  * against ngrams from an input document.
+ *
+ * N.B. the only regex chars dealt with currently are '.*' and '?'
  */
 public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
 
@@ -38,6 +40,7 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
 
     public static Splitter regexpSplitter = Splitter.on(regexpChars);
 
+    /** Orders strings by length, longest first */
     public static Ordering<String> byLengthOrdering = new Ordering<String>() {
         public int compare(String left, String right) {
             return Ints.compare(left.length(), right.length());
@@ -46,7 +49,7 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
 
     @Override
     public void extract(RegexpQuery query, List<QueryTerm> terms,
-                            QueryTermExtractor queryTermExtractor) {
+                            List<Extractor<?>> extractors) {
         String regexp = parseOutRegexp(query.toString(""));
         for (String substr : byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1)) {
             terms.add(new QueryTerm(query.getField(), substr, QueryTerm.Type.WILDCARD));
@@ -57,8 +60,8 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
     /**
      * The only way to extract a regexp from a RegexpQuery is by parsing it's
      * toString(String) output.  Which is a bit rubbish, really...
-     * @param queryRepresentation
-     * @return
+     * @param queryRepresentation the toString() representation of a RegexpQuery
+     * @return the regular expression for the query
      */
     public static String parseOutRegexp(String queryRepresentation) {
         int fieldSepPos = queryRepresentation.indexOf(":");
