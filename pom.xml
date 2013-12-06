@@ -10,10 +10,21 @@
     <version>0.5-SNAPSHOT</version>
 
     <properties>
-        <lucene.version>5.0.0-intervals-1.2-SNAPSHOT</lucene.version>
+        <lucene.version>5.0.0-intervals-1.2</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+    <issueManagement>
+        <system>Github Issues</system>
+        <url>https://github.com/flaxsearch/luwak/issues</url>
+    </issueManagement>
+    <scm>
+        <connection>scm:git:git://github.com:flaxsearch/luwak.git</connection>
+        <developerConnection>scm:git:git@github.com:flaxsearch/luwak.git</developerConnection>
+        <url>https://github.com/flaxsearch/luwak</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencies>
 
