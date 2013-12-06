@@ -8,6 +8,16 @@ instructions.
 
 Once that's done, you can build and deploy Luwak by running mvn install.
 
+Running the demo
+----------------
+
+A small demo program is included in the distribution that will run queries provided
+in a text file over a small corpus of documents from project gutenberg (via nltk).
+
+```sh
+./run-demo
+```
+
 Using the monitor
 -----------------
 

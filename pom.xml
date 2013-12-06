@@ -51,6 +51,19 @@
             <version>14.0.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lucene.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.13</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

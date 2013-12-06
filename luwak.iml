@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -19,6 +20,13 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.easytesting:fest-assert-core:2.0M10" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.easytesting:fest-util:1.2.5" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:14.0.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-queryparser:5.0.0-intervals-1.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-queries:5.0.0-intervals-1.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-sandbox:5.0.0-intervals-1.2-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: jakarta-regexp:jakarta-regexp:1.4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: ch.qos.logback:logback-classic:1.0.13" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: ch.qos.logback:logback-core:1.0.13" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
   </component>
 </module>
 
