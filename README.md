@@ -62,7 +62,7 @@ from registered queries for indexing.  If a passed-in query does not have a spec
 the presearcher will fall back to using a ```GenericTermExtractor```, which just uses ```Query#extractTerms(Set)```.
 
 This will not be appropriate for all custom Query types.  You can create your own custom extractor by
-subclassing ```Extractor```, and then pass it to the ``TermFilteredPresearcher``` constructor.
+subclassing ```Extractor```, and then pass it to the ```TermFilteredPresearcher``` constructor.
 
 ```java
 public class CustomQueryExtractor extends Extractor<CustomQuery> {
