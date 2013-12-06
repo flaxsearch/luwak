@@ -24,7 +24,7 @@ Using the monitor
 Basic usage looks like this:
 
 ```java
-Monitor monitor = new Monitor(new MatchAllPresearcher());
+Monitor monitor = new Monitor(new TermFilteredPresearcher());
 
 MonitorQuery mq = new MonitorQuery("query1", new TermQuery(new Term(textfield, "test")));
 monitor.update(mq);

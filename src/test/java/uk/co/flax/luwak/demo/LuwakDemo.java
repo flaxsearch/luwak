@@ -10,7 +10,7 @@ import org.fest.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.impl.TermFilteredPresearcher;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -51,7 +51,7 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new MatchAllPresearcher());
+        Monitor monitor = new Monitor(new TermFilteredPresearcher());
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
