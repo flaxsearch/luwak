@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -131,6 +132,17 @@ public class InputDocument {
          */
         public Builder addField(String field, String text, Analyzer analyzer) {
             doc.index.addField(field, text, analyzer);
+            return this;
+        }
+
+        /**
+         * Add a field to the InputDocument
+         * @param field the field name
+         * @param tokenStream a tokenstream containing the field contents
+         * @return the Builder object
+         */
+        public Builder addField(String field, TokenStream tokenStream) {
+            doc.index.addField(field, tokenStream);
             return this;
         }
 
