@@ -39,9 +39,7 @@ public class TestMonitor {
 
     static final String textfield = "textfield";
 
-    private final Monitor monitor = new Monitor();
-
-    private final Presearcher presearcher = new MatchAllPresearcher(monitor);
+    private final Monitor monitor = new Monitor(new MatchAllPresearcher());
 
     @Before
     public void setUp() {
@@ -54,9 +52,9 @@ public class TestMonitor {
         String document = "This is a test document";
 
         Query query = new TermQuery(new Term(textfield, "test"));
-        MonitorQuery mq = new MonitorQuery("query1", query, presearcher);
+        MonitorQuery mq = new MonitorQuery("query1", query);
 
-        InputDocument doc = InputDocument.builder("doc1", presearcher)
+        InputDocument doc = InputDocument.builder("doc1")
                 .addField(textfield, document, WHITESPACE)
                 .build();
 
@@ -74,7 +72,7 @@ public class TestMonitor {
 
     @Test(expected = IllegalStateException.class)
     public void monitorWithNoQueriesThrowsException() {
-        InputDocument doc = InputDocument.builder("doc1", presearcher).build();
+        InputDocument doc = InputDocument.builder("doc1").build();
         monitor.match(doc);
         fail("Monitor with no queries should have thrown an IllegalStateException");
     }
@@ -84,7 +82,7 @@ public class TestMonitor {
     @Test
     public void multiFieldQueryMatches() {
 
-        InputDocument doc = InputDocument.builder("doc1", presearcher)
+        InputDocument doc = InputDocument.builder("doc1")
                 .addField("field1", "this is a test of field one", WHITESPACE)
                 .addField("field2", "and this is an additional test", WHITESPACE)
                 .build();
@@ -92,7 +90,7 @@ public class TestMonitor {
         BooleanQuery bq = new BooleanQuery();
         bq.add(new TermQuery(new Term("field1", "test")), BooleanClause.Occur.SHOULD);
         bq.add(new TermQuery(new Term("field2", "test")), BooleanClause.Occur.SHOULD);
-        MonitorQuery mq = new MonitorQuery("query1", bq, presearcher);
+        MonitorQuery mq = new MonitorQuery("query1", bq);
 
         monitor.update(mq);
         assertThat(monitor.match(doc))
@@ -104,8 +102,8 @@ public class TestMonitor {
 
     }
 
-    public static InputDocument buildDoc(String id, String text, Presearcher presearcher) {
-        return InputDocument.builder(id, presearcher)
+    public static InputDocument buildDoc(String id, String text) {
+        return InputDocument.builder(id)
                 .addField(textfield, text, WHITESPACE)
                 .build();
     }
@@ -113,13 +111,12 @@ public class TestMonitor {
     @Test
     public void testHighlighterQuery() {
 
-        InputDocument docWithMatch = buildDoc("1", "this is a test document", presearcher);
-        InputDocument docWithNoMatch = buildDoc("2", "this is a document", presearcher);
-        InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test", presearcher);
+        InputDocument docWithMatch = buildDoc("1", "this is a test document");
+        InputDocument docWithNoMatch = buildDoc("2", "this is a document");
+        InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
 
         MonitorQuery mq = new MonitorQuery("1", new TermQuery(new Term(textfield, "test")),
-                                                new TermQuery(new Term(textfield, "document")),
-                presearcher);
+                                                new TermQuery(new Term(textfield, "document")));
 
         monitor.update(mq);
 
@@ -139,13 +136,13 @@ public class TestMonitor {
     public void canAddMonitorQuerySubclasses() {
 
         class TestQuery extends MonitorQuery {
-            public TestQuery(String id, String query, Presearcher presearcher) {
-                super(id, new TermQuery(new Term("field", query)), presearcher);
+            public TestQuery(String id, String query) {
+                super(id, new TermQuery(new Term("field", query)));
             }
         };
 
-        List<TestQuery> queries = ImmutableList.of(new TestQuery("1", "foo", presearcher),
-                                                   new TestQuery("2", "bar", presearcher));
+        List<TestQuery> queries = ImmutableList.of(new TestQuery("1", "foo"),
+                                                   new TestQuery("2", "bar"));
 
         monitor.update(queries);
 

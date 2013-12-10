@@ -31,10 +31,10 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         RegexpQuery wq = new RegexpQuery(new Term(TEXTFIELD, "hell.*"));
         wq.setRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
-        MonitorQuery query = new MonitorQuery("1", wq, presearcher);
+        MonitorQuery query = new MonitorQuery("1", wq);
         monitor.update(query);
 
-        InputDocument doc1 = InputDocument.builder("doc1", presearcher)
+        InputDocument doc1 = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "well hello there", WHITESPACE)
                 .build();
 
@@ -45,6 +45,6 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new WildcardNGramPresearcher(monitor);
+        return new WildcardNGramPresearcher();
     }
 }

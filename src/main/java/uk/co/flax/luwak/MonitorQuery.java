@@ -31,29 +31,33 @@ public class MonitorQuery {
     protected final Query query;
     protected final Query highlightQuery;
 
-    protected final Presearcher presearcher;
-
-    public MonitorQuery(String id, Query query, Query highlightQuery, Presearcher presearcher) {
+    public MonitorQuery(String id, Query query, Query highlightQuery) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
-        this.presearcher = presearcher;
     }
 
-    public MonitorQuery(String id, Query query, Presearcher presearcher) {
-        this(id, query, null, presearcher);
+    public MonitorQuery(String id, Query query) {
+        this(id, query, null);
     }
 
     public String getId() {
         return id;
     }
 
-    public final Document asIndexableDocument() {
-        Document doc = new Document();
-        presearcher.indexQuery(doc, query);
+    public final Document asIndexableDocument(Presearcher presearcher) {
+        Document doc = presearcher.indexQuery(query);
+        validateDocument(doc);
         doc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
         doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));
         return doc;
+    }
+
+    private void validateDocument(Document doc) {
+        if (doc.getFields(Monitor.FIELDS.del_id).length != 0)
+            throw new IllegalArgumentException("The presearcher has added a field [" + Monitor.FIELDS.del_id + "], which is reserved");
+        if (doc.getFields(Monitor.FIELDS.id).length != 0)
+            throw new IllegalArgumentException("The presearcher has added a field [" + Monitor.FIELDS.id + "], which is reserved");
     }
 
     public final Query getDeletionQuery() {

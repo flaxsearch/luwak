@@ -20,6 +20,9 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * An Extractor for TermQueries
+ */
 public class SimpleTermExtractor extends Extractor<TermQuery> {
 
     public SimpleTermExtractor() {
@@ -28,7 +31,7 @@ public class SimpleTermExtractor extends Extractor<TermQuery> {
 
     @Override
     public void extract(TermQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+                        List<Extractor<?>> extractors) {
         terms.add(new QueryTerm(query.getTerm().field(), query.getTerm().text(), QueryTerm.Type.EXACT));
     }
 }

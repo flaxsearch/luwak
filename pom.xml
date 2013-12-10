@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>uk.co.flax</groupId>
     <artifactId>luwak</artifactId>
     <packaging>jar</packaging>
-    <version>0.5-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
 
     <properties>
-        <lucene.version>5.0.0-intervals-1.2-SNAPSHOT</lucene.version>
-        <slf4j.version>1.7.2</slf4j.version>
+        <lucene.version>5.0.0-intervals-1.2</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+    <issueManagement>
+        <system>Github Issues</system>
+        <url>https://github.com/flaxsearch/luwak/issues</url>
+    </issueManagement>
+    <scm>
+        <connection>scm:git:git://github.com:flaxsearch/luwak.git</connection>
+        <developerConnection>scm:git:git@github.com:flaxsearch/luwak.git</developerConnection>
+        <url>https://github.com/flaxsearch/luwak</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencies>
 
@@ -50,6 +58,19 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>14.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>${lucene.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.13</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

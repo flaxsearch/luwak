@@ -22,12 +22,21 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * A TokenFilter that filters out tokens not found in a whitelist
+ */
 public final class WhitelistTokenFilter extends TokenFilter {
 
     private final Set<String> terms;
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
+    /**
+     * Create a new WhitelistTokenFilter
+     * @param ts the TokenStream to filter
+     * @param terms a Set of terms to allow through
+     */
     public WhitelistTokenFilter(TokenStream ts, Set<String> terms) {
         super(ts);
         this.terms = terms;

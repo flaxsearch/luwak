@@ -1,11 +1,12 @@
 package uk.co.flax.luwak.impl;
 
+import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ngram.NGramTokenFilter;
 import org.apache.lucene.util.Version;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.termextractor.QueryTermExtractor;
+import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
+import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -23,15 +24,31 @@ import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
  * limitations under the License.
  */
 
+/**
+ * A Presearcher implementation that matches Wildcard queries by indexing regex
+ * terms by their longest static substring, and generates ngrams from InputDocument
+ * tokens to match them.
+ *
+ * This implementation will filter out more wildcard queries than TermFilteredPresearcher,
+ * at the expense of longer document build times.  Which one is more performant will depend
+ * on the type and number of queries registered in the Monitor, and the size of documents
+ * to be monitored.  Profiling is recommended.
+ */
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
-    public WildcardNGramPresearcher(Monitor monitor) {
-        super(monitor, new QueryTermExtractor(new RegexpNGramTermExtractor()));
+    /**
+     * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
+     */
+    public WildcardNGramPresearcher(Extractor... extractors) {
+        super(ObjectArrays.concat(extractors, new RegexpNGramTermExtractor()));
+
     }
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        return super.filterInputDocumentTokens(field,
-                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE));
+        TokenStream ngramTs = new DuplicateRemovalTokenFilter(
+                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE)
+        );
+        return super.filterInputDocumentTokens(field, ngramTs);
     }
 }

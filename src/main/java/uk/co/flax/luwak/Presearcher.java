@@ -19,17 +19,29 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
+/**
+ * Abstract base class of all Presearcher implementations
+ *
+ * A Presearcher is used by the Monitor to reduce the number of queries actually
+ * run against an InputDocument.  It defines how queries are stored in the monitor's
+ * internal index, and how an InputDocument is converted to a query against that
+ * index.
+ *
+ * {@see uk.co.flax.luwak.impl.MatchAllPresearcher}
+ * {@see uk.co.flax.luwak.impl.TermFilteredPresearcher}
+ * {@see uk.co.flax.luwak.impl.WildcardNGramPresearcher}
+ */
 public abstract class Presearcher {
 
-    protected final Monitor monitor;
+    protected Monitor monitor;
 
-    public Presearcher(Monitor monitor) {
+    protected void setMonitor(Monitor monitor) {
         this.monitor = monitor;
     }
 
     public abstract Query buildQuery(InputDocument inputDocument);
 
-    public abstract void indexQuery(Document doc, Query query);
+    public abstract Document indexQuery(Query query);
 
     public Monitor getMonitor() {
         return monitor;

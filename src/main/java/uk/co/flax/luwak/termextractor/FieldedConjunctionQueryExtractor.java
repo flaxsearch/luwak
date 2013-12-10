@@ -21,6 +21,12 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Extract terms from a FieldedConjunctionQuery
+ *
+ * {@see BooleanTermExtractor}
+ */
 public class FieldedConjunctionQueryExtractor extends Extractor<FieldedConjunctionQuery> {
 
     public FieldedConjunctionQueryExtractor() {
@@ -29,12 +35,12 @@ public class FieldedConjunctionQueryExtractor extends Extractor<FieldedConjuncti
 
     @Override
     public void extract(FieldedConjunctionQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+                        List<Extractor<?>> extractors) {
         try {
             Field field = query.getClass().getDeclaredField("bq");
             field.setAccessible(true);
             BooleanQuery bq = (BooleanQuery) field.get(query);
-            queryTermExtractor.extractTerms(bq, terms);
+            extractTerms(bq, terms, extractors);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

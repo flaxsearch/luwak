@@ -26,8 +26,8 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.util.TermsEnumTokenStream;
@@ -35,19 +35,19 @@ import uk.co.flax.luwak.util.TokenStreamBooleanQuery;
 
 import java.io.IOException;
 
+/**
+ * Presearcher implementation that uses terms extracted from queries to index
+ * them in the Monitor, and builds a BooleanQuery from InputDocuments to match
+ * them.
+ *
+ * This Presearcher uses a QueryTermExtractor to extract terms from queries.
+ */
 public class TermFilteredPresearcher extends Presearcher {
 
     private final QueryTermExtractor extractor;
 
-    private final String ANYTOKEN = "__ANYTOKEN__";
-
-    public TermFilteredPresearcher(Monitor monitor) {
-        this(monitor, new QueryTermExtractor());
-    }
-
-    public TermFilteredPresearcher(Monitor monitor, QueryTermExtractor extractor) {
-        super(monitor);
-        this.extractor = extractor;
+    public TermFilteredPresearcher(Extractor... extractors) {
+        extractor = new QueryTermExtractor(extractors);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class TermFilteredPresearcher extends Presearcher {
                 TokenStream ts = filterInputDocumentTokens(field, new TermsEnumTokenStream(te));
                 bq.add(TokenStreamBooleanQuery.fromTokenStream(field, ts),
                         BooleanClause.Occur.SHOULD);
-                bq.add(new TermQuery(new Term(field, ANYTOKEN)), BooleanClause.Occur.SHOULD);
+                bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
             }
             return bq;
         }
@@ -75,12 +75,14 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     @Override
-    public final void indexQuery(Document doc, Query query) {
+    public final Document indexQuery(Query query) {
+        Document doc = new Document();
         for (QueryTerm queryTerm : extractor.extract(query)) {
             if (queryTerm.type == QueryTerm.Type.ANY)
-                doc.add(new StringField(queryTerm.field, ANYTOKEN, Field.Store.NO));
+                doc.add(new StringField(queryTerm.field, extractor.getAnyToken(), Field.Store.NO));
             else
                 doc.add(new StringField(queryTerm.field, queryTerm.term, Field.Store.NO));
         }
+        return doc;
     }
 }

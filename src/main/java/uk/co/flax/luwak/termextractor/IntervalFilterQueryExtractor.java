@@ -22,6 +22,9 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Extract terms from an IntervalFilterQuery
+ */
 public class IntervalFilterQueryExtractor extends Extractor<IntervalFilterQuery> {
 
     public IntervalFilterQueryExtractor() {
@@ -30,12 +33,12 @@ public class IntervalFilterQueryExtractor extends Extractor<IntervalFilterQuery>
 
     @Override
     public void extract(IntervalFilterQuery query, List<QueryTerm> terms,
-                        QueryTermExtractor queryTermExtractor) {
+                        List<Extractor<?>> extractors) {
         try {
             Field field = IntervalFilterQuery.class.getDeclaredField("inner");
             field.setAccessible(true);
             Query innerQuery = (Query) field.get(query);
-            queryTermExtractor.extractTerms(innerQuery, terms);
+            extractTerms(innerQuery, terms, extractors);
         }
         catch (Exception e) {
             throw new RuntimeException(e);

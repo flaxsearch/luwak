@@ -22,10 +22,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Utility class to extract terms from a {@link Query} by walking the query tree.
+ *
+ * Extracted terms may then be used to store queries in the Monitor.
+ */
 public class QueryTermExtractor {
+
+    private final String ANYTOKEN = "__ANYTOKEN__";
 
     private final List<Extractor<?>> extractors = new ArrayList<>();
 
+    /**
+     * The default list of Extractors to use
+     */
     public static final ImmutableList<Extractor<?>> DEFAULT_EXTRACTORS = ImmutableList.of(
             new IntervalFilterQueryExtractor(),
             new NonOverlappingQueryExtractor(),
@@ -38,10 +48,21 @@ public class QueryTermExtractor {
             new GenericTermExtractor()
     );
 
+    /**
+     * Create a new QueryTermExtractor using the default {@link Extractor} list
+     */
     public QueryTermExtractor() {
         extractors.addAll(DEFAULT_EXTRACTORS);
     }
 
+    /**
+     * Create a new QueryTermExtractor using user-specifed {@link Extractor}s, in
+     * addition to the default list.
+     *
+     * Extractors passed in here will override a default defined on the same query type.
+     *
+     * @param extractors an array of Extractors
+     */
     public QueryTermExtractor(Extractor<?>... extractors) {
         for (Extractor<?> extractor : extractors) {
             this.extractors.add(extractor);
@@ -49,24 +70,22 @@ public class QueryTermExtractor {
         this.extractors.addAll(DEFAULT_EXTRACTORS);
     }
 
+    /**
+     * Extract terms from a query
+     * @param query the query to extract terms from
+     * @return a Set of {@link QueryTerm}s
+     */
     public final Set<QueryTerm> extract(Query query) {
         List<QueryTerm> terms = new ArrayList<>();
-        extractTerms(query, terms);
+        Extractor.extractTerms(query, terms, extractors);
         return new HashSet<>(terms);
     }
 
-    @SuppressWarnings("unchecked")
-    public final void extractTerms(Query query, List<QueryTerm> terms) {
-        int termcount = terms.size();
-        for (Extractor extractor : extractors) {
-            if (extractor.cls.isAssignableFrom(query.getClass())) {
-                extractor.extract(query, terms, this);
-                if (terms.size() == termcount) {
-                    // TODO: Empty queries - ANYTERM token?
-                }
-                return;
-            }
-        }
+    /**
+     * Get the token used to match all documents
+     * @return the AnyToken
+     */
+    public String getAnyToken() {
+        return ANYTOKEN;
     }
-
 }
