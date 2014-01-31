@@ -77,6 +77,20 @@ public class TestMonitor {
         fail("Monitor with no queries should have thrown an IllegalStateException");
     }
 
+    @Test
+    public void updatesOverwriteOldQueries() {
+        MonitorQuery mq = new MonitorQuery("query1", new TermQuery(new Term(textfield, "this")));
+        monitor.update(mq);
+
+        MonitorQuery mq2 = new MonitorQuery("query1", new TermQuery(new Term(textfield, "that")));
+        monitor.update(mq2);
+
+        InputDocument doc = InputDocument.builder("doc1").addField(textfield, "that", WHITESPACE).build();
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(1)
+                .matchesQuery("query1");
+    }
+
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
     @Test
