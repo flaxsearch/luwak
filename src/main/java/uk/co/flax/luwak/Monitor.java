@@ -131,7 +131,7 @@ public class Monitor {
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
                 try {
-                    writer.addDocument(mq.asIndexableDocument(presearcher));
+                    writer.updateDocument(new Term(FIELDS.del_id, mq.getId()), mq.asIndexableDocument(presearcher));
                 }
                 catch (Exception e) {
                     throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
