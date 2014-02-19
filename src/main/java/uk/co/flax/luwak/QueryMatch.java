@@ -1,13 +1,5 @@
 package uk.co.flax.luwak;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
-import org.apache.lucene.search.intervals.Interval;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
@@ -30,7 +22,6 @@ import java.util.Set;
 public class QueryMatch {
 
     private final String queryId;
-    private final Multimap<String, Hit> hits = TreeMultimap.<String, Hit>create();
 
     /**
      * Create a new QueryMatch object for a query
@@ -41,88 +32,10 @@ public class QueryMatch {
     }
 
     /**
-     * Add a new {@link uk.co.flax.luwak.QueryMatch.Hit}
-     * @param interval
-     */
-    public void addInterval(Interval interval) {
-        hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
-    }
-
-    /**
      * @return the id of the query for this object
      */
     public String getQueryId() {
         return this.queryId;
     }
 
-    /**
-     * @return the fields in which matches have been found
-     */
-    public Set<String> getFields() {
-        return hits.keySet();
-    }
-
-    /**
-     * Get the hits for a specific field
-     * @param field the field
-     * @return the Hits found in this field
-     */
-    public Collection<Hit> getHits(String field) {
-        return Collections.unmodifiableCollection(hits.get(field));
-    }
-
-    /**
-     * @return the total number of hits for the query
-     */
-    public int getHitCount() {
-        return hits.keys().size();
-    }
-
-    /**
-     * Represents an individual hit
-     */
-    public static class Hit implements Comparable<Hit> {
-
-        /** The start position */
-        public final int startPosition;
-
-        /** The start offset */
-        public final int startOffset;
-
-        /** The end positions */
-        public final int endPosition;
-
-        /** The end offset */
-        public final int endOffset;
-
-        Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
-            this.startPosition = startPosition;
-            this.startOffset = startOffset;
-            this.endPosition = endPosition;
-            this.endOffset = endOffset;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Hit))
-                return false;
-            Hit other = (Hit) obj;
-            return this.startOffset == other.startOffset &&
-                    this.endOffset == other.endOffset &&
-                    this.startPosition == other.startPosition &&
-                    this.endPosition == other.endPosition;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("%d(%d)->%d(%d)", startPosition, startOffset, endPosition, endOffset);
-        }
-
-        @Override
-        public int compareTo(Hit other) {
-            if (this.startPosition != other.startPosition)
-                return Integer.compare(this.startPosition, other.startPosition);
-            return Integer.compare(this.endPosition, other.endPosition);
-        }
-    }
 }

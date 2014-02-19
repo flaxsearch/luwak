@@ -101,9 +101,6 @@ public class LuwakDemo {
         logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getMatchStats().querycount);
         for (QueryMatch qm : matches.matches()) {
             logger.info("\tQuery: {}", qm.getQueryId());
-            for (QueryMatch.Hit hit : qm.getHits(FIELD)) {
-                logger.info("\t\tHit: {}", hit.toString());
-            }
         }
     }
 

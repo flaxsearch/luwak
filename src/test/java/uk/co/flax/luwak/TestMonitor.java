@@ -4,8 +4,6 @@ import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
@@ -63,10 +61,7 @@ public class TestMonitor {
         assertThat(monitor.match(doc))
                 .matches("doc1")
                 .hasMatchCount(1)
-                .matchesQuery("query1")
-                    .withHitCount(1)
-                    .inField(textfield)
-                        .withHit(new QueryMatch.Hit(3, 10, 3, 14));
+                .matchesQuery("query1");
 
     }
 
@@ -92,59 +87,6 @@ public class TestMonitor {
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
-
-    @Test
-    public void multiFieldQueryMatches() {
-
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField("field1", "this is a test of field one", WHITESPACE)
-                .addField("field2", "and this is an additional test", WHITESPACE)
-                .build();
-
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "test")), BooleanClause.Occur.SHOULD);
-        bq.add(new TermQuery(new Term("field2", "test")), BooleanClause.Occur.SHOULD);
-        MonitorQuery mq = new MonitorQuery("query1", bq);
-
-        monitor.update(mq);
-        assertThat(monitor.match(doc))
-                .matchesQuery("query1")
-                    .inField("field1")
-                        .withHit(new QueryMatch.Hit(3, 10, 3, 14))
-                    .inField("field2")
-                        .withHit(new QueryMatch.Hit(5, 26, 5, 30));
-
-    }
-
-    public static InputDocument buildDoc(String id, String text) {
-        return InputDocument.builder(id)
-                .addField(textfield, text, WHITESPACE)
-                .build();
-    }
-
-    @Test
-    public void testHighlighterQuery() {
-
-        InputDocument docWithMatch = buildDoc("1", "this is a test document");
-        InputDocument docWithNoMatch = buildDoc("2", "this is a document");
-        InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
-
-        MonitorQuery mq = new MonitorQuery("1", new TermQuery(new Term(textfield, "test")),
-                                                new TermQuery(new Term(textfield, "document")));
-
-        monitor.update(mq);
-
-        assertThat(monitor.match(docWithMatch))
-                .matchesQuery("1")
-                    .inField(textfield)
-                        .withHit(new QueryMatch.Hit(4, 15, 4, 23));
-        assertThat(monitor.match(docWithNoMatch))
-                .doesNotMatchQuery("1");
-        assertThat(monitor.match(docWithNoHighlighterMatch))
-                .matchesQuery("1").inField(textfield)
-                    .withHit(new QueryMatch.Hit(3, 10, 3, 14));
-
-    }
 
     @Test
     public void canAddMonitorQuerySubclasses() {
