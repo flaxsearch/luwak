@@ -16,6 +16,7 @@ import uk.co.flax.luwak.util.WhitelistTokenFilter;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -53,12 +54,15 @@ public class Monitor {
     private DirectoryReader reader = null;
     private IndexSearcher searcher = null;
     private SetMultimap<String, String> terms = null;
+    private int flushThreshold = 0;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_50, null);
 
     private final Map<String, MonitorQuery> queries = new HashMap<>();
+    private Map<String, MonitorQuery> uncommitedAddQueries = new ConcurrentHashMap<>();
+    private Map<String, MonitorQuery> uncommitedDeleteQueries = new ConcurrentHashMap<>();
 
     private final Presearcher presearcher;
 
@@ -75,6 +79,16 @@ public class Monitor {
         directory = new RAMDirectory();
         this.presearcher = presearcher;
         presearcher.setMonitor(this);
+    }
+
+    /**
+     * Create a new Monitor and sets queries flush threshold
+     * @param presearcher
+     * @param flushThreshold
+     */
+    public Monitor(Presearcher presearcher, int flushThreshold) {
+        this(presearcher);
+        this.flushThreshold = flushThreshold;
     }
 
     private void openSearcher() throws IOException {
@@ -125,6 +139,48 @@ public class Monitor {
      * @param queriesToDelete an {@link Iterable} of {@link MonitorQuery} objects to remove
      */
     public void update(Iterable<? extends MonitorQuery> queriesToAdd, Iterable<? extends MonitorQuery> queriesToDelete) {
+        if (flushThreshold > 0) {
+            updateUncommited(queriesToAdd, queriesToDelete);
+            if (flushThreshold < this.uncommitedAddQueries.size() + this.uncommitedDeleteQueries.size()) {
+                Map<String, MonitorQuery> tmpQueriesToAdd, tmpQueriesToDelete = null;
+                try {
+                    lock.writeLock().lock();
+                    tmpQueriesToAdd = this.uncommitedAddQueries;
+                    tmpQueriesToDelete = this.uncommitedDeleteQueries;
+                    this.uncommitedAddQueries = new ConcurrentHashMap<>();
+                    this.uncommitedDeleteQueries = new ConcurrentHashMap<>();
+                } finally {
+                    lock.writeLock().unlock();
+                }
+                updateDirectly(tmpQueriesToAdd.values(), tmpQueriesToDelete.values());
+            }
+        } else {
+            updateDirectly(queriesToAdd, queriesToDelete);
+        }
+    }
+
+    private void updateUncommited(Iterable<? extends MonitorQuery> queriesToAdd,
+            Iterable<? extends MonitorQuery> queriesToDelete) {
+        for (MonitorQuery query : queriesToAdd) {
+            this.uncommitedAddQueries.put(query.getId(), query);
+            if (uncommitedDeleteQueries.containsKey(query.getId())) {
+                if (uncommitedDeleteQueries.get(query.getId()).getCreateTimestamp() < query.getCreateTimestamp()) {
+                    uncommitedDeleteQueries.remove(query.getId());
+                }
+            }
+        }
+        for (MonitorQuery query : queriesToDelete) {
+            this.uncommitedDeleteQueries.put(query.getId(), query);
+            if (uncommitedAddQueries.containsKey(query.getId())) {
+                if (uncommitedAddQueries.get(query.getId()).getCreateTimestamp() < query.getCreateTimestamp()) {
+                    uncommitedAddQueries.remove(query.getId());
+                }
+            }
+        }
+    }
+
+    private void updateDirectly(Iterable<? extends MonitorQuery> queriesToAdd,
+            Iterable<? extends MonitorQuery> queriesToDelete) {
         try {
             lock.writeLock().lock();
             IndexWriterConfig iwc = this.iwc.clone();
@@ -132,8 +188,7 @@ public class Monitor {
             for (MonitorQuery mq : queriesToAdd) {
                 try {
                     writer.updateDocument(new Term(FIELDS.del_id, mq.getId()), mq.asIndexableDocument(presearcher));
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
                 }
                 queries.put(mq.getId(), mq);
@@ -145,12 +200,10 @@ public class Monitor {
             writer.commit();
             writer.close();
             openSearcher();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             // Shouldn't happen, because we're using a RAMDirectory...
             throw new RuntimeException(e);
-        }
-        finally {
+        } finally {
             lock.writeLock().unlock();
         }
     }
@@ -164,19 +217,23 @@ public class Monitor {
         try {
             lock.readLock().lock();
 
-            if (searcher == null)
+            if (searcher == null && uncommitedAddQueries.isEmpty()) {
                 throw new IllegalStateException("Monitor has no registered queries!");
+            }
 
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
-            MonitorQueryCollector collector = new MonitorQueryCollector(document);
+            MonitorQueryCollector collector =
+                    new MonitorQueryCollector(document, uncommitedAddQueries, uncommitedDeleteQueries);
             Query presearcherQuery = presearcher.buildQuery(document);
 
             tick = System.currentTimeMillis();
             prebuild = tick - starttime;
             starttime = tick;
 
-            searcher.search(presearcherQuery, collector);
+            if (searcher != null) {
+                searcher.search(presearcherQuery, collector);
+            }
 
             monitor = System.currentTimeMillis() - starttime;
 
@@ -198,15 +255,28 @@ public class Monitor {
      * @return the query with the passed in ID
      */
     public MonitorQuery getQuery(String queryId) {
-        return queries.get(queryId);
+        if (queries.containsKey(queryId))
+            return queries.get(queryId);
+        else
+            return uncommitedAddQueries.get(queryId);
     }
 
     /**
-     * Get the number of queries registered in the monitor
+     * Get the number of queries registered and commited in the monitor
      * @return the number of queries registered in the monitor
      */
     public long getQueryCount() {
         return queries.size();
+    }
+
+    /**
+     * Get the number of queries registered but not commited in the monitor
+     * @return the number of queries not commited in monitor yet
+     */
+    public long getUncommitedQueryCount() {
+        if (uncommitedAddQueries != null && uncommitedDeleteQueries != null)
+            return uncommitedAddQueries.size() + uncommitedDeleteQueries.size();
+        return 0;
     }
 
     /**
@@ -242,6 +312,8 @@ public class Monitor {
         private final InputDocument doc;
 
         private final List<QueryMatch> matches = new ArrayList<QueryMatch>();
+        private Map<String, MonitorQuery> addQueries;
+        private Map<String, MonitorQuery> deleteQueries;
 
         SortedDocValues idField;
         final BytesRef idRef = new BytesRef();
@@ -252,6 +324,23 @@ public class Monitor {
             this.doc = doc;
         }
 
+        public MonitorQueryCollector(final InputDocument doc, Map<String, MonitorQuery> addQueries,
+                Map<String, MonitorQuery> deleteQueries) {
+            this(doc);
+            this.addQueries = addQueries;
+            this.deleteQueries = deleteQueries;
+            checkUncommitedQueries();
+        }
+
+        private void checkUncommitedQueries() {
+            for (MonitorQuery query: addQueries.values()) {
+                QueryMatch match = doc.search(query);
+                if (match != null)
+                    this.matches.add(match);
+                queryCount++;
+            }
+        }
+
         @Override
         public void setScorer(Scorer scorer) throws IOException {
             // no impl
@@ -259,8 +348,13 @@ public class Monitor {
 
         @Override
         public void collect(final int docnum) throws IOException {
-
             idField.get(docnum, idRef);
+
+            if ((deleteQueries != null && deleteQueries.containsKey(idRef))
+                    || (addQueries != null && addQueries.containsKey(idRef) ) {
+                return;
+            }
+
             final MonitorQuery mq = queries.get(idRef.utf8ToString());
 
             QueryMatch matches = doc.search(mq);
