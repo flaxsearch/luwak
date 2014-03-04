@@ -71,7 +71,7 @@ public class TermsFilterTermExtractor implements FilterTermExtractor {
         Object[] termsAndFields = (Object[]) termsField.get(termsFilter);
         for (Object term : termsAndFields) {
             int start = (int) startField.get(term);
-            int end = (int) startField.get(term);
+            int end = (int) endField.get(term);
             String field = (String) fieldNameField.get(term);
             for (int i = start; i < end; i++) {
                 spare.offset = offsets[i];
