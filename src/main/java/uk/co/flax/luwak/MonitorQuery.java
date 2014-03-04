@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import java.util.Date;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -30,11 +31,13 @@ public class MonitorQuery {
     protected final String id;
     protected final Query query;
     protected final Query highlightQuery;
+    protected final long createTimestamp;
 
     public MonitorQuery(String id, Query query, Query highlightQuery) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
+        createTimestamp = System.currentTimeMillis();
     }
 
     public MonitorQuery(String id, Query query) {
@@ -72,4 +75,7 @@ public class MonitorQuery {
         return highlightQuery;
     }
 
+    public long getCreateTimestamp() {
+        return createTimestamp;
+    }
 }

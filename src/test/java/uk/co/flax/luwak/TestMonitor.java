@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
@@ -39,7 +40,7 @@ public class TestMonitor {
 
     static final String textfield = "textfield";
 
-    private final Monitor monitor = new Monitor(new MatchAllPresearcher());
+    private Monitor monitor = new Monitor(new MatchAllPresearcher());
 
     @Before
     public void setUp() {
@@ -166,4 +167,116 @@ public class TestMonitor {
 
     }
 
+    @Test
+    public void testHandleUncommitedAddQueries() {
+        String document = "This is a test document";
+
+        Query query = new TermQuery(new Term(textfield, "test"));
+        MonitorQuery mq = new MonitorQuery("query1", query);
+        monitor = new Monitor(new MatchAllPresearcher(), 10);
+        monitor.update(mq);
+
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+        Assertions.assertThat(monitor.getUncommitedQueryCount()).isEqualTo(1);
+        Assertions.assertThat(monitor.getQuery("query1"))
+                .isNotNull();
+
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField(textfield, document, WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc))
+                .matches("doc1")
+                .hasMatchCount(1)
+                .matchesQuery("query1")
+                    .withHitCount(1)
+                    .inField(textfield)
+                        .withHit(new QueryMatch.Hit(3, 10, 3, 14));
+    }
+
+    @Test
+    public void testFlushUncommitedAddQueries() {
+        String document = "This is a test document";
+
+        MonitorQuery mq1 = new MonitorQuery("query1", new TermQuery(new Term(textfield, "test")));
+        MonitorQuery mq2 = new MonitorQuery("query2", new TermQuery(new Term(textfield, "This")));
+        MonitorQuery mq3 = new MonitorQuery("query3", new TermQuery(new Term(textfield, "is")));
+        monitor = new Monitor(new MatchAllPresearcher(), 1);
+        monitor.update(mq1);
+        monitor.update(mq2);
+        monitor.update(mq3);
+
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
+        Assertions.assertThat(monitor.getUncommitedQueryCount()).isEqualTo(1);
+        Assertions.assertThat(monitor.getQuery("query1"))
+                .isNotNull();
+
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField(textfield, document, WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(3)
+                .matches("doc1")
+                .hasMatchCount(3)
+                .matchesQuery("query1")
+                .withHitCount(1)
+                .inField(textfield)
+                .withHit(new QueryMatch.Hit(3, 10, 3, 14));
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(3)
+                .matches("doc1")
+                .hasMatchCount(3)
+                .matchesQuery("query2")
+                .withHitCount(1)
+                .inField(textfield)
+                .withHit(new QueryMatch.Hit(0, 0, 0, 4));
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(3)
+                .matches("doc1")
+                .hasMatchCount(3)
+                .matchesQuery("query3")
+                .withHitCount(1)
+                .inField(textfield)
+                .withHit(new QueryMatch.Hit(1, 5, 1, 7));
+    }
+
+    @Test
+    public void testHandleUncommitedDeleteQueries() {
+        String document = "This is a test document";
+
+        MonitorQuery mq1 = new MonitorQuery("query1", new TermQuery(new Term(textfield, "test")));
+        MonitorQuery mq2 = new MonitorQuery("query2", new TermQuery(new Term(textfield, "This")));
+        MonitorQuery mq3 = new MonitorQuery("query3", new TermQuery(new Term(textfield, "is")));
+        monitor = new Monitor(new MatchAllPresearcher(), 1);
+        monitor.update(mq1);
+        monitor.update(mq2);
+        monitor.update(mq3);
+        List<MonitorQuery> listToDelete = new ArrayList<>();
+        listToDelete.add(new MonitorQuery("query3", null));
+        monitor.update(new ArrayList<MonitorQuery>(), listToDelete);
+
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
+        Assertions.assertThat(monitor.getUncommitedQueryCount()).isEqualTo(1);
+
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField(textfield, document, WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(2)
+                .matches("doc1")
+                .hasMatchCount(2);
+
+        listToDelete = new ArrayList<>();
+        listToDelete.add(new MonitorQuery("query2", null));
+        monitor.update(new ArrayList<MonitorQuery>(), listToDelete);
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(1)
+                .matches("doc1")
+                .hasMatchCount(1);
+    }
 }
