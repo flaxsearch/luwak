@@ -1,6 +1,5 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.lucene.search.Filter;
@@ -11,19 +10,23 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     /**
      * The default list of Extractors to use
      */
-    public static final List<FilterTermExtractor> filterTermExtractors = new LinkedList<FilterTermExtractor>(
-        Arrays.asList(
-            new TermsFilterTermExtractor()
-        )
-    );
+    public static final List<FilterTermExtractor> DEFAULT_FILTER_EXTRACTORS;
+
+    static {
+        DEFAULT_FILTER_EXTRACTORS = new LinkedList<>();
+        DEFAULT_FILTER_EXTRACTORS.add(new TermsFilterTermExtractor());
+    }
+
+    protected List<FilterTermExtractor> filterTermExtractors = new LinkedList<>();
 
     public FilteredQueryExtractor() {
         super(FilteredQuery.class);
+        this.filterTermExtractors.addAll(DEFAULT_FILTER_EXTRACTORS);
     }
 
     public FilteredQueryExtractor(List<? extends FilterTermExtractor> filterTermExtractors) {
-        super(FilteredQuery.class);
-        FilteredQueryExtractor.filterTermExtractors.addAll(filterTermExtractors);
+        this();
+        this.filterTermExtractors.addAll(filterTermExtractors);
     }
 
     @Override
