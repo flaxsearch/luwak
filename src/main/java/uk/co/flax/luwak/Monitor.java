@@ -351,7 +351,7 @@ public class Monitor {
             idField.get(docnum, idRef);
 
             if ((deleteQueries != null && deleteQueries.containsKey(idRef))
-                    || (addQueries != null && addQueries.containsKey(idRef) ) {
+                    || (addQueries != null && addQueries.containsKey(idRef))) {
                 return;
             }
 
