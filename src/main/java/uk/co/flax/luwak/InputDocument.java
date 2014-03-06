@@ -34,6 +34,8 @@ import java.io.IOException;
  */
 public class InputDocument {
 
+    private ExceptionHandler exceptionHandler;
+
     /**
      * Create a new fluent {@link uk.co.flax.luwak.InputDocument.Builder} object.
      * @param id the id
@@ -96,8 +98,13 @@ public class InputDocument {
             return mc.getMatches();
         }
         catch (Exception e) {
-            throw new RuntimeException("Error running " + type + "query " + id + " against document " + this.id, e);
+            if (exceptionHandler == null) {
+                throw new RuntimeException("Error running " + type + "query " + id + " against document " + this.id, e);
+            } else {
+                exceptionHandler.exception(e);
+            }
         }
+        return null;
     }
 
     /**
@@ -143,6 +150,11 @@ public class InputDocument {
          */
         public Builder addField(String field, TokenStream tokenStream) {
             doc.index.addField(field, tokenStream);
+            return this;
+        }
+
+        public Builder setExceptionHandler(ExceptionHandler handler) {
+            doc.exceptionHandler = handler;
             return this;
         }
 
