@@ -3,6 +3,7 @@ package uk.co.flax.luwak.termextractor;
 import org.apache.lucene.search.Query;
 
 import java.util.List;
+import uk.co.flax.luwak.ExceptionHandler;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -30,9 +31,15 @@ import java.util.List;
 public abstract class Extractor<T extends Query> {
 
     public final Class<T> cls;
+    protected ExceptionHandler handler;
 
     protected Extractor(Class<T> cls) {
         this.cls = cls;
+    }
+
+    protected Extractor(Class<T> cls, ExceptionHandler handler) {
+        this(cls);
+        this.handler = handler;
     }
 
     /**

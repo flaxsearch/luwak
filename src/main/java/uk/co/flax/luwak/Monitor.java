@@ -54,6 +54,8 @@ public class Monitor {
     private IndexSearcher searcher = null;
     private SetMultimap<String, String> terms = null;
 
+    private ExceptionHandler exceptionHandler = null;
+
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_50, null);
@@ -75,6 +77,16 @@ public class Monitor {
         directory = new RAMDirectory();
         this.presearcher = presearcher;
         presearcher.setMonitor(this);
+    }
+
+    /**
+     * Create a new Monitor
+     *
+     * @param presearcher the Presearcher to use to store queries
+     */
+    public Monitor(Presearcher presearcher, ExceptionHandler handler) {
+        this(presearcher);
+        exceptionHandler = handler;
     }
 
     private void openSearcher() throws IOException {
@@ -164,8 +176,13 @@ public class Monitor {
         try {
             lock.readLock().lock();
 
-            if (searcher == null)
-                throw new IllegalStateException("Monitor has no registered queries!");
+            if (searcher == null) {
+                if (exceptionHandler == null) {
+                    throw new IllegalStateException("Monitor has no registered queries!");
+                } else {
+                    exceptionHandler.exception(new IllegalStateException("Monitor has no registered queries!"));
+                }
+            }
 
             long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
 
