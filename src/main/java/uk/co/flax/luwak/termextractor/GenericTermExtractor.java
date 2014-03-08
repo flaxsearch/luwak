@@ -42,7 +42,11 @@ public class GenericTermExtractor extends Extractor<Query> {
             }
         }
         catch (UnsupportedOperationException e) {
-            throw new RuntimeException("Cannot extract terms from query of type " + query.getClass());
+            if (handler == null) {
+                throw new RuntimeException(new RuntimeException("Cannot extract terms from query of type " + query.getClass()));
+            } else {
+                handler.exception(e);
+            }
         }
     }
 }
