@@ -34,6 +34,7 @@ import uk.co.flax.luwak.util.TermsEnumTokenStream;
 import uk.co.flax.luwak.util.TokenStreamBooleanQuery;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -75,9 +76,13 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     @Override
-    public final Document indexQuery(Query query) {
+    public final Document indexQuery(Query query, Set<QueryTerm> terms) {
         Document doc = new Document();
-        for (QueryTerm queryTerm : extractor.extract(query)) {
+        Set<QueryTerm> extractedQueryTerms = extractor.extract(query);
+        if (terms != null) {
+            terms.addAll(extractedQueryTerms);
+        }
+        for (QueryTerm queryTerm : extractedQueryTerms) {
             if (queryTerm.type == QueryTerm.Type.ANY)
                 doc.add(new StringField(queryTerm.field, extractor.getAnyToken(), Field.Store.NO));
             else

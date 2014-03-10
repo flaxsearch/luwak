@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -52,7 +53,7 @@ public class Monitor {
     private Directory directory;
     private DirectoryReader reader = null;
     private IndexSearcher searcher = null;
-    private SetMultimap<String, String> terms = null;
+    private SetMultimap<String, String> terms = HashMultimap.create();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -82,7 +83,6 @@ public class Monitor {
             reader.close();
         reader = DirectoryReader.open(directory);
         searcher = new IndexSearcher(reader);
-        buildTokenSet();
     }
 
     /**
@@ -131,7 +131,12 @@ public class Monitor {
             IndexWriter writer = new IndexWriter(directory, iwc);
             for (MonitorQuery mq : queriesToAdd) {
                 try {
-                    writer.updateDocument(new Term(FIELDS.del_id, mq.getId()), mq.asIndexableDocument(presearcher));
+                    Set<QueryTerm> currentTerms = new HashSet<>();
+                    writer.updateDocument(
+                            new Term(FIELDS.del_id, mq.getId()), mq.asIndexableDocument(presearcher, currentTerms));
+                    for (QueryTerm term : currentTerms) {
+                        this.terms.put(term.field, term.term);
+                    }
                 }
                 catch (Exception e) {
                     throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
@@ -219,20 +224,6 @@ public class Monitor {
      */
     public TokenStream filterTokenStream(String field, TokenStream ts) {
         return new WhitelistTokenFilter(ts, terms.get(field));
-    }
-
-    private void buildTokenSet() throws IOException {
-        SetMultimap<String, String> terms = HashMultimap.create();
-        BytesRef termBytes;
-        for (AtomicReaderContext ctx : reader.leaves()) {
-            for (String field : ctx.reader().fields()) {
-                TermsEnum te = ctx.reader().terms(field).iterator(null);
-                while ((termBytes = te.next()) != null) {
-                    terms.put(field, termBytes.utf8ToString());
-                }
-            }
-        }
-        this.terms = terms;
     }
 
     // A specialized Collector run against the Monitor's internal index, that for

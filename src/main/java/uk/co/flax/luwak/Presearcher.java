@@ -1,7 +1,9 @@
 package uk.co.flax.luwak;
 
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -41,10 +43,9 @@ public abstract class Presearcher {
 
     public abstract Query buildQuery(InputDocument inputDocument);
 
-    public abstract Document indexQuery(Query query);
+    public abstract Document indexQuery(Query query, Set<QueryTerm> terms);
 
     public Monitor getMonitor() {
         return monitor;
     }
-
 }
