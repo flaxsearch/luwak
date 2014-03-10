@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -8,6 +9,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -45,8 +47,8 @@ public class MonitorQuery {
         return id;
     }
 
-    public final Document asIndexableDocument(Presearcher presearcher) {
-        Document doc = presearcher.indexQuery(query);
+    public final Document asIndexableDocument(Presearcher presearcher, Set<QueryTerm> terms) {
+        Document doc = presearcher.indexQuery(query, terms);
         validateDocument(doc);
         doc.add(new StringField(Monitor.FIELDS.del_id, id, Field.Store.NO));
         doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(id.getBytes())));

@@ -16,11 +16,14 @@ package uk.co.flax.luwak.impl;
  * limitations under the License.
  */
 
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * A simple Presearcher implementation that runs all queries in a Monitor against
@@ -38,7 +41,7 @@ public class MatchAllPresearcher extends Presearcher {
     }
 
     @Override
-    public Document indexQuery(Query query) {
+    public Document indexQuery(Query query, Set<QueryTerm> terms) {
         return new Document();
     }
 }
