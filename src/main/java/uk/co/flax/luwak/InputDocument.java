@@ -125,6 +125,10 @@ public class InputDocument {
             this.doc = new InputDocument(id, factory);
         }
 
+        /**
+         * Create a new Builder for an InputDocument with the given id and a default CollectorFactory
+         * @param id the id of the InputDocument
+         */
         public Builder(String id) {
             this(id, new CollectorFactory());
         }
@@ -163,6 +167,9 @@ public class InputDocument {
 
     }
 
+    /**
+     * Base class used to collect matches from an individual query.
+     */
     public abstract static class QueryMatchCollector extends Collector {
 
         public final String queryId;
@@ -192,8 +199,16 @@ public class InputDocument {
         }
     }
 
+    /**
+     * The default QueryMatchCollector just indicates whether or not a given query has
+     * produced a match.
+     */
     static class DefaultMatchCollector extends QueryMatchCollector {
 
+        /**
+         * Creates a new DefaultMatchCollector for this query
+         * @param queryId the query id
+         */
         public DefaultMatchCollector(String queryId) {
             super(queryId);
         }
@@ -205,6 +220,10 @@ public class InputDocument {
 
     }
 
+    /**
+     * Factory class used to create QueryMatchCollectors during a search.  Pass subclasses
+     * of CollectorFactory to specialise match reporting.
+     */
     public static class CollectorFactory {
 
         public QueryMatchCollector createCollector(String queryId) {
