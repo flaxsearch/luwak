@@ -3,10 +3,7 @@ package uk.co.flax.luwak.intervals;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 import org.apache.lucene.util.Version;
 import org.junit.Before;
 import org.junit.Test;
@@ -115,6 +112,22 @@ public class TestIntervalsMatches {
         assertThat(monitor.match(docWithNoHighlighterMatch))
                 .matchesQuery("1").inField(textfield)
                 .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+
+    }
+
+    @Test
+    public void testQueryErrors() {
+
+        InputDocument doc = buildDoc("1", "this is a test document");
+        monitor.update(new MonitorQuery("1", new TermQuery(new Term(textfield, "test"))),
+                       new MonitorQuery("2", new MatchAllDocsQuery()),
+                       new MonitorQuery("3", new TermQuery(new Term(textfield, "document"))),
+                       new MonitorQuery("4", new TermQuery(new Term(textfield, "foo"))));
+
+        assertThat(monitor.match(doc))
+                .hasQueriesRunCount(4)
+                .hasMatchCount(2)
+                .hasErrorCount(1);
 
     }
 }

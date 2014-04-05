@@ -52,6 +52,11 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
         return this;
     }
 
+    public IntervalMatchesAssert hasErrorCount(int count) {
+        Assertions.assertThat(actual.errors()).hasSize(count);
+        return this;
+    }
+
     public IntervalMatchesAssert hasQueriesRunCount(int count) {
         Assertions.assertThat(actual.getMatchStats().querycount)
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
