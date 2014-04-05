@@ -153,14 +153,16 @@ public class InputDocument {
         }
     }
 
-    // a specialized Collector that uses an {@link IntervalIterator} to collect
-    // match positions from a Scorer.
-    static class QueryMatchCollector extends Collector implements IntervalCollector {
+
+    /**
+     * Base class used to collect matches from an individual query.
+     */
+    public static class QueryMatchCollector extends Collector implements IntervalCollector {
 
         protected Scorer scorer;
         private IntervalIterator positions;
 
-        private QueryMatch matches = null;
+        protected QueryMatch matches = null;
         private final String queryId;
 
         public QueryMatchCollector(String queryId) {
@@ -195,20 +197,19 @@ public class InputDocument {
         }
 
         @Override
-        public Weight.PostingFeatures postingFeatures() {
-            return Weight.PostingFeatures.OFFSETS;
-        }
-
-        @Override
         public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
             matches.addInterval(interval);
         }
 
         @Override
-        public void collectComposite(Scorer scorer, Interval interval,
-                                     int docID) {
-            //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+        public void collectComposite(Scorer scorer, Interval interval, int docID) {
+
         }
 
+        @Override
+        public Weight.PostingFeatures postingFeatures() {
+            return Weight.PostingFeatures.OFFSETS;
+        }
     }
+
 }
