@@ -1,12 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.util.BytesRef;
+
+import java.lang.reflect.Field;
+import java.util.LinkedList;
+import java.util.List;
 
 public class TermsFilterTermExtractor implements FilterTermExtractor {
 
@@ -42,6 +43,7 @@ public class TermsFilterTermExtractor implements FilterTermExtractor {
                     fieldNameField = innerClass.getDeclaredField("field");
                     fieldNameField.setAccessible(true);
                 } catch (NoSuchFieldException | SecurityException ex) {
+                    throw new RuntimeException("Couldn't initialize TermsFilterTermExtractor", ex);
                 }
             }
         }
@@ -55,13 +57,13 @@ public class TermsFilterTermExtractor implements FilterTermExtractor {
                 for (Term term : filterTerms) {
                     terms.add(new QueryTerm(term.field(), term.text(), QueryTerm.Type.EXACT));
                 }
-            } catch (IllegalArgumentException | IllegalAccessException ex) {
+            } catch (IllegalAccessException ex) {
+                throw new RuntimeException("Couldn't extract terms from filter", ex);
             }
         }
     }
 
-    private List<Term> getTermsFromTermsFilter(TermsFilter termsFilter)
-            throws IllegalArgumentException, IllegalAccessException {
+    private List<Term> getTermsFromTermsFilter(TermsFilter termsFilter) throws IllegalAccessException {
         List<Term> result = new LinkedList<>();
         termsField.get(termsFilter);
         byte[] termsBytes = (byte[]) termsBytesField.get(termsFilter);
