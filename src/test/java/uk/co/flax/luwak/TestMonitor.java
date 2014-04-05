@@ -3,6 +3,7 @@ package uk.co.flax.luwak;
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -12,9 +13,13 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.MatchAllPresearcher;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.fest.assertions.api.Assertions.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
@@ -105,6 +110,28 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQuery("1"))
                 .isNotNull()
                 .isInstanceOf(TestQuery.class);
+
+    }
+
+    @Test
+    public void errorsAreHandled() throws Exception {
+
+        Query badquery = mock(Query.class);
+        when(badquery.rewrite(any(IndexReader.class))).thenThrow(new IOException("Error rewriting!"));
+
+        monitor.update(new MonitorQuery("badquery", badquery));
+        monitor.update(new MonitorQuery("goodquery", new TermQuery(new Term(textfield, "goodquery"))));
+
+        InputDocument doc = InputDocument.builder("doc1").addField(textfield, "goodquery", WHITESPACE).build();
+        DocumentMatches matches = monitor.match(doc);
+
+        Assertions.assertThat(matches.matches()).hasSize(1);
+        Assertions.assertThat(matches.errors()).hasSize(1);
+        Assertions.assertThat(matches.errors().get(0).error)
+                .hasMessage("Error rewriting!")
+                .isInstanceOf(IOException.class);
+
+        Assertions.assertThat((long)matches.getMatchStats().querycount).isEqualTo(monitor.getQueryCount());
 
     }
 
