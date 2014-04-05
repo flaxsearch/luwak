@@ -242,6 +242,7 @@ public class Monitor {
         private final InputDocument doc;
 
         private final List<QueryMatch> matches = new ArrayList<QueryMatch>();
+        private final List<MatchError> errors = new ArrayList<>();
 
         SortedDocValues idField;
         final BytesRef idRef = new BytesRef();
@@ -263,9 +264,14 @@ public class Monitor {
             idField.get(docnum, idRef);
             final MonitorQuery mq = queries.get(idRef.utf8ToString());
 
-            QueryMatch matches = doc.search(mq);
-            if (matches != null)
-                this.matches.add(matches);
+            try {
+                QueryMatch matches = doc.search(mq);
+                if (matches != null)
+                    this.matches.add(matches);
+            }
+            catch (Exception e) {
+                this.errors.add(new MatchError(mq.getId(), e));
+            }
 
             queryCount++;
 
@@ -281,8 +287,8 @@ public class Monitor {
             return true;
         }
 
-        public DocumentMatches getMatches(long preptime, long querytime) {
-            return new DocumentMatches(this.doc.getId(), this.matches, this.queryCount, preptime, querytime);
+        DocumentMatches getMatches(long preptime, long querytime) {
+            return new DocumentMatches(this.doc.getId(), this.matches, this.errors, this.queryCount, preptime, querytime);
         }
 
     }

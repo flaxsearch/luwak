@@ -73,13 +73,13 @@ public class InputDocument {
      * @param mq the MonitorQuery to run
      * @return a {@link QueryMatch} object, or null if no matches are found.
      */
-    public QueryMatch search(MonitorQuery mq) {
+    public QueryMatch search(MonitorQuery mq) throws IOException {
 
-        QueryMatch matches = search(mq.getId(), "", mq.getQuery());
+        QueryMatch matches = search(mq.getId(), mq.getQuery());
         if (matches == null)
             return null;
 
-        QueryMatch highlightMatches = search(mq.getId(), "highlight ", mq.getHighlightQuery());
+        QueryMatch highlightMatches = search(mq.getId(), mq.getHighlightQuery());
         if (highlightMatches == null)
             return matches;
 
@@ -87,17 +87,14 @@ public class InputDocument {
 
     }
 
-    private QueryMatch search(String id, String type, Query query) {
+    private QueryMatch search(String id, Query query) throws IOException {
         if (query == null)
             return null;
+
         QueryMatchCollector mc = new QueryMatchCollector(id);
-        try {
-            searcher.search(query, mc);
-            return mc.getMatches();
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Error running " + type + "query " + id + " against document " + this.id, e);
-        }
+        searcher.search(query, mc);
+        return mc.getMatches();
+
     }
 
     /**

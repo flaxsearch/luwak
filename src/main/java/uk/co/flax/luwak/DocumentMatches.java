@@ -26,11 +26,14 @@ public class DocumentMatches {
 
     private final String id;
     private final List<QueryMatch> matches;
+    private final List<MatchError> errors;
     private final MatchStats stats;
 
-    public DocumentMatches(String docId, List<QueryMatch> matches, int qcount, long preptime, long querytime) {
+    public DocumentMatches(String docId, List<QueryMatch> matches, List<MatchError> errors,
+                           int qcount, long preptime, long querytime) {
         this.id = docId;
         this.matches = matches;
+        this.errors = errors;
         this.stats = new MatchStats(qcount, preptime, querytime);
     }
 
@@ -46,6 +49,13 @@ public class DocumentMatches {
      */
     public List<QueryMatch> matches() {
         return matches;
+    }
+
+    /**
+     * @return a list of errors encountered when monitoring the document
+     */
+    public List<MatchError> errors() {
+        return errors;
     }
 
     /**
