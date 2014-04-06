@@ -78,8 +78,8 @@ public class TermsFilterTermExtractor implements FilterTermExtractor {
             for (int i = start; i < end; i++) {
                 spare.offset = offsets[i];
                 spare.length = offsets[i + 1] - offsets[i];
+                result.add(new Term(field, spare.clone()));
             }
-            result.add(new Term(field, spare));
         }
         return result;
     }
