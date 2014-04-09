@@ -1,7 +1,7 @@
 package uk.co.flax.luwak;
 
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,14 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
-/**
- * Summary of the matches for an individual Query run against an InputDocument
- */
-public class QueryMatch {
+public class MatchError {
 
-    private final String queryId;
+    public final String queryId;
 
-    /**
-     * Create a new QueryMatch object for a query
-     * @param queryId the ID of the query
-     */
-    public QueryMatch(String queryId) {
+    public final Exception error;
+
+    public MatchError(String queryId, Exception error) {
         this.queryId = queryId;
+        this.error = error;
     }
-
-    /**
-     * @return the id of the query for this object
-     */
-    public String getQueryId() {
-        return this.queryId;
-    }
-
 }

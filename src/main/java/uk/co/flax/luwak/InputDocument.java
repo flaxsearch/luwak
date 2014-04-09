@@ -5,10 +5,10 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.*;
-import org.apache.lucene.search.intervals.Interval;
-import org.apache.lucene.search.intervals.IntervalCollector;
-import org.apache.lucene.search.intervals.IntervalIterator;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
 
 import java.io.IOException;
 
@@ -43,14 +43,20 @@ public class InputDocument {
         return new Builder(id);
     }
 
+    public static Builder builder(String id, CollectorFactory factory) {
+        return new Builder(id, factory);
+    }
+
     private final String id;
+    private final CollectorFactory collectorFactory;
 
     private final MemoryIndex index = new MemoryIndex(true);
     private IndexSearcher searcher;
 
-    // private constructor - use a Builder to create objects
-    private InputDocument(String id) {
+    // protected constructor - use a Builder to create objects
+    protected InputDocument(String id, CollectorFactory collectorFactory) {
         this.id = id;
+        this.collectorFactory = collectorFactory;
     }
 
     private void finish() {
@@ -73,13 +79,13 @@ public class InputDocument {
      * @param mq the MonitorQuery to run
      * @return a {@link QueryMatch} object, or null if no matches are found.
      */
-    public QueryMatch search(MonitorQuery mq) {
+    public QueryMatch search(MonitorQuery mq) throws IOException {
 
-        QueryMatch matches = search(mq.getId(), "", mq.getQuery());
+        QueryMatch matches = search(mq.getId(), mq.getQuery());
         if (matches == null)
             return null;
 
-        QueryMatch highlightMatches = search(mq.getId(), "highlight ", mq.getHighlightQuery());
+        QueryMatch highlightMatches = search(mq.getId(), mq.getHighlightQuery());
         if (highlightMatches == null)
             return matches;
 
@@ -87,17 +93,12 @@ public class InputDocument {
 
     }
 
-    private QueryMatch search(String id, String type, Query query) {
+    private QueryMatch search(String id, Query query) throws IOException {
         if (query == null)
             return null;
-        QueryMatchCollector mc = new QueryMatchCollector(id);
-        try {
-            searcher.search(query, mc);
-            return mc.getMatches();
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Error running " + type + "query " + id + " against document " + this.id, e);
-        }
+        QueryMatchCollector mc = collectorFactory.createCollector(id);
+        searcher.search(query, mc);
+        return mc.getMatches();
     }
 
     /**
@@ -118,9 +119,18 @@ public class InputDocument {
         /**
          * Create a new Builder for an InputDocument with the given id
          * @param id the id of the InputDocument
+         * @param factory a CollectorFactory used to create new QueryMatchCollector instances
+         */
+        public Builder(String id, CollectorFactory factory) {
+            this.doc = new InputDocument(id, factory);
+        }
+
+        /**
+         * Create a new Builder for an InputDocument with the given id and a default CollectorFactory
+         * @param id the id of the InputDocument
          */
         public Builder(String id) {
-            this.doc = new InputDocument(id);
+            this(id, new CollectorFactory());
         }
 
         /**
@@ -154,17 +164,16 @@ public class InputDocument {
             doc.finish();
             return doc;
         }
+
     }
 
-    // a specialized Collector that uses an {@link IntervalIterator} to collect
-    // match positions from a Scorer.
-    static class QueryMatchCollector extends Collector implements IntervalCollector {
+    /**
+     * Base class used to collect matches from an individual query.
+     */
+    public abstract static class QueryMatchCollector extends Collector {
 
-        protected Scorer scorer;
-        private IntervalIterator positions;
-
-        private QueryMatch matches = null;
-        private final String queryId;
+        public final String queryId;
+        protected QueryMatch matches = null;
 
         public QueryMatchCollector(String queryId) {
             this.queryId = queryId;
@@ -175,43 +184,52 @@ public class InputDocument {
         }
 
         @Override
-        public void collect(int doc) throws IOException {
-            // consume any remaining positions the scorer didn't report
-            matches = new QueryMatch(this.queryId);
-            positions.scorerAdvanced(doc);
-            while(positions.next() != null) {
-                positions.collect(this);
-            }
+        public void setScorer(Scorer scorer) throws IOException {
+
         }
 
+        @Override
         public boolean acceptsDocsOutOfOrder() {
             return false;
         }
 
-        public void setScorer(Scorer scorer) throws IOException {
-            this.scorer = scorer;
-            positions = scorer.intervals(true);
-            // If we want to visit the other scorers, we can, here...
-        }
-
+        @Override
         public void setNextReader(AtomicReaderContext context) throws IOException {
+
+        }
+    }
+
+    /**
+     * The default QueryMatchCollector just indicates whether or not a given query has
+     * produced a match.
+     */
+    static class DefaultMatchCollector extends QueryMatchCollector {
+
+        /**
+         * Creates a new DefaultMatchCollector for this query
+         * @param queryId the query id
+         */
+        public DefaultMatchCollector(String queryId) {
+            super(queryId);
         }
 
         @Override
-        public Weight.PostingFeatures postingFeatures() {
-            return Weight.PostingFeatures.OFFSETS;
-        }
-
-        @Override
-        public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
-            matches.addInterval(interval);
-        }
-
-        @Override
-        public void collectComposite(Scorer scorer, Interval interval,
-                                     int docID) {
-            //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+        public void collect(int doc) throws IOException {
+            matches = new QueryMatch(queryId);
         }
 
     }
+
+    /**
+     * Factory class used to create QueryMatchCollectors during a search.  Pass subclasses
+     * of CollectorFactory to specialise match reporting.
+     */
+    public static class CollectorFactory {
+
+        public QueryMatchCollector createCollector(String queryId) {
+            return new DefaultMatchCollector(queryId);
+        }
+
+    }
+
 }

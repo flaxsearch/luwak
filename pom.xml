@@ -8,7 +8,7 @@
     <version>1.1-SNAPSHOT</version>
 
     <properties>
-        <lucene.version>5.0.0-intervals-1.2</lucene.version>
+        <lucene.version>r1581360-intervals-1.3-SNAPSHOT</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -41,6 +41,11 @@
             <artifactId>lucene-analyzers-common</artifactId>
             <version>${lucene.version}</version>
         </dependency>
+        <dependency>
+            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <artifactId>lucene-queries</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -54,6 +59,13 @@
             <version>2.0M10</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>

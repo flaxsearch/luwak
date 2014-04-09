@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.intervals;
 
 import org.fest.assertions.api.AbstractAssert;
 import org.fest.assertions.api.Assertions;
@@ -8,7 +8,7 @@ import uk.co.flax.luwak.QueryMatch;
 import static org.fest.assertions.api.Fail.fail;
 
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,36 +23,41 @@ import static org.fest.assertions.api.Fail.fail;
  * limitations under the License.
  */
 
-public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches> {
+public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, DocumentMatches> {
 
-    protected MatchesAssert(DocumentMatches actual) {
-        super(actual, MatchesAssert.class);
+    protected IntervalMatchesAssert(DocumentMatches actual) {
+        super(actual, IntervalMatchesAssert.class);
     }
 
-    public static MatchesAssert assertThat(DocumentMatches matches) {
-        return new MatchesAssert(matches);
-    }
-
-    public MatchesAssert matchesQuery(String queryId) {
+    public QueryMatchAssert matchesQuery(String queryId) {
         for (QueryMatch match : actual.matches()) {
             if (match.getQueryId().equals(queryId))
-                return this;
+                return new QueryMatchAssert((IntervalsQueryMatch) match);
         }
         fail("Document " + actual.docId() + " did not match query " + queryId);
         return null;
     }
 
-    public MatchesAssert matches(String docid) {
+    public static IntervalMatchesAssert assertThat(DocumentMatches actual) {
+        return new IntervalMatchesAssert(actual);
+    }
+
+    public IntervalMatchesAssert matches(String docid) {
         Assertions.assertThat(actual.docId()).isEqualTo(docid);
         return this;
     }
 
-    public MatchesAssert hasMatchCount(int count) {
+    public IntervalMatchesAssert hasMatchCount(int count) {
         Assertions.assertThat(actual.matches()).hasSize(count);
         return this;
     }
 
-    public MatchesAssert hasQueriesRunCount(int count) {
+    public IntervalMatchesAssert hasErrorCount(int count) {
+        Assertions.assertThat(actual.errors()).hasSize(count);
+        return this;
+    }
+
+    public IntervalMatchesAssert hasQueriesRunCount(int count) {
         Assertions.assertThat(actual.getMatchStats().querycount)
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
                         count, actual.getMatchStats().querycount)
@@ -60,7 +65,7 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches
         return this;
     }
 
-    public MatchesAssert doesNotMatchQuery(String queryId) {
+    public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
         for (QueryMatch match : actual.matches()) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
