@@ -4,10 +4,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -61,20 +58,110 @@ public class Monitor {
     private final Map<String, MonitorQuery> queries = new HashMap<>();
 
     private final Presearcher presearcher;
+    private final MonitorQueryParser parser;
 
     public static class FIELDS {
         public static final String id = "id";
         public static final String del_id = "del_id";
+        public static final String query = "_query";
+        public static final String highlight = "_hl";
+        public static final String hash = "_hash";
+    }
+
+    class MonitorContext {
+
+        final IndexReader reader;
+        final Map<String, MonitorQuery> queries = new HashMap<>();
+        final Map<String, MonitorQueryParserException> errors = new HashMap<>();
+
+        MonitorContext(IndexReader reader, final Map<String, MonitorQuery> previousQueries) throws IOException {
+            this.reader = reader;
+
+            for (AtomicReaderContext leaf : reader.leaves()) {
+                LeafQueryReader qr = new LeafQueryReader(leaf.reader());
+                for (int i = 0; i < leaf.reader().maxDoc(); i++) {
+                    QueryContext qc = qr.getQueryContext(i);
+                    if (previousQueries.containsKey(qc.id) && qc.matches(previousQueries.get(qc.id)))
+                        queries.put(qc.id, previousQueries.get(qc.id));
+                    else
+                        try {
+                            queries.put(qc.id, qc.toMonitorQuery(parser));
+                        } catch (MonitorQueryParserException e) {
+                            //noinspection ThrowableResultOfMethodCallIgnored
+                            errors.put(qc.id, e);
+                        }
+                }
+            }
+
+        }
+
+        public void close() throws IOException {
+            reader.close();
+        }
+    }
+
+    static class LeafQueryReader {
+
+        final SortedDocValues queryField;
+        final SortedDocValues highlightQueryField;
+        final SortedDocValues idField;
+        final SortedDocValues hashField;
+
+        final BytesRef queryRef = new BytesRef();
+        final BytesRef hlRef = new BytesRef();
+        final BytesRef idRef = new BytesRef();
+        final BytesRef hashRef = new BytesRef();
+
+        LeafQueryReader(AtomicReader reader) throws IOException {
+            queryField = reader.getSortedDocValues(FIELDS.query);
+            highlightQueryField = reader.getSortedDocValues(FIELDS.highlight);
+            hashField = reader.getSortedDocValues(FIELDS.hash);
+            idField = reader.getSortedDocValues(FIELDS.id);
+        }
+
+        QueryContext getQueryContext(int doc) {
+            queryField.get(doc, queryRef);
+            highlightQueryField.get(doc, hlRef);
+            idField.get(doc, idRef);
+            hashField.get(doc, hashRef);
+            return new QueryContext(idRef.utf8ToString(), queryRef.utf8ToString(),
+                    hlRef.utf8ToString(), hashRef.utf8ToString());
+        }
+
+    }
+
+    static class QueryContext {
+
+        final String id;
+        final String query;
+        final String hl;
+        final String hash;
+
+        QueryContext(String id, String query, String hl, String hash) {
+            this.id = id;
+            this.query = query;
+            this.hl = hl;
+            this.hash = hash;
+        }
+
+        boolean matches(MonitorQuery mq) {
+            return mq.hashEquals(hash);
+        }
+
+        MonitorQuery toMonitorQuery(MonitorQueryParser parser) throws MonitorQueryParserException {
+            return parser.createQuery(id, query, hl, hash);
+        }
     }
 
     /**
      * Create a new Monitor
      * @param presearcher the Presearcher to use to store queries
      */
-    public Monitor(Presearcher presearcher) {
+    public Monitor(Presearcher presearcher, MonitorQueryParser parser) {
         directory = new RAMDirectory();
         this.presearcher = presearcher;
         presearcher.setMonitor(this);
+        this.parser = parser;
     }
 
     private void openSearcher() throws IOException {

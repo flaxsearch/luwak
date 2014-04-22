@@ -76,7 +76,6 @@
             <groupId>uk.co.flax.lucene-solr-intervals</groupId>
             <artifactId>lucene-queryparser</artifactId>
             <version>${lucene.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

@@ -30,15 +30,17 @@ public class MonitorQuery {
     protected final String id;
     protected final Query query;
     protected final Query highlightQuery;
+    protected final String hash;
 
-    public MonitorQuery(String id, Query query, Query highlightQuery) {
+    public MonitorQuery(String id, Query query, Query highlightQuery, String hash) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
+        this.hash = hash;
     }
 
-    public MonitorQuery(String id, Query query) {
-        this(id, query, null);
+    public MonitorQuery(String id, Query query, String hash) {
+        this(id, query, null, hash);
     }
 
     public String getId() {
@@ -72,4 +74,7 @@ public class MonitorQuery {
         return highlightQuery;
     }
 
+    public boolean hashEquals(String hash) {
+        return this.hash.equals(hash);
+    }
 }
