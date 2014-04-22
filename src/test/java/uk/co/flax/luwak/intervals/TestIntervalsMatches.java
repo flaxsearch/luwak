@@ -1,5 +1,6 @@
 package uk.co.flax.luwak.intervals;
 
+import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.Term;
@@ -7,6 +8,11 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.util.Version;
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import uk.co.flax.luwak.DocumentMatches;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
@@ -115,19 +121,21 @@ public class TestIntervalsMatches {
 
     }
 
+
     @Test
     public void testQueryErrors() {
-
+        Query failingQuery = mock(Query.class);
+        doThrow(new RuntimeException("simple exception")).when(failingQuery).extractTerms(any(Set.class));
         InputDocument doc = buildDoc("1", "this is a test document");
         monitor.update(new MonitorQuery("1", new TermQuery(new Term(textfield, "test"))),
-                       new MonitorQuery("2", new MatchAllDocsQuery()),
+                       new MonitorQuery("2", failingQuery),
                        new MonitorQuery("3", new TermQuery(new Term(textfield, "document"))),
                        new MonitorQuery("4", new TermQuery(new Term(textfield, "foo"))));
-
+        DocumentMatches match = monitor.match(doc);
         assertThat(monitor.match(doc))
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);
-
     }
+
 }
