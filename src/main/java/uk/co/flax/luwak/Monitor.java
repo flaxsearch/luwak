@@ -235,17 +235,44 @@ public class Monitor {
         this.terms = terms;
     }
 
+    abstract class QueryCollector extends Collector {
+
+        SortedDocValues idField;
+        final BytesRef idRef = new BytesRef();
+
+        @Override
+        public void setScorer(Scorer scorer) throws IOException {
+            // no impl
+        }
+
+        @Override
+        public void collect(int doc) throws IOException {
+            idField.get(doc, idRef);
+            final MonitorQuery mq = queries.get(idRef.utf8ToString());
+            doQuery(mq);
+        }
+
+        @Override
+        public void setNextReader(AtomicReaderContext context) throws IOException {
+            idField = context.reader().getSortedDocValues(FIELDS.id);
+        }
+
+        @Override
+        public boolean acceptsDocsOutOfOrder() {
+            return true;
+        }
+
+        protected abstract void doQuery(MonitorQuery mq) throws IOException;
+    }
+
     // A specialized Collector run against the Monitor's internal index, that for
     // each hit extracts the related query and runs it against the InputDocument
-    class MonitorQueryCollector extends Collector {
+    class MonitorQueryCollector extends QueryCollector {
 
         private final InputDocument doc;
 
         private final List<QueryMatch> matches = new ArrayList<QueryMatch>();
         private final List<MatchError> errors = new ArrayList<>();
-
-        SortedDocValues idField;
-        final BytesRef idRef = new BytesRef();
 
         private int queryCount;
 
@@ -254,15 +281,7 @@ public class Monitor {
         }
 
         @Override
-        public void setScorer(Scorer scorer) throws IOException {
-            // no impl
-        }
-
-        @Override
-        public void collect(final int docnum) throws IOException {
-
-            idField.get(docnum, idRef);
-            final MonitorQuery mq = queries.get(idRef.utf8ToString());
+        public void doQuery(MonitorQuery mq) throws IOException {
 
             try {
                 QueryMatch matches = doc.search(mq);
@@ -277,19 +296,43 @@ public class Monitor {
 
         }
 
-        @Override
-        public void setNextReader(AtomicReaderContext context) throws IOException {
-            idField = context.reader().getSortedDocValues(FIELDS.id);
-        }
-
-        @Override
-        public boolean acceptsDocsOutOfOrder() {
-            return true;
-        }
-
         DocumentMatches getMatches(long preptime, long querytime) {
             return new DocumentMatches(this.doc.getId(), this.matches, this.errors, this.queryCount, preptime, querytime);
         }
 
+    }
+
+    /**
+     * Return a list of queries that the presearcher selects for the given document
+     * @param document the document
+     * @return a list of the queries that would be run against this doc in #match()
+     */
+    public List<MonitorQuery> getMatchingQueries(InputDocument document) {
+        lock.readLock().lock();
+        try {
+            Query presearcherQuery = presearcher.buildQuery(document);
+            MatchingQueryCollector collector = new MatchingQueryCollector();
+            searcher.search(presearcherQuery, collector);
+            return collector.getMatchingQueries();
+        } catch (IOException e) {
+            // shouldn't happen with a RAMDirectory...
+            throw new RuntimeException(e);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    private class MatchingQueryCollector extends QueryCollector {
+
+        private final List<MonitorQuery> matchingQueries = new ArrayList<>();
+
+        @Override
+        protected void doQuery(MonitorQuery mq) throws IOException {
+            matchingQueries.add(mq);
+        }
+
+        public List<MonitorQuery> getMatchingQueries() {
+            return matchingQueries;
+        }
     }
 }
