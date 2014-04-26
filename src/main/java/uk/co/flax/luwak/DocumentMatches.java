@@ -85,5 +85,10 @@ public class DocumentMatches {
             this.preptime = preptime;
             this.querytime = querytime;
         }
+
+        @Override
+        public String toString() {
+            return "[ preptime=" + preptime + " querytime=" + querytime + " querycount=" + querycount + " ]";
+        }
     }
 }
