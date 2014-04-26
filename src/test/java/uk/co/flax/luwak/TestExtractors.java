@@ -88,7 +88,7 @@ public class TestExtractors {
         NumericRangeQuery<Long> nrq = NumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
         Set<QueryTerm> terms = qte.extract(nrq);
 
-        assertThat(terms).containsExactly(new QueryTerm("field", "", QueryTerm.Type.ANY));
+        assertThat(terms).containsExactly(new QueryTerm("field", "field:[0 TO 10]", QueryTerm.Type.ANY));
 
         BooleanQuery bq = new BooleanQuery();
         bq.add(nrq, BooleanClause.Occur.MUST);
