@@ -5,6 +5,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
+import org.fest.assertions.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.TermFilteredPresearcher;
 
@@ -44,6 +45,21 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);
 
+    }
+
+    @Test
+    public void reportsMatchingQueries() {
+
+        MonitorQuery q1 = new MonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "foo")));
+        MonitorQuery q2 = new MonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "bar")));
+        MonitorQuery q3 = new MonitorQuery("3", new TermQuery(new Term(TEXTFIELD, "fimble")));
+        monitor.update(q1, q2, q3);
+
+        InputDocument doc1 = InputDocument.builder("doc1").addField(TEXTFIELD, "foo bar fimble", WHITESPACE).build();
+        InputDocument doc2 = InputDocument.builder("doc1").addField(TEXTFIELD, "foo bar fumble", WHITESPACE).build();
+
+        Assertions.assertThat(monitor.getMatchingQueries(doc1)).hasSize(3);
+        Assertions.assertThat(monitor.getMatchingQueries(doc2)).hasSize(2);
     }
 
     @Test
