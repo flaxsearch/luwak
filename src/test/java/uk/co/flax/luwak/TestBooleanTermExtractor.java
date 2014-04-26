@@ -99,6 +99,18 @@ public class TestBooleanTermExtractor {
                 .hasSize(2);
     }
 
+    @Test
+    public void longerTermsPreferred() {
+        BooleanQuery bq = BQBuilder.newBQ()
+                .addMustClause(new TermQuery(new Term("field1", "a")))
+                .addMustClause(new TermQuery(new Term("field1", "supercalifragilisticexpialidocious")))
+                .addMustClause(new TermQuery(new Term("field1", "b")))
+                .build();
+
+        assertThat(extract(bq))
+                .containsExactly(new QueryTerm("field1", "supercalifragilisticexpialidocious", QueryTerm.Type.EXACT));
+    }
+
     public static Set<QueryTerm> extract(Query query) {
         return new QueryTermExtractor().extract(query);
     }
