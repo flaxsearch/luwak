@@ -66,6 +66,14 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
         return 0;
     }
 
+    private int longestTermLength(List<QueryTerm> terms) {
+        int l = 0;
+        for (QueryTerm term : terms) {
+            l = Math.max(l, term.term.length());
+        }
+        return l;
+    }
+
     protected List<QueryTerm> selectBestTerms(List<QueryTerm> first, List<QueryTerm> second) {
         if (first == null)
             return second;
@@ -84,7 +92,11 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
             case 1: return second;
         }
 
+        // If one termlist is shorter than another, return the shorter list
         if (second.size() < first.size())
+            return second;
+
+        if (longestTermLength(second) > longestTermLength(first))
             return second;
 
         return first;
