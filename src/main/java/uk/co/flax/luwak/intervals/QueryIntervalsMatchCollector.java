@@ -16,12 +16,13 @@ package uk.co.flax.luwak.intervals;
 * limitations under the License.
 */
 
+import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
-import uk.co.flax.luwak.InputDocument;
 
 import java.io.IOException;
 
@@ -29,21 +30,36 @@ import java.io.IOException;
  * a specialized Collector that uses an {@link IntervalIterator} to collect
  * match positions from a Scorer.
  */
-public class QueryIntervalsMatchCollector extends InputDocument.QueryMatchCollector implements IntervalCollector {
+public class QueryIntervalsMatchCollector extends Collector implements IntervalCollector {
 
     private IntervalIterator positions;
 
+    private final IntervalsQueryMatch matches;
+
     public QueryIntervalsMatchCollector(String queryId) {
-        super(queryId);
+        matches = new IntervalsQueryMatch(queryId);
+    }
+
+    public IntervalsQueryMatch getMatches() {
+        return matches;
     }
 
     @Override
     public void collect(int doc) throws IOException {
-        matches = new IntervalsQueryMatch(this.queryId);
         positions.scorerAdvanced(doc);
         while(positions.next() != null) {
             positions.collect(this);
         }
+    }
+
+    @Override
+    public void setNextReader(AtomicReaderContext context) throws IOException {
+
+    }
+
+    @Override
+    public boolean acceptsDocsOutOfOrder() {
+        return false;
     }
 
     @Override
@@ -58,22 +74,13 @@ public class QueryIntervalsMatchCollector extends InputDocument.QueryMatchCollec
 
     @Override
     public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
-        ((IntervalsQueryMatch)matches).addInterval(interval);
+        matches.addInterval(interval);
     }
 
     @Override
     public void collectComposite(Scorer scorer, Interval interval,
                                  int docID) {
         //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
-    }
-
-    public static InputDocument.CollectorFactory factory() {
-        return new InputDocument.CollectorFactory() {
-            @Override
-            public InputDocument.QueryMatchCollector createCollector(String queryId) {
-                return new QueryIntervalsMatchCollector(queryId);
-            }
-        };
     }
 
 }

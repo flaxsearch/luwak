@@ -27,31 +27,11 @@ public abstract class MonitorQueryParser {
 
     protected abstract Query parse(String queryString) throws MonitorQueryParserException;
 
-    protected abstract String hash(String query, String hl);
-
     public MonitorQuery createQuery(String id, String query, String hl, String hash) throws MonitorQueryParserException {
-        return new MonitorQuery(id, parse(query), parse(hl), hash(query, hl));
+        return new MonitorQuery(id, parse(query), parse(hl));
     }
 
-    public abstract static class SHAHashing extends MonitorQueryParser {
-
-        private static final MessageDigest digest;
-        static {
-            try {
-                digest = MessageDigest.getInstance("SHA-1");
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Can't initialise SHAHashing parser", e);
-            }
-        }
-
-        @Override
-        public String hash(String query, String hl) {
-            return new String(digest.digest((query + hl).getBytes()));
-        }
-
-    }
-
-    public static class LuceneMonitorQueryParser extends SHAHashing {
+    public static class LuceneMonitorQueryParser extends MonitorQueryParser {
 
         private final QueryParser parser;
 

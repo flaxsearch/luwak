@@ -23,14 +23,14 @@ import static org.fest.assertions.api.Fail.fail;
  * limitations under the License.
  */
 
-public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, DocumentMatches> {
+public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, IntervalsMatcher> {
 
-    protected IntervalMatchesAssert(DocumentMatches actual) {
+    protected IntervalMatchesAssert(IntervalsMatcher actual) {
         super(actual, IntervalMatchesAssert.class);
     }
 
     public QueryMatchAssert matchesQuery(String queryId) {
-        for (QueryMatch match : actual.matches()) {
+        for (IntervalsQueryMatch match : actual.getMatches()) {
             if (match.getQueryId().equals(queryId))
                 return new QueryMatchAssert((IntervalsQueryMatch) match);
         }

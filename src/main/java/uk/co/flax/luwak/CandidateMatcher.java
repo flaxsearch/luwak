@@ -1,7 +1,13 @@
 package uk.co.flax.luwak;
 
+import org.apache.lucene.search.Query;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +22,18 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
-public class MonitorQuery {
+public abstract class CandidateMatcher {
 
-    private final String id;
-    private final String query;
-    private final String highlightQuery;
+    private final List<MatchError> errors = new ArrayList<>();
 
-    public MonitorQuery(String id, String query, String highlightQuery) {
-        this.id = id;
-        this.query = query;
-        this.highlightQuery = highlightQuery;
+    public abstract void matchQuery(InputDocument document, String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+
+    public void reportError(MatchError e) {
+        this.errors.add(e);
     }
 
-    public MonitorQuery(String id, String query) {
-        this(id, query, null);
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public String getHighlightQuery() {
-        return highlightQuery;
+    public List<MatchError> getErrors() {
+        return errors;
     }
 
 }

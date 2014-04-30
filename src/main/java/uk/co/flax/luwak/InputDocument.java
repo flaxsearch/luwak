@@ -7,7 +7,6 @@ import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 
 import java.io.IOException;
@@ -43,20 +42,14 @@ public class InputDocument {
         return new Builder(id);
     }
 
-    public static Builder builder(String id, CollectorFactory factory) {
-        return new Builder(id, factory);
-    }
-
     private final String id;
-    private final CollectorFactory collectorFactory;
 
     private final MemoryIndex index = new MemoryIndex(true);
     private IndexSearcher searcher;
 
     // protected constructor - use a Builder to create objects
-    protected InputDocument(String id, CollectorFactory collectorFactory) {
+    protected InputDocument(String id) {
         this.id = id;
-        this.collectorFactory = collectorFactory;
     }
 
     private void finish() {
@@ -71,34 +64,8 @@ public class InputDocument {
         return id;
     }
 
-    /**
-     * Run a MonitorQuery against this document.  If there are matches, and the MonitorQuery
-     * has a non-null highlight query, the highlight query is then also run.  Matches are
-     * returned from the highlight query, or from the original query if there are no highlight
-     * matches.
-     * @param mq the MonitorQuery to run
-     * @return a {@link QueryMatch} object, or null if no matches are found.
-     */
-    public QueryMatch search(MonitorQuery mq) throws IOException {
-
-        QueryMatch matches = search(mq.getId(), mq.getQuery());
-        if (matches == null)
-            return null;
-
-        QueryMatch highlightMatches = search(mq.getId(), mq.getHighlightQuery());
-        if (highlightMatches == null)
-            return matches;
-
-        return highlightMatches;
-
-    }
-
-    private QueryMatch search(String id, Query query) throws IOException {
-        if (query == null)
-            return null;
-        QueryMatchCollector mc = collectorFactory.createCollector(id);
-        searcher.search(query, mc);
-        return mc.getMatches();
+    public IndexSearcher getSearcher() {
+        return searcher;
     }
 
     /**
@@ -106,7 +73,7 @@ public class InputDocument {
      * @return an {@link org.apache.lucene.index.AtomicReader} over the internal index
      */
     public AtomicReader asAtomicReader() {
-        return index.createSearcher().getIndexReader().leaves().get(0).reader();
+        return searcher.getIndexReader().leaves().get(0).reader();
     }
 
     /**
@@ -119,18 +86,9 @@ public class InputDocument {
         /**
          * Create a new Builder for an InputDocument with the given id
          * @param id the id of the InputDocument
-         * @param factory a CollectorFactory used to create new QueryMatchCollector instances
-         */
-        public Builder(String id, CollectorFactory factory) {
-            this.doc = new InputDocument(id, factory);
-        }
-
-        /**
-         * Create a new Builder for an InputDocument with the given id and a default CollectorFactory
-         * @param id the id of the InputDocument
          */
         public Builder(String id) {
-            this(id, new CollectorFactory());
+            this.doc = new InputDocument(id);
         }
 
         /**
