@@ -1,25 +1,16 @@
 package uk.co.flax.luwak;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
-import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;
-import java.util.List;
 
-import static org.fest.assertions.api.Assertions.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
@@ -40,28 +31,27 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 public class TestMonitor {
 
-    static final String textfield = "textfield";
+    static final String TEXTFIELD = "TEXTFIELD";
 
-    private final Monitor monitor = new Monitor(new MatchAllPresearcher());
+    static final Analyzer ANALYZER = new KeywordAnalyzer();
+
+    private Monitor monitor;
 
     @Before
-    public void setUp() {
-        monitor.reset();
+    public void setUp() throws IOException {
+        monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER),
+                new MatchAllPresearcher());
     }
 
     @Test
-    public void singleTermQueryMatchesSingleDocument() {
+    public void singleTermQueryMatchesSingleDocument() throws IOException {
 
         String document = "This is a test document";
-
-        Query query = new TermQuery(new Term(textfield, "test"));
-        MonitorQuery mq = new MonitorQuery("query1", query);
-
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(textfield, document, WHITESPACE)
+                .addField(TEXTFIELD, document, WHITESPACE)
                 .build();
 
-        monitor.update(mq);
+        monitor.update(new MonitorQuery("query1", "test"));
 
         assertThat(monitor.match(doc))
                 .matches("doc1")
@@ -70,69 +60,18 @@ public class TestMonitor {
 
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void monitorWithNoQueriesThrowsException() {
-        InputDocument doc = InputDocument.builder("doc1").build();
-        monitor.match(doc);
-        fail("Monitor with no queries should have thrown an IllegalStateException");
-    }
-
     @Test
-    public void updatesOverwriteOldQueries() {
-        MonitorQuery mq = new MonitorQuery("query1", new TermQuery(new Term(textfield, "this")));
-        monitor.update(mq);
+    public void updatesOverwriteOldQueries() throws IOException {
+        monitor.update(new MonitorQuery("query1", "this"));
 
-        MonitorQuery mq2 = new MonitorQuery("query1", new TermQuery(new Term(textfield, "that")));
-        monitor.update(mq2);
+        monitor.update(new MonitorQuery("query1", "that"));
 
-        InputDocument doc = InputDocument.builder("doc1").addField(textfield, "that", WHITESPACE).build();
+        InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "that", WHITESPACE).build();
         assertThat(monitor.match(doc))
                 .hasQueriesRunCount(1)
                 .matchesQuery("query1");
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
-
-    @Test
-    public void canAddMonitorQuerySubclasses() {
-
-        class TestQuery extends MonitorQuery {
-            public TestQuery(String id, String query) {
-                super(id, new TermQuery(new Term("field", query)));
-            }
-        };
-
-        List<TestQuery> queries = ImmutableList.of(new TestQuery("1", "foo"),
-                                                   new TestQuery("2", "bar"));
-
-        monitor.update(queries);
-
-        Assertions.assertThat(monitor.getQuery("1"))
-                .isNotNull()
-                .isInstanceOf(TestQuery.class);
-
-    }
-
-    @Test
-    public void errorsAreHandled() throws Exception {
-
-        Query badquery = mock(Query.class);
-        when(badquery.rewrite(any(IndexReader.class))).thenThrow(new IOException("Error rewriting!"));
-
-        monitor.update(new MonitorQuery("badquery", badquery));
-        monitor.update(new MonitorQuery("goodquery", new TermQuery(new Term(textfield, "goodquery"))));
-
-        InputDocument doc = InputDocument.builder("doc1").addField(textfield, "goodquery", WHITESPACE).build();
-        DocumentMatches matches = monitor.match(doc);
-
-        Assertions.assertThat(matches.matches()).hasSize(1);
-        Assertions.assertThat(matches.errors()).hasSize(1);
-        Assertions.assertThat(matches.errors().get(0).error)
-                .hasMessage("Error rewriting!")
-                .isInstanceOf(IOException.class);
-
-        Assertions.assertThat((long)matches.getMatchStats().querycount).isEqualTo(monitor.getQueryCount());
-
-    }
 
 }

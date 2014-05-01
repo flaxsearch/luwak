@@ -1,10 +1,9 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.MultiTermQuery;
-import org.apache.lucene.search.RegexpQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.WildcardNGramPresearcher;
+
+import java.io.IOException;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -27,18 +26,17 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Test
-    public void filtersWildcards() {
+    public void filtersWildcards() throws IOException {
 
-        RegexpQuery wq = new RegexpQuery(new Term(TEXTFIELD, "hell.*"));
-        wq.setRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
-        MonitorQuery query = new MonitorQuery("1", wq);
-        monitor.update(query);
+        monitor.update(new MonitorQuery("1", "/hell.*/"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "well hello there", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1))
+        SimpleMatcher matcher = new SimpleMatcher(doc1);
+        monitor.match(matcher);
+        assertThat(matcher)
                 .hasMatchCount(1);
 
     }

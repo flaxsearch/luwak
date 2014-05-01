@@ -71,7 +71,8 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        return monitor.filterTokenStream(field, ts);
+        //return monitor.filterTokenStream(field, ts);
+        return ts;
     }
 
     @Override

@@ -55,8 +55,6 @@ public class Monitor implements Closeable {
         }
     });
 
-    private static final IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_50, null);
-
     public static final class FIELDS {
         public static final String id = "_id";
         public static final String query = "_query";
@@ -84,7 +82,7 @@ public class Monitor implements Closeable {
         this.parser = parser;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, iwc);
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50, null));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
@@ -105,6 +103,8 @@ public class Monitor implements Closeable {
         for (MonitorQuery query : queries) {
             try {
                 Query matchQuery = this.queries.get(query.getQuery());
+                if (query.getHighlightQuery() != null)
+                    this.queries.get(query.getHighlightQuery()); // force HlQ to be parsed
                 writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
             }
             catch (ExecutionException e) {
@@ -139,12 +139,30 @@ public class Monitor implements Closeable {
 
     /**
      * Match an InputDocument against the queries in the monitor
-     * @param doc the document to match
      * @param matcher the CandidateMatcher class to use to report matches
      * @throws IOException
      */
-    public void match(InputDocument doc, CandidateMatcher matcher) throws IOException {
-        match(presearcher.buildQuery(doc), new SearchingCollector(doc, matcher));
+    public void match(CandidateMatcher matcher) throws IOException {
+
+        long start = System.nanoTime();
+        Query query = presearcher.buildQuery(matcher.getDocument());
+        matcher.setQueryBuildTime(System.nanoTime() - start);
+
+        SearchingCollector collector = new SearchingCollector(matcher);
+        match(query, collector);
+        matcher.setQueriesRun(collector.getQueryCount());
+    }
+
+    /**
+     * Match an input document using a {@link uk.co.flax.luwak.SimpleMatcher}
+     * @param doc the document to match
+     * @return a SimpleMatcher with the results from the document
+     * @throws IOException
+     */
+    public SimpleMatcher match(InputDocument doc) throws IOException {
+        SimpleMatcher matcher = new SimpleMatcher(doc);
+        match(matcher);
+        return matcher;
     }
 
     /**
@@ -165,12 +183,14 @@ public class Monitor implements Closeable {
 
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
+        long startTime = System.nanoTime();
         try {
             searcher = manager.acquire();
             searcher.search(query, collector);
         }
         finally {
             manager.release(searcher);
+            collector.setSearchTime(System.nanoTime() - startTime);
         }
     }
 
@@ -179,28 +199,34 @@ public class Monitor implements Closeable {
         doc.add(new StringField(Monitor.FIELDS.id, mq.getId(), Field.Store.NO));
         doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
         doc.add(new SortedDocValuesField(Monitor.FIELDS.query, new BytesRef(mq.getQuery())));
-        doc.add(new SortedDocValuesField(Monitor.FIELDS.highlight, new BytesRef(mq.getHighlightQuery())));
+        String hl = mq.getHighlightQuery();
+        if (hl == null)
+            hl = "";
+        doc.add(new SortedDocValuesField(Monitor.FIELDS.highlight, new BytesRef(hl)));
         return doc;
     }
 
     private class SearchingCollector extends MonitorQueryCollector {
 
-        final InputDocument document;
         final CandidateMatcher matcher;
 
-        private SearchingCollector(InputDocument document, CandidateMatcher matcher) {
-            this.document = document;
+        private SearchingCollector(CandidateMatcher matcher) {
             this.matcher = matcher;
         }
 
         @Override
         protected void doSearch(String queryId, Query matchQuery, Query highlight) {
             try {
-                matcher.matchQuery(document, queryId, matchQuery, highlight);
+                matcher.matchQuery(queryId, matchQuery, highlight);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
             }
+        }
+
+        @Override
+        void setSearchTime(long searchTime) {
+            matcher.setSearchTime(searchTime);
         }
     }
 
@@ -216,16 +242,20 @@ public class Monitor implements Closeable {
 
         protected abstract void doSearch(String id, Query matchQuery, Query highlight);
 
+        private int queryCount = 0;
+        private long searchTime = -1;
+
         @Override
         public void setScorer(Scorer scorer) throws IOException {
 
         }
 
         @Override
-        public void collect(int doc) throws IOException {
+        public final void collect(int doc) throws IOException {
             queryDV.get(doc, query);
             highlightDV.get(doc, highlight);
             idDV.get(doc, id);
+            queryCount++;
             doSearch(id.utf8ToString(), queries.getIfPresent(query.utf8ToString()), queries.getIfPresent(highlight.utf8ToString()));
         }
 
@@ -233,11 +263,24 @@ public class Monitor implements Closeable {
         public void setNextReader(AtomicReaderContext context) throws IOException {
             this.queryDV = context.reader().getSortedDocValues(Monitor.FIELDS.query);
             this.highlightDV = context.reader().getSortedDocValues(Monitor.FIELDS.highlight);
+            this.idDV = context.reader().getSortedDocValues(FIELDS.id);
         }
 
         @Override
         public boolean acceptsDocsOutOfOrder() {
             return true;
+        }
+
+        public int getQueryCount() {
+            return queryCount;
+        }
+
+        public long getSearchTime() {
+            return searchTime;
+        }
+
+        void setSearchTime(long searchTime) {
+            this.searchTime = searchTime;
         }
     }
 }

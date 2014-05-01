@@ -22,9 +22,9 @@ import java.util.Collection;
  */
 public class FieldMatchAssert extends AbstractAssert<FieldMatchAssert, Collection<IntervalsQueryMatch.Hit>> {
 
-    private final QueryMatchAssert parent;
+    private final IntervalsQueryMatchAssert parent;
 
-    public FieldMatchAssert(QueryMatchAssert parent, Collection<IntervalsQueryMatch.Hit> actualHits) {
+    public FieldMatchAssert(IntervalsQueryMatchAssert parent, Collection<IntervalsQueryMatch.Hit> actualHits) {
         super(actualHits, FieldMatchAssert.class);
         this.parent = parent;
     }

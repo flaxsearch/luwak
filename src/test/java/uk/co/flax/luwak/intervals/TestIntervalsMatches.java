@@ -2,11 +2,6 @@ package uk.co.flax.luwak.intervals;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,9 +12,8 @@ import uk.co.flax.luwak.impl.MatchAllPresearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;
-import java.util.List;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -61,15 +55,14 @@ public class TestIntervalsMatches {
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        InputDocument doc = buildDoc("doc1", "This is a test document");
-        IntervalsMatcher matcher = new IntervalsMatcher();
-        monitor.match(doc, matcher);
+        IntervalsMatcher matcher = new IntervalsMatcher(buildDoc("doc1", "This is a test document"));
+        monitor.match(matcher);
 
-        List<IntervalsQueryMatch> matches = matcher.getMatches();
-        assertThat(matches).hasSize(1);
-        assertThat(matches.get(0).getQueryId()).isEqualTo("query1");
-        assertThat(matches.get(0).getHitCount()).isEqualTo(1);
-        assertThat(matches.get(0).getHits(textfield)).containsExactly(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+        assertThat(matcher)
+                .hasMatchCount(1)
+                .matchesQuery("query1")
+                    .inField(textfield)
+                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
 
     }
 
@@ -83,15 +76,16 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("query1", "field1:test field2:test"));
 
-        IntervalsMatcher matcher = new IntervalsMatcher();
-        monitor.match(doc, matcher);
+        IntervalsMatcher matcher = new IntervalsMatcher(doc);
+        monitor.match(matcher);
 
-        List<IntervalsQueryMatch> matches = matcher.getMatches();
-        assertThat(matches).hasSize(1);
-        assertThat(matches.get(0).getQueryId()).isEqualTo("query1");
-        assertThat(matches.get(0).getHitCount()).isEqualTo(2);
-        assertThat(matches.get(0).getHits("field1")).containsExactly(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
-        assertThat(matches.get(0).getHits("field2")).containsExactly(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
+        assertThat(matcher)
+                .hasMatchCount(1)
+                .matchesQuery("query1")
+                    .inField("field1")
+                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14))
+                    .inField("field2")
+                        .withHit(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
 
     }
 
@@ -104,32 +98,37 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", "test", "document"));
 
-        IntervalsMatcher matcher1 = new IntervalsMatcher();
-        monitor.match(docWithMatch, matcher1);
-        assertThat(matcher1.getMatches().get(0).)
-
-        assertThat(monitor.match(docWithMatch))
+        IntervalsMatcher matcher1 = new IntervalsMatcher(docWithMatch);
+        monitor.match(matcher1);
+        assertThat(matcher1)
                 .matchesQuery("1")
                 .inField(textfield)
                 .withHit(new IntervalsQueryMatch.Hit(4, 15, 4, 23));
-        assertThat(monitor.match(docWithNoMatch))
+
+        IntervalsMatcher matcher2 = new IntervalsMatcher(docWithNoMatch);
+        monitor.match(matcher2);
+        assertThat(matcher2)
                 .doesNotMatchQuery("1");
-        assertThat(monitor.match(docWithNoHighlighterMatch))
+
+        IntervalsMatcher matcher3 = new IntervalsMatcher(docWithNoHighlighterMatch);
+        monitor.match(matcher3);
+        assertThat(matcher3)
                 .matchesQuery("1").inField(textfield)
                 .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
 
     }
 
     @Test
-    public void testQueryErrors() {
+    public void testQueryErrors() throws IOException {
 
-        InputDocument doc = buildDoc("1", "this is a test document");
-        monitor.update(new MonitorQuery("1", new TermQuery(new Term(textfield, "test"))),
-                       new MonitorQuery("2", new MatchAllDocsQuery()),
-                       new MonitorQuery("3", new TermQuery(new Term(textfield, "document"))),
-                       new MonitorQuery("4", new TermQuery(new Term(textfield, "foo"))));
+        monitor.update(new MonitorQuery("1", "test"),
+                       new MonitorQuery("2", "*:*"),
+                       new MonitorQuery("3", "document"),
+                       new MonitorQuery("4", "foo"));
 
-        assertThat(monitor.match(doc))
+        IntervalsMatcher matcher = new IntervalsMatcher(buildDoc("1", "this is a test document"));
+        monitor.match(matcher);
+        assertThat(matcher)
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);

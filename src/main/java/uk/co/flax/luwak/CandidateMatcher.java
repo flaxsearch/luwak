@@ -26,7 +26,21 @@ public abstract class CandidateMatcher {
 
     private final List<MatchError> errors = new ArrayList<>();
 
-    public abstract void matchQuery(InputDocument document, String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    protected final InputDocument doc;
+
+    private long queryBuildTime = -1;
+    private long searchTime = -1;
+    private int queriesRun = -1;
+
+    public CandidateMatcher(InputDocument doc) {
+        this.doc = doc;
+    }
+
+    public abstract void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+
+    public abstract boolean matches(String queryId);
+
+    public abstract int getMatchCount();
 
     public void reportError(MatchError e) {
         this.errors.add(e);
@@ -34,6 +48,38 @@ public abstract class CandidateMatcher {
 
     public List<MatchError> getErrors() {
         return errors;
+    }
+
+    public InputDocument getDocument() {
+        return doc;
+    }
+
+    public String docId() {
+        return doc.getId();
+    }
+
+    public long getQueryBuildTime() {
+        return queryBuildTime;
+    }
+
+    void setQueryBuildTime(long queryBuildTime) {
+        this.queryBuildTime = queryBuildTime;
+    }
+
+    public long getSearchTime() {
+        return searchTime;
+    }
+
+    void setSearchTime(long searchTime) {
+        this.searchTime = searchTime;
+    }
+
+    public int getQueriesRun() {
+        return queriesRun;
+    }
+
+    void setQueriesRun(int queriesRun) {
+        this.queriesRun = queriesRun;
     }
 
 }

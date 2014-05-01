@@ -32,7 +32,7 @@ import java.io.IOException;
 public class TokenStreamBooleanQuery {
 
     static {
-        BooleanQuery.setMaxClauseCount(10000);
+        BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
     }
 
     /**

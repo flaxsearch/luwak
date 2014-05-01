@@ -2,7 +2,6 @@ package uk.co.flax.luwak.intervals;
 
 import org.fest.assertions.api.AbstractAssert;
 import org.fest.assertions.api.Assertions;
-import uk.co.flax.luwak.DocumentMatches;
 import uk.co.flax.luwak.QueryMatch;
 
 import static org.fest.assertions.api.Fail.fail;
@@ -29,16 +28,16 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
         super(actual, IntervalMatchesAssert.class);
     }
 
-    public QueryMatchAssert matchesQuery(String queryId) {
+    public IntervalsQueryMatchAssert matchesQuery(String queryId) {
         for (IntervalsQueryMatch match : actual.getMatches()) {
             if (match.getQueryId().equals(queryId))
-                return new QueryMatchAssert((IntervalsQueryMatch) match);
+                return new IntervalsQueryMatchAssert((IntervalsQueryMatch) match);
         }
         fail("Document " + actual.docId() + " did not match query " + queryId);
         return null;
     }
 
-    public static IntervalMatchesAssert assertThat(DocumentMatches actual) {
+    public static IntervalMatchesAssert assertThat(IntervalsMatcher actual) {
         return new IntervalMatchesAssert(actual);
     }
 
@@ -48,25 +47,25 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalMatchesAssert hasMatchCount(int count) {
-        Assertions.assertThat(actual.matches()).hasSize(count);
+        Assertions.assertThat(actual.getMatches()).hasSize(count);
         return this;
     }
 
     public IntervalMatchesAssert hasErrorCount(int count) {
-        Assertions.assertThat(actual.errors()).hasSize(count);
+        Assertions.assertThat(actual.getErrors()).hasSize(count);
         return this;
     }
 
     public IntervalMatchesAssert hasQueriesRunCount(int count) {
-        Assertions.assertThat(actual.getMatchStats().querycount)
+        Assertions.assertThat(actual.getQueriesRun())
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
-                        count, actual.getMatchStats().querycount)
+                        count, actual.getQueriesRun())
                 .isEqualTo(count);
         return this;
     }
 
     public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
-        for (QueryMatch match : actual.matches()) {
+        for (QueryMatch match : actual.getMatches()) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
         return this;

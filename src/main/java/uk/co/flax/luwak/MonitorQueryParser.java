@@ -1,11 +1,6 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -27,25 +22,4 @@ public abstract class MonitorQueryParser {
 
     protected abstract Query parse(String queryString) throws MonitorQueryParserException;
 
-    public MonitorQuery createQuery(String id, String query, String hl, String hash) throws MonitorQueryParserException {
-        return new MonitorQuery(id, parse(query), parse(hl));
-    }
-
-    public static class LuceneMonitorQueryParser extends MonitorQueryParser {
-
-        private final QueryParser parser;
-
-        public LuceneMonitorQueryParser(QueryParser parser) {
-            this.parser = parser;
-        }
-
-        @Override
-        protected Query parse(String queryString) throws MonitorQueryParserException {
-            try {
-                return parser.parse(queryString);
-            } catch (ParseException e) {
-                throw new MonitorQueryParserException(e);
-            }
-        }
-    }
 }

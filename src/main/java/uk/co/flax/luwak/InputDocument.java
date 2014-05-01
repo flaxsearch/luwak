@@ -3,13 +3,8 @@ package uk.co.flax.luwak;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Scorer;
-
-import java.io.IOException;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -121,71 +116,6 @@ public class InputDocument {
         public InputDocument build() {
             doc.finish();
             return doc;
-        }
-
-    }
-
-    /**
-     * Base class used to collect matches from an individual query.
-     */
-    public abstract static class QueryMatchCollector extends Collector {
-
-        public final String queryId;
-        protected QueryMatch matches = null;
-
-        public QueryMatchCollector(String queryId) {
-            this.queryId = queryId;
-        }
-
-        public QueryMatch getMatches() {
-            return matches;
-        }
-
-        @Override
-        public void setScorer(Scorer scorer) throws IOException {
-
-        }
-
-        @Override
-        public boolean acceptsDocsOutOfOrder() {
-            return false;
-        }
-
-        @Override
-        public void setNextReader(AtomicReaderContext context) throws IOException {
-
-        }
-    }
-
-    /**
-     * The default QueryMatchCollector just indicates whether or not a given query has
-     * produced a match.
-     */
-    static class DefaultMatchCollector extends QueryMatchCollector {
-
-        /**
-         * Creates a new DefaultMatchCollector for this query
-         * @param queryId the query id
-         */
-        public DefaultMatchCollector(String queryId) {
-            super(queryId);
-        }
-
-        @Override
-        public void collect(int doc) throws IOException {
-            matches = new QueryMatch(queryId);
-        }
-
-    }
-
-    /**
-     * Factory class used to create QueryMatchCollectors during a search.  Pass subclasses
-     * of CollectorFactory to specialise match reporting.
-     */
-    public static class CollectorFactory {
-
-        public QueryMatchCollector createCollector(String queryId) {
-            return new DefaultMatchCollector(queryId);
         }
 
     }

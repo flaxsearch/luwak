@@ -5,8 +5,9 @@ import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -25,30 +26,44 @@ import java.util.List;
  */
 public class IntervalsMatcher extends CandidateMatcher {
 
-    private final List<IntervalsQueryMatch> matches = new ArrayList<>();
+    private final Map<String, IntervalsQueryMatch> matches = new HashMap<>();
+
+    public IntervalsMatcher(InputDocument doc) {
+        super(doc);
+    }
 
     @Override
-    public void matchQuery(InputDocument document, String id, Query matchQuery, Query highlightQuery) throws IOException {
+    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
 
-        QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(id);
-        document.getSearcher().search(matchQuery, collector);
+        QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(queryId);
+        doc.getSearcher().search(matchQuery, collector);
         IntervalsQueryMatch hits = collector.getMatches();
 
         if (hits.getHitCount() == 0)
             return;
 
         if (highlightQuery == null) {
-            matches.add(hits);
+            matches.put(queryId, hits);
             return;
         }
 
-        document.getSearcher().search(highlightQuery, collector);
+        doc.getSearcher().search(highlightQuery, collector);
         hits = collector.getMatches();
         if (hits.getHitCount() != 0)
-            matches.add(hits);
+            matches.put(queryId, hits);
     }
 
-    public List<IntervalsQueryMatch> getMatches() {
-        return matches;
+    @Override
+    public boolean matches(String queryId) {
+        return matches.containsKey(queryId);
+    }
+
+    @Override
+    public int getMatchCount() {
+        return matches.size();
+    }
+
+    public Collection<IntervalsQueryMatch> getMatches() {
+        return matches.values();
     }
 }

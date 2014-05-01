@@ -4,13 +4,16 @@ import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.util.Version;
 import org.fest.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.SimpleMatcher;
 import uk.co.flax.luwak.impl.TermFilteredPresearcher;
+import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -51,11 +54,11 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher());
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
-            DocumentMatches matches = monitor.match(doc);
+            SimpleMatcher matches = monitor.match(doc);
             outputMatches(matches);
         }
 
@@ -72,8 +75,7 @@ public class LuwakDemo {
                 if (Strings.isNullOrEmpty(queryString))
                     continue;
                 logger.info("Parsing [{}]", queryString);
-                QueryParser parser = new QueryParser(Version.LUCENE_50, FIELD, ANALYZER);
-                queries.add(new MonitorQuery(String.format("%d-%s", count++, queryString), parser.parse(queryString)));
+                queries.add(new MonitorQuery(String.format("%d-%s", count++, queryString), queryString));
             }
         }
         monitor.update(queries);
@@ -97,10 +99,10 @@ public class LuwakDemo {
         return docs;
     }
 
-    static void outputMatches(DocumentMatches matches) {
-        logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getMatchStats().querycount);
-        for (QueryMatch qm : matches.matches()) {
-            logger.info("\tQuery: {}", qm.getQueryId());
+    static void outputMatches(SimpleMatcher matches) {
+        logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
+        for (String query : matches.getMatchingQueries()) {
+            logger.info("\tQuery: {}", query);
         }
     }
 
