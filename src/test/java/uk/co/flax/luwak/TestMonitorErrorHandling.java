@@ -45,7 +45,7 @@ public class TestMonitorErrorHandling {
         Query errorQuery = mock(Query.class);
         when(errorQuery.rewrite(any(IndexReader.class))).thenThrow(new RuntimeException("Error rewriting"));
 
-        when(parser.parse("unparseable")).thenThrow(new MonitorQueryParserException("Error parsing"));
+        when(parser.parse("unparseable")).thenThrow(new MonitorQueryParserException("unparseable", "Error parsing"));
         when(parser.parse("test")).thenReturn(new TermQuery(new Term(FIELD, "test")));
         when(parser.parse("error")).thenReturn(errorQuery);
 
@@ -56,7 +56,7 @@ public class TestMonitorErrorHandling {
     public void testMonitorErrors() throws Exception {
 
         Monitor monitor = new Monitor(createMockParser(), new MatchAllPresearcher());
-        List<MonitorQueryParserException> errors = monitor.update(
+        List<QueryError> errors = monitor.update(
                 new MonitorQuery("1", "unparseable"),
                 new MonitorQuery("2", "test"),
                 new MonitorQuery("3", "error"));

@@ -42,7 +42,7 @@ public class LuceneQueryParser extends MonitorQueryParser {
         try {
             return parser.parse(queryString);
         } catch (ParseException e) {
-            throw new MonitorQueryParserException(e);
+            throw new MonitorQueryParserException(queryString, e.getMessage());
         }
     }
 }

@@ -98,8 +98,8 @@ public class Monitor implements Closeable {
      * @return a list of exceptions for queries that could not be added
      * @throws IOException
      */
-    public List<MonitorQueryParserException> update(Iterable<MonitorQuery> queries) throws IOException {
-        List<MonitorQueryParserException> errors = new ArrayList<>();
+    public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
+        List<QueryError> errors = new ArrayList<>();
         for (MonitorQuery query : queries) {
             try {
                 Query matchQuery = this.queries.get(query.getQuery());
@@ -110,7 +110,7 @@ public class Monitor implements Closeable {
             catch (ExecutionException e) {
                 Throwable t = e.getCause();
                 if (t instanceof MonitorQueryParserException)
-                    errors.add((MonitorQueryParserException)t);
+                    errors.add(new QueryError(query.getId(), (MonitorQueryParserException) t));
                 else
                     throw new RuntimeException(t);
             }
@@ -120,7 +120,7 @@ public class Monitor implements Closeable {
         return errors;
     }
 
-    public List<MonitorQueryParserException> update(MonitorQuery... queries) throws IOException {
+    public List<QueryError> update(MonitorQuery... queries) throws IOException {
         return update(Arrays.asList(queries));
     }
 

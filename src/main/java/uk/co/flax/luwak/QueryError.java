@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import java.util.Locale;
+
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -16,17 +18,24 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
-public class MonitorQueryParserException extends Exception {
+public class QueryError {
 
-    private final String query;
+    public final String id;
+    public final String query;
+    public final String error;
 
-    public MonitorQueryParserException(String query, String errorMessage) {
-        super(errorMessage);
+    public QueryError(String id, String query, String errorMessage) {
+        this.id = id;
         this.query = query;
+        this.error = errorMessage;
     }
 
-    public String getQuery() {
-        return query;
+    public QueryError(String id, MonitorQueryParserException e) {
+        this(id, e.getQuery(), e.getMessage());
     }
 
+    @Override
+    public String toString() {
+        return String.format(Locale.ROOT, "Error parsing query %s [%s] : %s", id, query, error);
+    }
 }
