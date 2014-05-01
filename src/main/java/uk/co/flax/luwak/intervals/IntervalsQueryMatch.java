@@ -3,7 +3,6 @@ package uk.co.flax.luwak.intervals;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.apache.lucene.search.intervals.Interval;
-import uk.co.flax.luwak.QueryMatch;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,9 +24,11 @@ import java.util.Set;
  * limitations under the License.
  */
 
-public class IntervalsQueryMatch extends QueryMatch {
+public class IntervalsQueryMatch {
 
     private final Multimap<String, Hit> hits = TreeMultimap.create();
+
+    private final String queryId;
 
     /**
      * Create a new QueryMatch object for a query
@@ -35,7 +36,7 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @param queryId the ID of the query
      */
     public IntervalsQueryMatch(String queryId) {
-        super(queryId);
+        this.queryId = queryId;
     }
 
     /**
@@ -45,6 +46,14 @@ public class IntervalsQueryMatch extends QueryMatch {
     public void addInterval(Interval interval) {
         hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
     }
+
+    /**
+     * @return the id of the query for this object
+     */
+    public String getQueryId() {
+        return this.queryId;
+    }
+
 
     /**
      * @return the fields in which matches have been found

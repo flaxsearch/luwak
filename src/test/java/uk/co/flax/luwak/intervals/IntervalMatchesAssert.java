@@ -2,7 +2,6 @@ package uk.co.flax.luwak.intervals;
 
 import org.fest.assertions.api.AbstractAssert;
 import org.fest.assertions.api.Assertions;
-import uk.co.flax.luwak.QueryMatch;
 
 import static org.fest.assertions.api.Fail.fail;
 
@@ -65,7 +64,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
-        for (QueryMatch match : actual.getMatches()) {
+        for (IntervalsQueryMatch match : actual.getMatches()) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
         return this;
