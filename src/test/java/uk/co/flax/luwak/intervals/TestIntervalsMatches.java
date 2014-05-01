@@ -1,8 +1,10 @@
 package uk.co.flax.luwak.intervals;
 
+import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.util.Version;
+import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
@@ -116,6 +118,19 @@ public class TestIntervalsMatches {
                 .matchesQuery("1").inField(textfield)
                 .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
 
+    }
+
+    @Test
+    public void testHighlighterQueryOnlyReturnsHitsFromHighlighter() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "test", "document"));
+
+        IntervalsMatcher matcher = new IntervalsMatcher(buildDoc("1", "this is a test document"));
+        monitor.match(matcher);
+
+        IntervalsQueryMatch match = Iterables.getFirst(matcher.getMatches(), null);
+        Assertions.assertThat(match).isNotNull();
+        Assertions.assertThat(match.getHitCount()).isEqualTo(1);
     }
 
     @Test

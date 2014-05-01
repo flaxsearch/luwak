@@ -47,9 +47,13 @@ public class IntervalsMatcher extends CandidateMatcher {
             return;
         }
 
-        doc.getSearcher().search(highlightQuery, collector);
-        hits = collector.getMatches();
-        if (hits.getHitCount() != 0)
+        QueryIntervalsMatchCollector collector2 = new QueryIntervalsMatchCollector(queryId);
+        doc.getSearcher().search(highlightQuery, collector2);
+        IntervalsQueryMatch hlhits = collector2.getMatches();
+
+        if (hlhits.getHitCount() != 0)
+            matches.put(queryId, hlhits);
+        else
             matches.put(queryId, hits);
     }
 
