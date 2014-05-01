@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.util.Version;
+import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.MatchAllPresearcher;
@@ -70,6 +71,12 @@ public class TestMonitor {
         assertThat(monitor.match(doc))
                 .hasQueriesRunCount(1)
                 .matchesQuery("query1");
+    }
+
+    @Test
+    public void canAddEmptyHighlightQueries() throws IOException {
+        monitor.update(new MonitorQuery("1", "query", ""));
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(1);
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);

@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -103,7 +104,7 @@ public class Monitor implements Closeable {
         for (MonitorQuery query : queries) {
             try {
                 Query matchQuery = this.queries.get(query.getQuery());
-                if (query.getHighlightQuery() != null)
+                if (!Strings.isNullOrEmpty(query.getHighlightQuery()))
                     this.queries.get(query.getHighlightQuery()); // force HlQ to be parsed
                 writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
             }
