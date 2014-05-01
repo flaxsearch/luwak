@@ -63,7 +63,8 @@ public class ScoringMatcher extends CandidateMatcher {
                 public void setNextReader(AtomicReaderContext context) { }
             });
             float score = scores[0];
-            ScoringMatcher.this.scores.put(queryId, score);
+            if (score > 0)
+                ScoringMatcher.this.scores.put(queryId, score);
         } catch (IOException e) { // can never happen (RAMDirectory)
             throw new RuntimeException(e);
         }
