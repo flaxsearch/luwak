@@ -1,9 +1,12 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.matchers;
 
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
+import uk.co.flax.luwak.CandidateMatcher;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.MatcherFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -69,5 +72,14 @@ public class SimpleMatcher extends CandidateMatcher {
     @Override
     public int getMatchCount() {
         return matches.size();
+    }
+
+    public static MatcherFactory<SimpleMatcher> factory() {
+        return new MatcherFactory<SimpleMatcher>() {
+            @Override
+            public SimpleMatcher createMatcher(InputDocument doc) {
+                return new SimpleMatcher(doc);
+            }
+        };
     }
 }

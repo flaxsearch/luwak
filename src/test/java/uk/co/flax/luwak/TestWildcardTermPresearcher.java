@@ -2,6 +2,7 @@ package uk.co.flax.luwak;
 
 import org.junit.Test;
 import uk.co.flax.luwak.impl.WildcardNGramPresearcher;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
 
@@ -34,9 +35,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "well hello there", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher = new SimpleMatcher(doc1);
-        monitor.match(matcher);
-        assertThat(matcher)
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
                 .hasMatchCount(1);
 
     }

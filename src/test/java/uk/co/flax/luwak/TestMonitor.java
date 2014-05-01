@@ -8,6 +8,7 @@ import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class TestMonitor {
 
         monitor.update(new MonitorQuery("query1", "test"));
 
-        assertThat(monitor.match(doc))
+        assertThat(monitor.match(doc, SimpleMatcher.factory()))
                 .matches("doc1")
                 .hasMatchCount(1)
                 .matchesQuery("query1");
@@ -68,7 +69,7 @@ public class TestMonitor {
         monitor.update(new MonitorQuery("query1", "that"));
 
         InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "that", WHITESPACE).build();
-        assertThat(monitor.match(doc))
+        assertThat(monitor.match(doc, SimpleMatcher.factory()))
                 .hasQueriesRunCount(1)
                 .matchesQuery("query1");
     }

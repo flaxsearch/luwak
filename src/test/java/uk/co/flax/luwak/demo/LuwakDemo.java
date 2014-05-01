@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.SimpleMatcher;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.impl.TermFilteredPresearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
@@ -58,7 +58,7 @@ public class LuwakDemo {
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
-            SimpleMatcher matches = monitor.match(doc);
+            SimpleMatcher matches = monitor.match(doc, SimpleMatcher.factory());
             outputMatches(matches);
         }
 

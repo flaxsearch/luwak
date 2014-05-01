@@ -138,12 +138,7 @@ public class Monitor implements Closeable {
         manager.maybeRefresh();
     }
 
-    /**
-     * Match an InputDocument against the queries in the monitor
-     * @param matcher the CandidateMatcher class to use to report matches
-     * @throws IOException
-     */
-    public void match(CandidateMatcher matcher) throws IOException {
+    private void match(CandidateMatcher matcher) throws IOException {
 
         long start = System.nanoTime();
         Query query = presearcher.buildQuery(matcher.getDocument());
@@ -154,14 +149,8 @@ public class Monitor implements Closeable {
         matcher.setQueriesRun(collector.getQueryCount());
     }
 
-    /**
-     * Match an input document using a {@link uk.co.flax.luwak.SimpleMatcher}
-     * @param doc the document to match
-     * @return a SimpleMatcher with the results from the document
-     * @throws IOException
-     */
-    public SimpleMatcher match(InputDocument doc) throws IOException {
-        SimpleMatcher matcher = new SimpleMatcher(doc);
+    public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        T matcher = factory.createMatcher(doc);
         match(matcher);
         return matcher;
     }

@@ -2,6 +2,7 @@ package uk.co.flax.luwak;
 
 import org.junit.Test;
 import uk.co.flax.luwak.impl.TermFilteredPresearcher;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
 
@@ -37,8 +38,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher = new SimpleMatcher(doc);
-        monitor.match(matcher);
+        SimpleMatcher matcher = monitor.match(doc, SimpleMatcher.factory());
         assertThat(matcher)
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);
@@ -54,9 +54,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher1 = new SimpleMatcher(doc1);
-        monitor.match(matcher1);
-        assertThat(matcher1)
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(1);
 
@@ -64,9 +62,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "weeble sclup test", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher2 = new SimpleMatcher(doc2);
-        monitor.match(matcher2);
-        assertThat(matcher2)
+        assertThat(monitor.match(doc2, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(0);
     }
@@ -80,9 +76,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "whatever", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher = new SimpleMatcher(doc);
-        monitor.match(matcher);
-        assertThat(matcher)
+        assertThat(monitor.match(doc, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(1);
 

@@ -3,6 +3,7 @@ package uk.co.flax.luwak.intervals;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.MatcherFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -69,5 +70,14 @@ public class IntervalsMatcher extends CandidateMatcher {
 
     public Collection<IntervalsQueryMatch> getMatches() {
         return matches.values();
+    }
+
+    public static MatcherFactory<IntervalsMatcher> factory() {
+        return new MatcherFactory<IntervalsMatcher>() {
+            @Override
+            public IntervalsMatcher createMatcher(InputDocument doc) {
+                return new IntervalsMatcher(doc);
+            }
+        };
     }
 }
