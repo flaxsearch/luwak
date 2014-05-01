@@ -181,6 +181,10 @@ public class Monitor implements Closeable {
         });
     }
 
+    public int getQueryCount() {
+        return writer.numDocs();
+    }
+
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
         long startTime = System.nanoTime();
