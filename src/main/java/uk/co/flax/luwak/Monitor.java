@@ -147,7 +147,7 @@ public class Monitor implements Closeable {
 
         long start = System.nanoTime();
         Query query = presearcher.buildQuery(matcher.getDocument());
-        matcher.setQueryBuildTime(System.nanoTime() - start);
+        matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
 
         SearchingCollector collector = new SearchingCollector(matcher);
         match(query, collector);
@@ -195,7 +195,7 @@ public class Monitor implements Closeable {
         }
         finally {
             manager.release(searcher);
-            collector.setSearchTime(System.nanoTime() - startTime);
+            collector.setSearchTime((System.nanoTime() - startTime) / 1000000);
         }
     }
 
