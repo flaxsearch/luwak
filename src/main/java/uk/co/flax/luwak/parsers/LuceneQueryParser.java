@@ -25,7 +25,7 @@ import uk.co.flax.luwak.MonitorQueryParserException;
  * limitations under the License.
  */
 
-public class LuceneQueryParser extends MonitorQueryParser {
+public class LuceneQueryParser implements MonitorQueryParser {
 
     private final QueryParser parser;
 
@@ -38,7 +38,7 @@ public class LuceneQueryParser extends MonitorQueryParser {
     }
 
     @Override
-    protected Query parse(String queryString) throws MonitorQueryParserException {
+    public Query parse(String queryString) throws MonitorQueryParserException {
         try {
             return parser.parse(queryString);
         } catch (ParseException e) {

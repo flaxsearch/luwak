@@ -18,8 +18,8 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
-public abstract class MonitorQueryParser {
+public interface MonitorQueryParser {
 
-    protected abstract Query parse(String queryString) throws MonitorQueryParserException;
+    Query parse(String queryString) throws MonitorQueryParserException;
 
 }
