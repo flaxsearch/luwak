@@ -27,9 +27,9 @@ import org.apache.lucene.search.Query;
  * internal index, and how an InputDocument is converted to a query against that
  * index.
  *
- * {@see uk.co.flax.luwak.impl.MatchAllPresearcher}
- * {@see uk.co.flax.luwak.impl.TermFilteredPresearcher}
- * {@see uk.co.flax.luwak.impl.WildcardNGramPresearcher}
+ * {@see uk.co.flax.luwak.presearcher.MatchAllPresearcher}
+ * {@see uk.co.flax.luwak.presearcher.TermFilteredPresearcher}
+ * {@see uk.co.flax.luwak.presearcher.WildcardNGramPresearcher}
  */
 public abstract class Presearcher {
 

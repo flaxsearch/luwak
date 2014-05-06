@@ -1,7 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.junit.Test;
-import uk.co.flax.luwak.impl.WildcardNGramPresearcher;
+import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;

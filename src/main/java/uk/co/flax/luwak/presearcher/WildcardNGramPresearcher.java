@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.impl;
+package uk.co.flax.luwak.presearcher;
 
 import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;

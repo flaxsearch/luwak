@@ -10,7 +10,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;

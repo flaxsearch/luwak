@@ -8,7 +8,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.util.List;

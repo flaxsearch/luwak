@@ -7,7 +7,7 @@ import org.apache.lucene.util.Version;
 import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 

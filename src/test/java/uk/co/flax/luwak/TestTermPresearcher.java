@@ -1,7 +1,7 @@
 package uk.co.flax.luwak;
 
 import org.junit.Test;
-import uk.co.flax.luwak.impl.TermFilteredPresearcher;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
