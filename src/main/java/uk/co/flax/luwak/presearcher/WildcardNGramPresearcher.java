@@ -39,16 +39,18 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher(Extractor... extractors) {
-        super(ObjectArrays.concat(extractors, new RegexpNGramTermExtractor()));
+    public WildcardNGramPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
+        super(filter, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor()));
+    }
 
+    public WildcardNGramPresearcher(Extractor... extractors) {
+        this(new DocumentTokenFilter.Default(), extractors);
     }
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        TokenStream ngramTs = new DuplicateRemovalTokenFilter(
-                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE)
-        );
-        return super.filterInputDocumentTokens(field, ngramTs);
+        TokenStream filtered = super.filterInputDocumentTokens(field, ts);
+        TokenStream ngrammed = new NGramTokenFilter(Version.LUCENE_50, filtered, 1, Integer.MAX_VALUE);
+        return new DuplicateRemovalTokenFilter(ngrammed);
     }
 }

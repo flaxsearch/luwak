@@ -15,6 +15,7 @@ package uk.co.flax.luwak.presearcher;/*
  */
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -31,7 +32,6 @@ import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.util.TermsEnumTokenStream;
-import uk.co.flax.luwak.util.TokenStreamBooleanQuery;
 
 import java.io.IOException;
 
@@ -46,8 +46,15 @@ public class TermFilteredPresearcher implements Presearcher {
 
     private final QueryTermExtractor extractor;
 
+    private final DocumentTokenFilter filter;
+
+    public TermFilteredPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
+        this.extractor = new QueryTermExtractor(extractors);
+        this.filter = filter;
+    }
+
     public TermFilteredPresearcher(Extractor... extractors) {
-        extractor = new QueryTermExtractor(extractors);
+        this(new DocumentTokenFilter.Default(), extractors);
     }
 
     @Override
@@ -56,11 +63,20 @@ public class TermFilteredPresearcher implements Presearcher {
             AtomicReader reader = doc.asAtomicReader();
             BooleanQuery bq = new BooleanQuery();
             for (String field : reader.fields()) {
+
+                boolean hasValues = false;
+
                 TermsEnum te = reader.terms(field).iterator(null);
                 TokenStream ts = filterInputDocumentTokens(field, new TermsEnumTokenStream(te));
-                bq.add(TokenStreamBooleanQuery.fromTokenStream(field, ts),
-                        BooleanClause.Occur.SHOULD);
-                bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
+
+                CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
+                while (ts.incrementToken()) {
+                    hasValues = true;
+                    bq.add(new TermQuery(new Term(field, termAtt.toString())), BooleanClause.Occur.SHOULD);
+                }
+                if (hasValues)
+                    bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
+
             }
             return bq;
         }
@@ -71,8 +87,7 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        //return monitor.filterTokenStream(field, ts);
-        return ts;
+        return this.filter.filter(field, ts);
     }
 
     @Override
@@ -86,4 +101,5 @@ public class TermFilteredPresearcher implements Presearcher {
         }
         return doc;
     }
+
 }
