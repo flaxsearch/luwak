@@ -1,6 +1,10 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.presearcher;
 
 import org.junit.Test;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.presearcher.PresearcherTestBase;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
