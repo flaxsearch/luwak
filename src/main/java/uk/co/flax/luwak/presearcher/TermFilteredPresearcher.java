@@ -44,6 +44,10 @@ import java.io.IOException;
  */
 public class TermFilteredPresearcher implements Presearcher {
 
+    static {
+        BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+    }
+
     private final QueryTermExtractor extractor;
 
     private final DocumentTokenFilter filter;
