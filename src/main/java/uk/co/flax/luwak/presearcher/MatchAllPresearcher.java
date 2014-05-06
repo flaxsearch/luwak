@@ -26,7 +26,7 @@ import uk.co.flax.luwak.Presearcher;
  * A simple Presearcher implementation that runs all queries in a Monitor against
  * each supplied InputDocument.
  */
-public class MatchAllPresearcher extends Presearcher {
+public class MatchAllPresearcher implements Presearcher {
 
     public MatchAllPresearcher() {
         super();

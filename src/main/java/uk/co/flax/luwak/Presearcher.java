@@ -31,20 +31,20 @@ import org.apache.lucene.search.Query;
  * {@see uk.co.flax.luwak.presearcher.TermFilteredPresearcher}
  * {@see uk.co.flax.luwak.presearcher.WildcardNGramPresearcher}
  */
-public abstract class Presearcher {
+public interface Presearcher {
 
-    protected Monitor monitor;
+    /**
+     * Build a query for a Monitor's queryindex from an InputDocument.
+     * @param inputDocument the document to query for
+     * @return a Query to run over a Monitor's queryindex
+     */
+    public Query buildQuery(InputDocument inputDocument);
 
-    protected void setMonitor(Monitor monitor) {
-        this.monitor = monitor;
-    }
-
-    public abstract Query buildQuery(InputDocument inputDocument);
-
-    public abstract Document indexQuery(Query query);
-
-    public Monitor getMonitor() {
-        return monitor;
-    }
+    /**
+     * Build a lucene Document to index the query in a Monitor's queryindex
+     * @param query the Query to index
+     * @return a lucene Document to add to the queryindex
+     */
+    public Document indexQuery(Query query);
 
 }

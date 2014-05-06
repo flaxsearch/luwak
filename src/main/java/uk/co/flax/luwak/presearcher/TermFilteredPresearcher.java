@@ -42,7 +42,7 @@ import java.io.IOException;
  *
  * This Presearcher uses a QueryTermExtractor to extract terms from queries.
  */
-public class TermFilteredPresearcher extends Presearcher {
+public class TermFilteredPresearcher implements Presearcher {
 
     private final QueryTermExtractor extractor;
 
