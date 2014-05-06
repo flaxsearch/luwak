@@ -1,4 +1,4 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
