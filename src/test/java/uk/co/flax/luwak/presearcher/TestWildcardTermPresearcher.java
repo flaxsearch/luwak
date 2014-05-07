@@ -4,8 +4,6 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
-import uk.co.flax.luwak.presearcher.PresearcherTestBase;
-import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
@@ -37,6 +35,20 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         InputDocument doc1 = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "well hello there", WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+                .hasMatchCount(1);
+
+    }
+
+    @Test
+    public void caseSensitivity() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "foo"));
+
+        InputDocument doc1 = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, "Foo foo", WHITESPACE)
                 .build();
 
         assertThat(monitor.match(doc1, SimpleMatcher.factory()))
