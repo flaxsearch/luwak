@@ -122,6 +122,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <quiet>true</quiet>
+                </configuration>
             </plugin>
         </plugins>
     </build>
