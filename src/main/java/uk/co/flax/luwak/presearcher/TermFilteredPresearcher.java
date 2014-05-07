@@ -18,8 +18,10 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
@@ -34,6 +36,8 @@ import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.util.TermsEnumTokenStream;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -47,6 +51,8 @@ public class TermFilteredPresearcher implements Presearcher {
     static {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
     }
+
+    public static final String TERMSFIELD = "_terms";
 
     private final QueryTermExtractor extractor;
 
@@ -94,15 +100,29 @@ public class TermFilteredPresearcher implements Presearcher {
         return this.filter.filter(field, ts);
     }
 
+    public static final FieldType QUERYFIELDTYPE;
+    static {
+        QUERYFIELDTYPE = new FieldType(TextField.TYPE_STORED);
+        QUERYFIELDTYPE.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        QUERYFIELDTYPE.freeze();
+    }
+
     @Override
     public final Document indexQuery(Query query) {
-        Document doc = new Document();
+
+        Map<String, StringBuilder> fieldTerms = new HashMap<>();
         for (QueryTerm queryTerm : extractor.extract(query)) {
-            if (queryTerm.type == QueryTerm.Type.ANY)
-                doc.add(new StringField(queryTerm.field, extractor.getAnyToken(), Field.Store.NO));
-            else
-                doc.add(new StringField(queryTerm.field, queryTerm.term, Field.Store.NO));
+            String term = (queryTerm.type == QueryTerm.Type.ANY) ? extractor.getAnyToken() : queryTerm.term;
+            if (!fieldTerms.containsKey(queryTerm.field))
+                fieldTerms.put(queryTerm.field, new StringBuilder());
+            fieldTerms.get(queryTerm.field).append(" ").append(term);
         }
+
+        Document doc = new Document();
+        for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
+            doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
+        }
+
         return doc;
     }
 

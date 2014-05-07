@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -83,7 +84,8 @@ public class Monitor implements Closeable {
         this.parser = parser;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50, null));
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50,
+                new WhitespaceAnalyzer(Version.LUCENE_50)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
@@ -155,6 +157,11 @@ public class Monitor implements Closeable {
         return matcher;
     }
 
+    public void match(InputDocument doc, TimedCollector collector) throws IOException {
+        Query query = presearcher.buildQuery(doc);
+        match(query, collector);
+    }
+
     /**
      * Ensures that all queries in the queryindex have been parsed.  Call this if you
      * have stored queries in an external Directory and want to to ensure that they are
@@ -175,7 +182,7 @@ public class Monitor implements Closeable {
         return writer.numDocs();
     }
 
-    private void match(Query query, MonitorQueryCollector collector) throws IOException {
+    private void match(Query query, TimedCollector collector) throws IOException {
         IndexSearcher searcher = null;
         long startTime = System.nanoTime();
         try {
@@ -219,12 +226,12 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        void setSearchTime(long searchTime) {
+        public void setSearchTime(long searchTime) {
             matcher.setSearchTime(searchTime);
         }
     }
 
-    private abstract class MonitorQueryCollector extends Collector {
+    public abstract class MonitorQueryCollector extends TimedCollector {
 
         protected SortedDocValues queryDV;
         protected SortedDocValues highlightDV;
@@ -273,7 +280,8 @@ public class Monitor implements Closeable {
             return searchTime;
         }
 
-        void setSearchTime(long searchTime) {
+        @Override
+        public void setSearchTime(long searchTime) {
             this.searchTime = searchTime;
         }
     }
