@@ -1,11 +1,14 @@
 package uk.co.flax.luwak.termextractor;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -31,8 +34,15 @@ import java.util.List;
  */
 public class BooleanTermExtractor extends Extractor<BooleanQuery> {
 
-    public BooleanTermExtractor() {
+    private final Set<String> unpreferredFields;
+
+    public BooleanTermExtractor(Set<String> unpreferredFields) {
         super(BooleanQuery.class);
+        this.unpreferredFields = unpreferredFields;
+    }
+
+    public BooleanTermExtractor() {
+        this(Sets.<String>newHashSet());
     }
 
     @Override
@@ -46,56 +56,14 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
             }
         }
         else if (checker.isConjunctionQuery()) {
-            List<QueryTerm> bestTerms = null;
+            List<QueryTermList> termlists = new ArrayList<>();
             for (Query subquery : checker.getConjunctions()) {
                 List<QueryTerm> subTerms = new ArrayList<>();
                 extractTerms(subquery, subTerms, extractors);
-                bestTerms = selectBestTerms(bestTerms, subTerms);
+                termlists.add(new QueryTermList(subTerms));
             }
-            terms.addAll(bestTerms);
+            Iterables.addAll(terms, QueryTermList.selectBest(termlists, unpreferredFields));
         }
-    }
-
-    private int compareTypeCounts(List<QueryTerm> first, List<QueryTerm> second, QueryTerm.Type type) {
-        int firstCount = countType(first, type);
-        int secondCount = countType(second, type);
-        if (firstCount == 0 && secondCount > 0)
-            return -1;
-        if (secondCount == 0 && firstCount > 0)
-            return 1;
-        return 0;
-    }
-
-    protected List<QueryTerm> selectBestTerms(List<QueryTerm> first, List<QueryTerm> second) {
-        if (first == null)
-            return second;
-
-        // If either termlist contains no ANY terms, and the other one does contain some
-        // return the list with none.
-        switch (compareTypeCounts(first, second, QueryTerm.Type.ANY)) {
-            case -1: return first;
-            case 1: return second;
-        }
-
-        // If either termlist contains no wildcard terms, and the other does contains some
-        // return the list with none
-        switch (compareTypeCounts(first, second, QueryTerm.Type.WILDCARD)) {
-            case -1: return first;
-            case 1: return second;
-        }
-
-        if (second.size() < first.size())
-            return second;
-
-        return first;
-    }
-
-    private int countType(List<QueryTerm> terms, QueryTerm.Type type) {
-        int c = 0;
-        for (QueryTerm term : terms) {
-            if (term.type == type) c++;
-        }
-        return c;
     }
 
     public static class Analyzer {
