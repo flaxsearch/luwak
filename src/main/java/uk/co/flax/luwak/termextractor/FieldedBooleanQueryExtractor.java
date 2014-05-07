@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Extract terms from a FieldedBooleanQuery
  *
- * {@see BooleanTermExtractor}
+ * See {@link BooleanTermExtractor}
  */
 public class FieldedBooleanQueryExtractor extends Extractor<FieldedBooleanQuery> {
 
