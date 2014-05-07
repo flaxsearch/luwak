@@ -5,8 +5,8 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
-import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
-import uk.co.flax.luwak.util.SuffixingNGramTokenFilter;
+import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
+import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.

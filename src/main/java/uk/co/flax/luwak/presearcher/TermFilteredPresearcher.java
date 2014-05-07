@@ -33,7 +33,7 @@ import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.util.TermsEnumTokenStream;
+import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 
 import java.io.IOException;
 import java.util.HashMap;

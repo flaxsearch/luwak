@@ -7,7 +7,6 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
-import uk.co.flax.luwak.util.SuffixingNGramTokenFilter;
 
 import java.io.IOException;
 

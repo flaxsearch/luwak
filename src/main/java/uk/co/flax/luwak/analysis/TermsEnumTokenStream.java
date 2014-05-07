@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.analysis;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
