@@ -1,13 +1,14 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.presearcher;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.TermQuery;
-import org.fest.assertions.api.Assertions;
 import org.junit.Test;
-import uk.co.flax.luwak.impl.TermFilteredPresearcher;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.presearcher.PresearcherTestBase;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
+
+import java.io.IOException;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -29,53 +30,35 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 public class TestTermPresearcher extends PresearcherTestBase {
 
     @Test
-    public void filtersOnTermQueries() {
+    public void filtersOnTermQueries() throws IOException {
 
         MonitorQuery query1
-                = new MonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "furble")));
+                = new MonitorQuery("1", "furble");
         MonitorQuery query2
-                = new MonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "document")));
+                = new MonitorQuery("2", "document");
         monitor.update(query1, query2);
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc))
+        SimpleMatcher matcher = monitor.match(doc, SimpleMatcher.factory());
+        assertThat(matcher)
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);
 
     }
 
     @Test
-    public void reportsMatchingQueries() {
+    public void ignoresTermsOnNotQueries() throws IOException {
 
-        MonitorQuery q1 = new MonitorQuery("1", new TermQuery(new Term(TEXTFIELD, "foo")));
-        MonitorQuery q2 = new MonitorQuery("2", new TermQuery(new Term(TEXTFIELD, "bar")));
-        MonitorQuery q3 = new MonitorQuery("3", new TermQuery(new Term(TEXTFIELD, "fimble")));
-        monitor.update(q1, q2, q3);
-
-        InputDocument doc1 = InputDocument.builder("doc1").addField(TEXTFIELD, "foo bar fimble", WHITESPACE).build();
-        InputDocument doc2 = InputDocument.builder("doc1").addField(TEXTFIELD, "foo bar fumble", WHITESPACE).build();
-
-        Assertions.assertThat(monitor.getMatchingQueries(doc1)).hasSize(3);
-        Assertions.assertThat(monitor.getMatchingQueries(doc2)).hasSize(2);
-    }
-
-    @Test
-    public void ignoresTermsOnNotQueries() {
-
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term(TEXTFIELD, "document")), BooleanClause.Occur.SHOULD);
-        bq.add(new TermQuery(new Term(TEXTFIELD, "test")), BooleanClause.Occur.MUST_NOT);
-
-        monitor.update(new MonitorQuery("1", bq));
+        monitor.update(new MonitorQuery("1", "document -test"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1))
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(1);
 
@@ -83,21 +66,21 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "weeble sclup test", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc2))
+        assertThat(monitor.match(doc2, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(0);
     }
 
     @Test
-    public void matchesAnyQueries() {
+    public void matchesAnyQueries() throws IOException {
 
-        monitor.update(new MonitorQuery("1", new RegexpQuery(new Term(TEXTFIELD, "hell?"))));
+        monitor.update(new MonitorQuery("1", "/hell?/"));
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "whatever", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc))
+        assertThat(monitor.match(doc, SimpleMatcher.factory()))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(1);
 

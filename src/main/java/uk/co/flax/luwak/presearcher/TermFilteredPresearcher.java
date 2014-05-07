@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.impl;/*
+package uk.co.flax.luwak.presearcher;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,13 @@ package uk.co.flax.luwak.impl;/*
  */
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
@@ -30,10 +33,11 @@ import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.util.TermsEnumTokenStream;
-import uk.co.flax.luwak.util.TokenStreamBooleanQuery;
+import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -42,12 +46,25 @@ import java.io.IOException;
  *
  * This Presearcher uses a QueryTermExtractor to extract terms from queries.
  */
-public class TermFilteredPresearcher extends Presearcher {
+public class TermFilteredPresearcher implements Presearcher {
+
+    static {
+        BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+    }
+
+    public static final String TERMSFIELD = "_terms";
 
     private final QueryTermExtractor extractor;
 
+    private final DocumentTokenFilter filter;
+
+    public TermFilteredPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
+        this.extractor = new QueryTermExtractor(extractors);
+        this.filter = filter;
+    }
+
     public TermFilteredPresearcher(Extractor... extractors) {
-        extractor = new QueryTermExtractor(extractors);
+        this(new DocumentTokenFilter.Default(), extractors);
     }
 
     @Override
@@ -56,11 +73,20 @@ public class TermFilteredPresearcher extends Presearcher {
             AtomicReader reader = doc.asAtomicReader();
             BooleanQuery bq = new BooleanQuery();
             for (String field : reader.fields()) {
+
+                boolean hasValues = false;
+
                 TermsEnum te = reader.terms(field).iterator(null);
                 TokenStream ts = filterInputDocumentTokens(field, new TermsEnumTokenStream(te));
-                bq.add(TokenStreamBooleanQuery.fromTokenStream(field, ts),
-                        BooleanClause.Occur.SHOULD);
-                bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
+
+                CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
+                while (ts.incrementToken()) {
+                    hasValues = true;
+                    bq.add(new TermQuery(new Term(field, termAtt.toString())), BooleanClause.Occur.SHOULD);
+                }
+                if (hasValues)
+                    bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
+
             }
             return bq;
         }
@@ -71,18 +97,33 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        return monitor.filterTokenStream(field, ts);
+        return this.filter.filter(field, ts);
+    }
+
+    public static final FieldType QUERYFIELDTYPE;
+    static {
+        QUERYFIELDTYPE = new FieldType(TextField.TYPE_STORED);
+        QUERYFIELDTYPE.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        QUERYFIELDTYPE.freeze();
     }
 
     @Override
     public final Document indexQuery(Query query) {
-        Document doc = new Document();
+
+        Map<String, StringBuilder> fieldTerms = new HashMap<>();
         for (QueryTerm queryTerm : extractor.extract(query)) {
-            if (queryTerm.type == QueryTerm.Type.ANY)
-                doc.add(new StringField(queryTerm.field, extractor.getAnyToken(), Field.Store.NO));
-            else
-                doc.add(new StringField(queryTerm.field, queryTerm.term, Field.Store.NO));
+            String term = (queryTerm.type == QueryTerm.Type.ANY) ? extractor.getAnyToken() : queryTerm.term;
+            if (!fieldTerms.containsKey(queryTerm.field))
+                fieldTerms.put(queryTerm.field, new StringBuilder());
+            fieldTerms.get(queryTerm.field).append(" ").append(term);
         }
+
+        Document doc = new Document();
+        for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
+            doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
+        }
+
         return doc;
     }
+
 }

@@ -1,7 +1,9 @@
 package uk.co.flax.luwak;
 
+import java.util.Locale;
+
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +18,24 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
-/**
- * Summary of the matches for an individual Query run against an InputDocument
- */
-public class QueryMatch {
+public class QueryError {
 
-    private final String queryId;
+    public final String id;
+    public final String query;
+    public final String error;
 
-    /**
-     * Create a new QueryMatch object for a query
-     * @param queryId the ID of the query
-     */
-    public QueryMatch(String queryId) {
-        this.queryId = queryId;
+    public QueryError(String id, String query, String errorMessage) {
+        this.id = id;
+        this.query = query;
+        this.error = errorMessage;
     }
 
-    /**
-     * @return the id of the query for this object
-     */
-    public String getQueryId() {
-        return this.queryId;
+    public QueryError(String id, MonitorQueryParserException e) {
+        this(id, e.getQuery(), e.getMessage());
     }
 
+    @Override
+    public String toString() {
+        return String.format(Locale.ROOT, "Error parsing query %s [%s] : %s", id, query, error);
+    }
 }

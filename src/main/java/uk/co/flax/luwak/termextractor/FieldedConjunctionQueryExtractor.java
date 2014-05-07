@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Extract terms from a FieldedConjunctionQuery
  *
- * {@see BooleanTermExtractor}
+ * See {@link BooleanTermExtractor}
  */
 public class FieldedConjunctionQueryExtractor extends Extractor<FieldedConjunctionQuery> {
 

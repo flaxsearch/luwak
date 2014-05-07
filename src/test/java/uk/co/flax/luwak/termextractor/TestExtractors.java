@@ -1,4 +1,4 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
@@ -6,9 +6,6 @@ import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +33,13 @@ public class TestExtractors {
     @Test
     public void testRegexpExtractor() {
 
-        RegexpNGramTermExtractor extractor = new RegexpNGramTermExtractor();
+        RegexpNGramTermExtractor extractor = new RegexpNGramTermExtractor("XX");
         List<QueryTerm> terms = new ArrayList<>();
         RegexpQuery query = new RegexpQuery(new Term("field", "super.*califragilistic"));
 
         extractor.extract(query, terms, null);
 
-        assertThat(terms).containsExactly(new QueryTerm("field", "califragilistic", QueryTerm.Type.WILDCARD));
+        assertThat(terms).containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.WILDCARD));
 
     }
 

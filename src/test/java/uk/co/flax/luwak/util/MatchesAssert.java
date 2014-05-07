@@ -2,10 +2,7 @@ package uk.co.flax.luwak.util;
 
 import org.fest.assertions.api.AbstractAssert;
 import org.fest.assertions.api.Assertions;
-import uk.co.flax.luwak.DocumentMatches;
-import uk.co.flax.luwak.QueryMatch;
-
-import static org.fest.assertions.api.Fail.fail;
+import uk.co.flax.luwak.CandidateMatcher;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -23,23 +20,19 @@ import static org.fest.assertions.api.Fail.fail;
  * limitations under the License.
  */
 
-public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches> {
+public class MatchesAssert extends AbstractAssert<MatchesAssert, CandidateMatcher> {
 
-    protected MatchesAssert(DocumentMatches actual) {
+    protected MatchesAssert(CandidateMatcher actual) {
         super(actual, MatchesAssert.class);
     }
 
-    public static MatchesAssert assertThat(DocumentMatches matches) {
+    public static MatchesAssert assertThat(CandidateMatcher matches) {
         return new MatchesAssert(matches);
     }
 
     public MatchesAssert matchesQuery(String queryId) {
-        for (QueryMatch match : actual.matches()) {
-            if (match.getQueryId().equals(queryId))
-                return this;
-        }
-        fail("Document " + actual.docId() + " did not match query " + queryId);
-        return null;
+        Assertions.assertThat(actual.matches(queryId));
+        return this;
     }
 
     public MatchesAssert matches(String docid) {
@@ -48,22 +41,16 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, DocumentMatches
     }
 
     public MatchesAssert hasMatchCount(int count) {
-        Assertions.assertThat(actual.matches()).hasSize(count);
+        Assertions.assertThat(actual.getMatchCount()).isEqualTo(count);
         return this;
     }
 
     public MatchesAssert hasQueriesRunCount(int count) {
-        Assertions.assertThat(actual.getMatchStats().querycount)
+        Assertions.assertThat(actual.getQueriesRun())
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
-                        count, actual.getMatchStats().querycount)
+                        count, actual.getQueriesRun())
                 .isEqualTo(count);
         return this;
     }
 
-    public MatchesAssert doesNotMatchQuery(String queryId) {
-        for (QueryMatch match : actual.matches()) {
-            Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
-        }
-        return this;
-    }
 }

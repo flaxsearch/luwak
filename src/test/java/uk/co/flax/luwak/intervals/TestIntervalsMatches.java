@@ -1,22 +1,19 @@
 package uk.co.flax.luwak.intervals;
 
-import java.util.Set;
+import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
 import org.apache.lucene.util.Version;
+import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import uk.co.flax.luwak.DocumentMatches;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.impl.MatchAllPresearcher;
+import uk.co.flax.luwak.parsers.LuceneQueryParser;
+import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
+
+import java.io.IOException;
 
 import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
 
@@ -41,98 +38,104 @@ public class TestIntervalsMatches {
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
-    private final Monitor monitor = new Monitor(new MatchAllPresearcher());
+    private Monitor monitor;
 
     public static InputDocument buildDoc(String id, String text) {
-        return InputDocument.builder(id, QueryIntervalsMatchCollector.factory())
+        return InputDocument.builder(id)
                 .addField(textfield, text, WHITESPACE)
                 .build();
     }
 
     @Before
-    public void setUp() {
-        monitor.reset();
+    public void setUp() throws IOException {
+        monitor = new Monitor(new LuceneQueryParser(textfield), new MatchAllPresearcher());
     }
 
     @Test
-    public void singleTermQueryMatchesSingleDocument() {
+    public void singleTermQueryMatchesSingleDocument() throws IOException {
 
-        Query query = new TermQuery(new Term(textfield, "test"));
-        MonitorQuery mq = new MonitorQuery("query1", query);
-
-        InputDocument doc = buildDoc("doc1", "This is a test document");
-
+        MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        assertThat(monitor.match(doc))
-                .matches("doc1")
+        IntervalsMatcher matcher = monitor.match(buildDoc("doc1", "this is a test document"), IntervalsMatcher.factory());
+
+        assertThat(matcher)
                 .hasMatchCount(1)
                 .matchesQuery("query1")
-                .withHitCount(1)
-                .inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+                    .inField(textfield)
+                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
 
     }
 
     @Test
-    public void multiFieldQueryMatches() {
+    public void multiFieldQueryMatches() throws IOException {
 
-        InputDocument doc = InputDocument.builder("doc1", QueryIntervalsMatchCollector.factory())
+        InputDocument doc = InputDocument.builder("doc1")
                 .addField("field1", "this is a test of field one", WHITESPACE)
                 .addField("field2", "and this is an additional test", WHITESPACE)
                 .build();
 
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "test")), BooleanClause.Occur.SHOULD);
-        bq.add(new TermQuery(new Term("field2", "test")), BooleanClause.Occur.SHOULD);
-        MonitorQuery mq = new MonitorQuery("query1", bq);
+        monitor.update(new MonitorQuery("query1", "field1:test field2:test"));
 
-        monitor.update(mq);
-        assertThat(monitor.match(doc))
+        IntervalsMatcher matcher = monitor.match(doc, IntervalsMatcher.factory());
+
+        assertThat(matcher)
+                .hasMatchCount(1)
                 .matchesQuery("query1")
-                .inField("field1")
-                .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14))
-                .inField("field2")
-                .withHit(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
+                    .inField("field1")
+                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14))
+                    .inField("field2")
+                        .withHit(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
 
     }
 
     @Test
-    public void testHighlighterQuery() {
+    public void testHighlighterQuery() throws IOException {
 
         InputDocument docWithMatch = buildDoc("1", "this is a test document");
         InputDocument docWithNoMatch = buildDoc("2", "this is a document");
         InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
 
-        MonitorQuery mq = new MonitorQuery("1", new TermQuery(new Term(textfield, "test")),
-                new TermQuery(new Term(textfield, "document")));
+        monitor.update(new MonitorQuery("1", "test", "document"));
 
-        monitor.update(mq);
-
-        assertThat(monitor.match(docWithMatch))
-                .matchesQuery("1")
-                .inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(4, 15, 4, 23));
-        assertThat(monitor.match(docWithNoMatch))
-                .doesNotMatchQuery("1");
-        assertThat(monitor.match(docWithNoHighlighterMatch))
+        assertThat(monitor.match(docWithNoHighlighterMatch, IntervalsMatcher.factory()))
                 .matchesQuery("1").inField(textfield)
                 .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
 
+        assertThat(monitor.match(docWithMatch, IntervalsMatcher.factory()))
+                .matchesQuery("1")
+                .inField(textfield)
+                .withHit(new IntervalsQueryMatch.Hit(4, 15, 4, 23));
+
+        assertThat(monitor.match(docWithNoMatch, IntervalsMatcher.factory()))
+                .doesNotMatchQuery("1");
+
+
+
+    }
+
+    @Test
+    public void testHighlighterQueryOnlyReturnsHitsFromHighlighter() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "test", "document"));
+
+        IntervalsMatcher matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.factory());
+
+        IntervalsQueryMatch match = Iterables.getFirst(matcher.getMatches(), null);
+        Assertions.assertThat(match).isNotNull();
+        Assertions.assertThat(match.getHitCount()).isEqualTo(1);
     }
 
 
     @Test
-    public void testQueryErrors() {
-        Query failingQuery = mock(Query.class);
-        doThrow(new RuntimeException("simple exception")).when(failingQuery).extractTerms(any(Set.class));
-        InputDocument doc = buildDoc("1", "this is a test document");
-        monitor.update(new MonitorQuery("1", new TermQuery(new Term(textfield, "test"))),
-                       new MonitorQuery("2", failingQuery),
-                       new MonitorQuery("3", new TermQuery(new Term(textfield, "document"))),
-                       new MonitorQuery("4", new TermQuery(new Term(textfield, "foo"))));
-        DocumentMatches match = monitor.match(doc);
-        assertThat(monitor.match(doc))
+    public void testQueryErrors() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "test"),
+                       new MonitorQuery("2", "*:*"),
+                       new MonitorQuery("3", "document"),
+                       new MonitorQuery("4", "foo"));
+
+        assertThat(monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.factory()))
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);

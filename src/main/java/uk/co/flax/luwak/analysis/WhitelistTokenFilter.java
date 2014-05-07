@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.analysis;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;

@@ -1,9 +1,15 @@
-package uk.co.flax.luwak;
+package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.util.Version;
 import org.junit.Before;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQueryParser;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.parsers.LuceneQueryParser;
+
+import java.io.IOException;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -28,12 +34,16 @@ public abstract class PresearcherTestBase {
     protected Presearcher presearcher;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         presearcher = createPresearcher();
-        monitor = new Monitor(presearcher);
+        monitor = new Monitor(createParser(), presearcher);
     }
 
     protected abstract Presearcher createPresearcher();
+
+    protected MonitorQueryParser createParser() {
+        return new LuceneQueryParser(TEXTFIELD, WHITESPACE);
+    }
 
     public static final String TEXTFIELD = "text";
 

@@ -18,17 +18,17 @@ import org.fest.assertions.api.Assertions;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class QueryMatchAssert extends AbstractAssert<QueryMatchAssert, IntervalsQueryMatch> {
+public class IntervalsQueryMatchAssert extends AbstractAssert<IntervalsQueryMatchAssert, IntervalsQueryMatch> {
 
-    protected QueryMatchAssert(IntervalsQueryMatch actual) {
-        super(actual, QueryMatchAssert.class);
+    protected IntervalsQueryMatchAssert(IntervalsQueryMatch actual) {
+        super(actual, IntervalsQueryMatchAssert.class);
     }
 
-    public static QueryMatchAssert assertThat(IntervalsQueryMatch actual) {
-        return new QueryMatchAssert(actual);
+    public static IntervalsQueryMatchAssert assertThat(IntervalsQueryMatch actual) {
+        return new IntervalsQueryMatchAssert(actual);
     }
 
-    public QueryMatchAssert withHitCount(int count) {
+    public IntervalsQueryMatchAssert withHitCount(int count) {
         Assertions.assertThat(actual.getHitCount()).isEqualTo(count);
         return this;
     }

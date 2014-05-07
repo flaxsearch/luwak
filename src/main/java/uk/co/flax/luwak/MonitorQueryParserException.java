@@ -1,7 +1,7 @@
 package uk.co.flax.luwak;
 
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,17 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
-public class MonitorQuery {
+public class MonitorQueryParserException extends Exception {
 
-    private final String id;
     private final String query;
-    private final String highlightQuery;
 
-    public MonitorQuery(String id, String query, String highlightQuery) {
-        this.id = id;
+    public MonitorQueryParserException(String query, String errorMessage) {
+        super(errorMessage);
         this.query = query;
-        this.highlightQuery = highlightQuery;
-    }
-
-    public MonitorQuery(String id, String query) {
-        this(id, query, null);
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getQuery() {
         return query;
-    }
-
-    public String getHighlightQuery() {
-        return highlightQuery;
     }
 
 }

@@ -1,12 +1,12 @@
-package uk.co.flax.luwak.impl;
+package uk.co.flax.luwak.presearcher;
 
 import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.ngram.NGramTokenFilter;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
-import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
+import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
+import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -36,19 +36,24 @@ import uk.co.flax.luwak.util.DuplicateRemovalTokenFilter;
  */
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
+    public static final String NGRAM_SUFFIX = "XX";
+
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher(Extractor... extractors) {
-        super(ObjectArrays.concat(extractors, new RegexpNGramTermExtractor()));
+    public WildcardNGramPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
+        super(filter, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
+    }
 
+    public WildcardNGramPresearcher(Extractor... extractors) {
+        this(new DocumentTokenFilter.Default(), extractors);
     }
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        TokenStream ngramTs = new DuplicateRemovalTokenFilter(
-                new NGramTokenFilter(Version.LUCENE_50, ts, 1, Integer.MAX_VALUE)
-        );
-        return super.filterInputDocumentTokens(field, ngramTs);
+        TokenStream filtered = super.filterInputDocumentTokens(field, ts);
+        TokenStream duped = new KeywordRepeatFilter(filtered);
+        TokenStream ngrammed = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, 1, Integer.MAX_VALUE);
+        return new DuplicateRemovalTokenFilter(ngrammed);
     }
 }

@@ -1,4 +1,6 @@
-package uk.co.flax.luwak.util;/*
+package uk.co.flax.luwak.analysis;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +29,7 @@ import java.io.IOException;
  */
 public class DuplicateRemovalTokenFilter extends FilteringTokenFilter {
 
-    private final CharArraySet seenTerms = new CharArraySet(Version.LUCENE_50, 1024, true);
+    private final CharArraySet seenTerms = new CharArraySet(Version.LUCENE_50, 1024, false);
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
     public DuplicateRemovalTokenFilter(TokenStream input) {

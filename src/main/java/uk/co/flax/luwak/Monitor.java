@@ -1,26 +1,31 @@
 package uk.co.flax.luwak;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.SetMultimap;
-import org.apache.lucene.analysis.TokenStream;
+import com.google.common.base.Strings;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.Version;
-import uk.co.flax.luwak.util.WhitelistTokenFilter;
 
+import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,226 +40,231 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * limitations under the License.
  */
 
-/**
- * A Monitor matches {@link uk.co.flax.luwak.InputDocument}s to registered
- * {@link uk.co.flax.luwak.MonitorQuery} objects.
- *
- * MonitorQueries are stored in an internal index, their representation
- * being determined by a {@link uk.co.flax.luwak.Presearcher}.  An incoming {@link InputDocument}
- * is converted by the Presearcher to a query and run against this index using
- * a specialized Collector, which extracts the stored query for each hit and runs
- * it against the document.
- */
-public class Monitor {
+public class Monitor implements Closeable {
 
-    public static final List<MonitorQuery> EMPTY_QUERY_LIST = new ArrayList<>();
-
-    private Directory directory;
-    private DirectoryReader reader = null;
-    private IndexSearcher searcher = null;
-    private SetMultimap<String, String> terms = null;
-
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private final IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_50, null);
-
-    private final Map<String, MonitorQuery> queries = new HashMap<>();
-
+    private final MonitorQueryParser parser;
     private final Presearcher presearcher;
 
-    public static class FIELDS {
-        public static final String id = "id";
-        public static final String del_id = "del_id";
+    private final Directory directory;
+    private final IndexWriter writer;
+    private final SearcherManager manager;
+
+    // Query cache, using a passed-in QueryParser to build queries on demand.
+    private final LoadingCache<String, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<String, Query>() {
+        @Override
+        public Query load(String query) throws Exception {
+            return parser.parse(query);
+        }
+    });
+
+    public static final class FIELDS {
+        public static final String id = "_id";
+        public static final String query = "_query";
+        public static final String highlight = "_highlight";
     }
 
     /**
-     * Create a new Monitor
-     * @param presearcher the Presearcher to use to store queries
+     * Create a new Monitor instance, using an internal RAMDirectory to build the queryindex
+     * @param parser the query parser to use
+     * @param presearcher the presearcher to use
+     * @throws IOException
      */
-    public Monitor(Presearcher presearcher) {
-        directory = new RAMDirectory();
+    public Monitor(MonitorQueryParser parser, Presearcher presearcher) throws IOException {
+        this(parser, presearcher, new RAMDirectory());
+    }
+
+    /**
+     * Create a new Monitor instance, using a passed in Directory for its queryindex
+     * @param parser the query parser to use
+     * @param presearcher the presearcher to use
+     * @param directory the directory where the queryindex is stored
+     * @throws IOException
+     */
+    public Monitor(MonitorQueryParser parser, Presearcher presearcher, Directory directory) throws IOException {
+        this.parser = parser;
         this.presearcher = presearcher;
-        presearcher.setMonitor(this);
+        this.directory = directory;
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50,
+                new WhitespaceAnalyzer(Version.LUCENE_50)));
+
+        this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
 
-    private void openSearcher() throws IOException {
-        if (reader != null)
-            reader.close();
-        reader = DirectoryReader.open(directory);
-        searcher = new IndexSearcher(reader);
-        buildTokenSet();
-    }
-
-    /**
-     * Remove all currently registered queries from the monitor
-     */
-    public void reset() {
-        lock.writeLock().lock();
-        try {
-            directory.close();
-            directory = new RAMDirectory();
-            queries.clear();
-        } catch (IOException e) {
-            // Shouldn't happen, we're a RAM directory
-            throw new RuntimeException(e);
-        }
-        finally {
-            lock.writeLock().unlock();
-        }
+    @Override
+    public void close() throws IOException {
+        IOUtils.closeWhileHandlingException(manager, writer, directory);
     }
 
     /**
-     * Register new queries with the monitor
-     * @param queriesToAdd an {@link Iterable} of {@link MonitorQuery} objects
+     * Add new queries to the monitor
+     * @param queries the MonitorQueries to add
+     * @return a list of exceptions for queries that could not be added
+     * @throws IOException
      */
-    public void update(Iterable<? extends MonitorQuery> queriesToAdd) {
-        update(queriesToAdd, EMPTY_QUERY_LIST);
-    }
-
-    /**
-     * Register new queries with the monitor
-     * @param queries an array of {@link MonitorQuery} objects
-     */
-    public void update(MonitorQuery... queries) {
-        update(Arrays.asList(queries));
-    }
-
-    /**
-     * Register new queries and delete existing queries from the the monitor
-     * @param queriesToAdd an {@link Iterable} of {@link MonitorQuery} objects to add
-     * @param queriesToDelete an {@link Iterable} of {@link MonitorQuery} objects to remove
-     */
-    public void update(Iterable<? extends MonitorQuery> queriesToAdd, Iterable<? extends MonitorQuery> queriesToDelete) {
-        try {
-            lock.writeLock().lock();
-            IndexWriterConfig iwc = this.iwc.clone();
-            IndexWriter writer = new IndexWriter(directory, iwc);
-            for (MonitorQuery mq : queriesToAdd) {
-                try {
-                    writer.updateDocument(new Term(FIELDS.del_id, mq.getId()), mq.asIndexableDocument(presearcher));
-                }
-                catch (Exception e) {
-                    throw new RuntimeException("Couldn't index query " + mq.getId() + " [" + mq.getQuery() + "]", e);
-                }
-                queries.put(mq.getId(), mq);
+    public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
+        List<QueryError> errors = new ArrayList<>();
+        for (MonitorQuery query : queries) {
+            try {
+                Query matchQuery = this.queries.get(query.getQuery());
+                if (!Strings.isNullOrEmpty(query.getHighlightQuery()))
+                    this.queries.get(query.getHighlightQuery()); // force HlQ to be parsed
+                writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
             }
-            for (MonitorQuery mq : queriesToDelete) {
-                writer.deleteDocuments(mq.getDeletionQuery());
-                queries.remove(mq.getId());
-            }
-            writer.commit();
-            writer.close();
-            openSearcher();
-        }
-        catch (IOException e) {
-            // Shouldn't happen, because we're using a RAMDirectory...
-            throw new RuntimeException(e);
-        }
-        finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    /**
-     * Match an {@link InputDocument} against the queries registered in this monitor
-     * @param document the Document to match
-     * @return a {@link DocumentMatches} object describing the queries that matched
-     */
-    public DocumentMatches match(final InputDocument document) {
-        try {
-            lock.readLock().lock();
-
-            if (searcher == null)
-                throw new IllegalStateException("Monitor has no registered queries!");
-
-            long starttime = System.currentTimeMillis(), prebuild, monitor, tick;
-
-            MonitorQueryCollector collector = new MonitorQueryCollector(document);
-            Query presearcherQuery = presearcher.buildQuery(document);
-
-            tick = System.currentTimeMillis();
-            prebuild = tick - starttime;
-            starttime = tick;
-
-            searcher.search(presearcherQuery, collector);
-
-            monitor = System.currentTimeMillis() - starttime;
-
-            return collector.getMatches(prebuild, monitor);
-
-        }
-        catch (IOException e) {
-            // Shouldn't happen, because we're using a RAMDirectory
-            throw new RuntimeException(e);
-        }
-        finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    /**
-     * Get the query registered under a specific ID, or null if there is no corresponding query
-     * @param queryId the id of the MonitorQuery
-     * @return the query with the passed in ID
-     */
-    public MonitorQuery getQuery(String queryId) {
-        return queries.get(queryId);
-    }
-
-    /**
-     * Get the number of queries registered in the monitor
-     * @return the number of queries registered in the monitor
-     */
-    public long getQueryCount() {
-        return queries.size();
-    }
-
-    /**
-     * Create a new {@link TokenStream} that removes any tokens in its input that are not present
-     * in the monitor's internal index.  Used by {@link Presearcher#buildQuery(InputDocument)} to
-     * trim the BooleanQuery created from an InputDocument.
-     * @param field the field this TokenStream is for
-     * @param ts the input TokenStream
-     * @return a filtered TokenStream
-     */
-    public TokenStream filterTokenStream(String field, TokenStream ts) {
-        return new WhitelistTokenFilter(ts, terms.get(field));
-    }
-
-    private void buildTokenSet() throws IOException {
-        SetMultimap<String, String> terms = HashMultimap.create();
-        BytesRef termBytes;
-        for (AtomicReaderContext ctx : reader.leaves()) {
-            for (String field : ctx.reader().fields()) {
-                TermsEnum te = ctx.reader().terms(field).iterator(null);
-                while ((termBytes = te.next()) != null) {
-                    terms.put(field, termBytes.utf8ToString());
-                }
+            catch (ExecutionException e) {
+                Throwable t = e.getCause();
+                if (t instanceof MonitorQueryParserException)
+                    errors.add(new QueryError(query.getId(), (MonitorQueryParserException) t));
+                else
+                    throw new RuntimeException(t);
             }
         }
-        this.terms = terms;
+        writer.commit();
+        manager.maybeRefresh();
+        return errors;
     }
 
-    abstract class QueryCollector extends Collector {
+    public List<QueryError> update(MonitorQuery... queries) throws IOException {
+        return update(Arrays.asList(queries));
+    }
 
-        SortedDocValues idField;
-        final BytesRef idRef = new BytesRef();
+    /**
+     * Delete queries from the monitor
+     * @param queries the queries to remove
+     * @throws IOException
+     */
+    public void delete(Iterable<MonitorQuery> queries) throws IOException {
+        for (MonitorQuery mq : queries) {
+            writer.deleteDocuments(new Term(Monitor.FIELDS.id, mq.getId()));
+        }
+        writer.commit();
+        manager.maybeRefresh();
+    }
+
+    private void match(CandidateMatcher matcher) throws IOException {
+
+        long start = System.nanoTime();
+        Query query = presearcher.buildQuery(matcher.getDocument());
+        matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
+
+        SearchingCollector collector = new SearchingCollector(matcher);
+        match(query, collector);
+        matcher.setQueriesRun(collector.getQueryCount());
+    }
+
+    public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        T matcher = factory.createMatcher(doc);
+        match(matcher);
+        return matcher;
+    }
+
+    public void match(InputDocument doc, TimedCollector collector) throws IOException {
+        Query query = presearcher.buildQuery(doc);
+        match(query, collector);
+    }
+
+    /**
+     * Ensures that all queries in the queryindex have been parsed.  Call this if you
+     * have stored queries in an external Directory and want to to ensure that they are
+     * all loaded and parsed before any documents are passed in.
+     *
+     * @throws IOException
+     */
+    public void loadAllQueries() throws IOException {
+        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+            @Override
+            protected void doSearch(String queryId, Query matchQuery, Query highlight) {
+                // no impl
+            }
+        });
+    }
+
+    public int getQueryCount() {
+        return writer.numDocs();
+    }
+
+    private void match(Query query, TimedCollector collector) throws IOException {
+        IndexSearcher searcher = null;
+        long startTime = System.nanoTime();
+        try {
+            searcher = manager.acquire();
+            searcher.search(query, collector);
+        }
+        finally {
+            manager.release(searcher);
+            collector.setSearchTime((System.nanoTime() - startTime) / 1000000);
+        }
+    }
+
+    protected Document buildIndexableQuery(MonitorQuery mq, Query matchQuery) {
+        Document doc = presearcher.indexQuery(matchQuery);
+        doc.add(new StringField(Monitor.FIELDS.id, mq.getId(), Field.Store.NO));
+        doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
+        doc.add(new SortedDocValuesField(Monitor.FIELDS.query, new BytesRef(mq.getQuery())));
+        String hl = mq.getHighlightQuery();
+        if (hl == null)
+            hl = "";
+        doc.add(new SortedDocValuesField(Monitor.FIELDS.highlight, new BytesRef(hl)));
+        return doc;
+    }
+
+    private class SearchingCollector extends MonitorQueryCollector {
+
+        final CandidateMatcher matcher;
+
+        private SearchingCollector(CandidateMatcher matcher) {
+            this.matcher = matcher;
+        }
+
+        @Override
+        protected void doSearch(String queryId, Query matchQuery, Query highlight) {
+            try {
+                matcher.matchQuery(queryId, matchQuery, highlight);
+            }
+            catch (Exception e) {
+                matcher.reportError(new MatchError(queryId, e));
+            }
+        }
+
+        @Override
+        public void setSearchTime(long searchTime) {
+            matcher.setSearchTime(searchTime);
+        }
+    }
+
+    public abstract class MonitorQueryCollector extends TimedCollector {
+
+        protected SortedDocValues queryDV;
+        protected SortedDocValues highlightDV;
+        protected SortedDocValues idDV;
+
+        final BytesRef query = new BytesRef();
+        final BytesRef highlight = new BytesRef();
+        final BytesRef id = new BytesRef();
+
+        protected abstract void doSearch(String id, Query matchQuery, Query highlight);
+
+        private int queryCount = 0;
+        private long searchTime = -1;
 
         @Override
         public void setScorer(Scorer scorer) throws IOException {
-            // no impl
+
         }
 
         @Override
-        public void collect(int doc) throws IOException {
-            idField.get(doc, idRef);
-            final MonitorQuery mq = queries.get(idRef.utf8ToString());
-            doQuery(mq);
+        public final void collect(int doc) throws IOException {
+            queryDV.get(doc, query);
+            highlightDV.get(doc, highlight);
+            idDV.get(doc, id);
+            queryCount++;
+            doSearch(id.utf8ToString(), queries.getIfPresent(query.utf8ToString()), queries.getIfPresent(highlight.utf8ToString()));
         }
 
         @Override
         public void setNextReader(AtomicReaderContext context) throws IOException {
-            idField = context.reader().getSortedDocValues(FIELDS.id);
+            this.queryDV = context.reader().getSortedDocValues(Monitor.FIELDS.query);
+            this.highlightDV = context.reader().getSortedDocValues(Monitor.FIELDS.highlight);
+            this.idDV = context.reader().getSortedDocValues(FIELDS.id);
         }
 
         @Override
@@ -262,77 +272,17 @@ public class Monitor {
             return true;
         }
 
-        protected abstract void doQuery(MonitorQuery mq) throws IOException;
-    }
+        public int getQueryCount() {
+            return queryCount;
+        }
 
-    // A specialized Collector run against the Monitor's internal index, that for
-    // each hit extracts the related query and runs it against the InputDocument
-    class MonitorQueryCollector extends QueryCollector {
-
-        private final InputDocument doc;
-
-        private final List<QueryMatch> matches = new ArrayList<QueryMatch>();
-        private final List<MatchError> errors = new ArrayList<>();
-
-        private int queryCount;
-
-        public MonitorQueryCollector(final InputDocument doc) {
-            this.doc = doc;
+        public long getSearchTime() {
+            return searchTime;
         }
 
         @Override
-        public void doQuery(MonitorQuery mq) throws IOException {
-
-            try {
-                QueryMatch matches = doc.search(mq);
-                if (matches != null)
-                    this.matches.add(matches);
-            }
-            catch (Exception e) {
-                this.errors.add(new MatchError(mq.getId(), e));
-            }
-
-            queryCount++;
-
-        }
-
-        DocumentMatches getMatches(long preptime, long querytime) {
-            return new DocumentMatches(this.doc.getId(), this.matches, this.errors, this.queryCount, preptime, querytime);
-        }
-
-    }
-
-    /**
-     * Return a list of queries that the presearcher selects for the given document
-     * @param document the document
-     * @return a list of the queries that would be run against this doc in #match()
-     */
-    public List<MonitorQuery> getMatchingQueries(InputDocument document) {
-        lock.readLock().lock();
-        try {
-            Query presearcherQuery = presearcher.buildQuery(document);
-            MatchingQueryCollector collector = new MatchingQueryCollector();
-            searcher.search(presearcherQuery, collector);
-            return collector.getMatchingQueries();
-        } catch (IOException e) {
-            // shouldn't happen with a RAMDirectory...
-            throw new RuntimeException(e);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    private class MatchingQueryCollector extends QueryCollector {
-
-        private final List<MonitorQuery> matchingQueries = new ArrayList<>();
-
-        @Override
-        protected void doQuery(MonitorQuery mq) throws IOException {
-            matchingQueries.add(mq);
-        }
-
-        public List<MonitorQuery> getMatchingQueries() {
-            return matchingQueries;
+        public void setSearchTime(long searchTime) {
+            this.searchTime = searchTime;
         }
     }
 }
