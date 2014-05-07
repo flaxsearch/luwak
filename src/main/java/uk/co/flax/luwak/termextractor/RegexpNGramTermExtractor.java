@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.termextractor;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import org.apache.lucene.search.RegexpQuery;
@@ -32,8 +33,11 @@ import java.util.regex.Pattern;
  */
 public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
 
-    public RegexpNGramTermExtractor() {
+    private final String ngramSuffix;
+
+    public RegexpNGramTermExtractor(String ngramSuffix) {
         super(RegexpQuery.class);
+        this.ngramSuffix = ngramSuffix;
     }
 
     public static Pattern regexpChars = Pattern.compile("\\.\\*|\\?");
@@ -51,10 +55,8 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
     public void extract(RegexpQuery query, List<QueryTerm> terms,
                             List<Extractor<?>> extractors) {
         String regexp = parseOutRegexp(query.toString(""));
-        for (String substr : byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1)) {
-            terms.add(new QueryTerm(query.getField(), substr, QueryTerm.Type.WILDCARD));
-            return;
-        }
+        String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
+        terms.add(new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.WILDCARD));
     }
 
     /**

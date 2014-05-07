@@ -43,6 +43,20 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
+    public void ngramsOnlyMatchWildcards() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "hello"));
+
+        InputDocument doc1 = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, "hellopolis", WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+                .hasQueriesRunCount(0);
+
+    }
+
+    @Test
     public void caseSensitivity() throws IOException {
 
         monitor.update(new MonitorQuery("1", "foo"));
