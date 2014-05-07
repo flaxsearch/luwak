@@ -65,6 +65,10 @@ public class QueryTermList implements Iterable<QueryTerm> {
             if (comparison != 0)
                 return comparison;
 
+            comparison = Integer.compare(o2.longestTerm(), o1.longestTerm());
+            if (comparison != 0)
+                return comparison;
+
             return Integer.compare(o1.length(), o2.length());
         }
 
@@ -107,6 +111,14 @@ public class QueryTermList implements Iterable<QueryTerm> {
         for (QueryTerm term : terms) {
             if (fields.contains(term.field))
                 c++;
+        }
+        return c;
+    }
+
+    private int longestTerm() {
+        int c = -1;
+        for (QueryTerm term : terms) {
+            c = Math.max(c, term.term.length());
         }
         return c;
     }

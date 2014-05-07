@@ -36,6 +36,28 @@ public class TestQueryTermComparators {
     }
 
     @Test
+    public void testLongerTokensArePreferred() {
+
+        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
+                .containsExactly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+
+    }
+
+    @Test
+    public void testShorterTermListsArePreferred() {
+
+        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT),
+                new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
+                .containsExactly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+    }
+
+    @Test
     public void testUndesireableFieldsAreNotPreferred() {
 
         QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
