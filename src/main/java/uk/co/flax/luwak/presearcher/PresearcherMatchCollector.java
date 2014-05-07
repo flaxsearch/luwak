@@ -83,7 +83,11 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
         String terms = document.getField(interval.field).stringValue();
         if (!matchingTerms.containsKey(currentId))
             matchingTerms.put(currentId, new StringBuilder());
-        matchingTerms.get(currentId).append(" ").append(terms.substring(interval.offsetBegin, interval.offsetEnd));
+        matchingTerms.get(currentId)
+                .append(" ")
+                .append(interval.field)
+                .append(":")
+                .append(terms.substring(interval.offsetBegin, interval.offsetEnd));
     }
 
     @Override

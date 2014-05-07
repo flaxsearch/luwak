@@ -50,8 +50,8 @@ public class TestPresearcherMatchCollector {
                 .containsKey("1")
                 .containsKey("2");
 
-        assertThat(collector.matchingTerms.get("1").toString()).isEqualTo(" test");
-        assertThat(collector.matchingTerms.get("2").toString()).isEqualTo(" foo");
+        assertThat(collector.matchingTerms.get("1").toString()).isEqualTo(" f:test");
+        assertThat(collector.matchingTerms.get("2").toString()).isEqualTo(" f:foo");
 
     }
 
