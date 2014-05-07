@@ -3,6 +3,7 @@ package uk.co.flax.luwak.presearcher;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
 import org.apache.lucene.util.Version;
 
@@ -54,10 +55,10 @@ public interface DocumentTokenFilter {
 
     public static class TokensFilter implements DocumentTokenFilter {
 
-        private final Set<String> tokensToFilter;
+        private final CharArraySet tokensToFilter = new CharArraySet(Version.LUCENE_50, 1024, false);
 
         public TokensFilter(Set<String> tokensToFilter) {
-            this.tokensToFilter = tokensToFilter;
+            this.tokensToFilter.addAll(tokensToFilter);
         }
 
         @Override
@@ -68,7 +69,7 @@ public interface DocumentTokenFilter {
 
                 @Override
                 protected boolean accept() throws IOException {
-                    return !tokensToFilter.contains(termAtt.toString());
+                    return !tokensToFilter.contains(termAtt);
                 }
             };
         }
