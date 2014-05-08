@@ -54,7 +54,7 @@ public class TermFilteredPresearcher implements Presearcher {
 
     public static final String TERMSFIELD = "_terms";
 
-    private final QueryTermExtractor extractor;
+    protected final QueryTermExtractor extractor;
 
     private final DocumentTokenFilter filter;
 

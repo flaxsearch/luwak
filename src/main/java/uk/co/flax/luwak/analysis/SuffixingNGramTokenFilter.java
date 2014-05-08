@@ -29,6 +29,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
 
     private final int minGram, maxGram;
     private final String suffix;
+    private final int maxTokenLength;
+    private final String anyToken;
 
     private char[] curTermBuffer;
     private int curTermLength;
@@ -50,21 +52,16 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
      * Creates NGramTokenFilter with given min and max n-grams.
      * @param input {@link org.apache.lucene.analysis.TokenStream} holding the input to be tokenized
      * @param suffix a string to suffix to all ngrams
-     * @param minGram the smallest n-gram to generate
-     * @param maxGram the largest n-gram to generate
      */
-    public SuffixingNGramTokenFilter(TokenStream input, String suffix, int minGram, int maxGram) {
-        super(new CodepointCountFilter(Version.LUCENE_50, input, minGram, Integer.MAX_VALUE));
+    public SuffixingNGramTokenFilter(TokenStream input, String suffix, String anyToken, int maxTokenLength) {
+        super(new CodepointCountFilter(Version.LUCENE_50, input, 1, Integer.MAX_VALUE));
         this.charUtils = CharacterUtils.getInstance(Version.LUCENE_50);
-        if (minGram < 1) {
-            throw new IllegalArgumentException("minGram must be greater than zero");
-        }
-        if (minGram > maxGram) {
-            throw new IllegalArgumentException("minGram must not be greater than maxGram");
-        }
-        this.minGram = minGram;
-        this.maxGram = maxGram;
+
+        this.minGram = 1;
+        this.maxGram = Integer.MAX_VALUE;
         this.suffix = suffix;
+        this.anyToken = anyToken;
+        this.maxTokenLength = maxTokenLength;
 
         posIncAtt = addAttribute(PositionIncrementAttribute.class);
         posLenAtt = addAttribute(PositionLengthAttribute.class);
@@ -83,6 +80,11 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
 
                 if (keywordAtt.isKeyword())
                     return true;
+
+                if (termAtt.length() > maxTokenLength) {
+                    termAtt.setEmpty().append(anyToken);
+                    return true;
+                }
 
                 curTermBuffer = termAtt.buffer().clone();
                 curTermLength = termAtt.length();
