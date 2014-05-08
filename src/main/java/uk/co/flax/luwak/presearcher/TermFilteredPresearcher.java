@@ -64,27 +64,25 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), extractors);
+        this(DocumentTokenFilter.PASSTHROUGH, extractors);
     }
 
     @Override
-    public final Query buildQuery(InputDocument doc) {
+    public final Query buildQuery(InputDocument doc, DocumentTokenFilter filter) {
         try {
             AtomicReader reader = doc.asAtomicReader();
             BooleanQuery bq = new BooleanQuery();
             for (String field : reader.fields()) {
 
-                boolean hasValues = false;
-
                 TermsEnum te = reader.terms(field).iterator(null);
-                TokenStream ts = filterInputDocumentTokens(field, new TermsEnumTokenStream(te));
+                TokenStream ts = this.filter.filter(field,
+                        filter.filter(field, filterInputDocumentTokens(field, new TermsEnumTokenStream(te))));
 
                 CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
                 while (ts.incrementToken()) {
-                    hasValues = true;
                     bq.add(new TermQuery(new Term(field, termAtt.toString())), BooleanClause.Occur.SHOULD);
                 }
-                if (hasValues)
+
                     bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
 
             }
@@ -96,8 +94,8 @@ public class TermFilteredPresearcher implements Presearcher {
         }
     }
 
-    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
-        return this.filter.filter(field, ts);
+    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
+        return ts;
     }
 
     public static final FieldType QUERYFIELDTYPE;

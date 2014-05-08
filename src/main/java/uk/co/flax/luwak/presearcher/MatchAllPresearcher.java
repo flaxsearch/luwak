@@ -33,7 +33,7 @@ public class MatchAllPresearcher implements Presearcher {
     }
 
     @Override
-    public Query buildQuery(InputDocument doc) {
+    public Query buildQuery(InputDocument doc, DocumentTokenFilter filter) {
         return new MatchAllDocsQuery();
     }
 

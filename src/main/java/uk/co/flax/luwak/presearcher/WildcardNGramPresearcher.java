@@ -8,6 +8,8 @@ import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 
+import java.io.IOException;
+
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
@@ -46,11 +48,11 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     }
 
     public WildcardNGramPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), extractors);
+        this(DocumentTokenFilter.PASSTHROUGH, extractors);
     }
 
     @Override
-    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
+    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
         TokenStream filtered = super.filterInputDocumentTokens(field, ts);
         TokenStream duped = new KeywordRepeatFilter(filtered);
         TokenStream ngrammed = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, 1, Integer.MAX_VALUE);

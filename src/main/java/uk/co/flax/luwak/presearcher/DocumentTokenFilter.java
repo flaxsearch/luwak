@@ -27,15 +27,14 @@ import java.util.Set;
 */
 public interface DocumentTokenFilter {
 
-    public TokenStream filter(String field, TokenStream in);
+    public TokenStream filter(String field, TokenStream in) throws IOException;
 
-    public static class Default implements DocumentTokenFilter {
-
+    public static final DocumentTokenFilter PASSTHROUGH = new DocumentTokenFilter() {
         @Override
         public TokenStream filter(String field, TokenStream in) {
             return in;
         }
-    }
+    };
 
     public static class FieldFilter implements DocumentTokenFilter {
 
