@@ -29,13 +29,13 @@ public interface DocumentTokenFilter {
 
     public TokenStream filter(String field, TokenStream in);
 
-    public static class Default implements DocumentTokenFilter {
+    public static final DocumentTokenFilter PASSTHROUGH = new DocumentTokenFilter() {
 
         @Override
         public TokenStream filter(String field, TokenStream in) {
             return in;
         }
-    }
+    };
 
     public static class FieldFilter implements DocumentTokenFilter {
 

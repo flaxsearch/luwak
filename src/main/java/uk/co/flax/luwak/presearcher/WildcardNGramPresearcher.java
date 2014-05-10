@@ -48,7 +48,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     }
 
     public WildcardNGramPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(DocumentTokenFilter.PASSTHROUGH, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override

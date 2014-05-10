@@ -70,7 +70,7 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(DocumentTokenFilter.PASSTHROUGH, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override
