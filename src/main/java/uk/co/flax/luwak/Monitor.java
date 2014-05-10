@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -143,14 +144,20 @@ public class Monitor implements Closeable {
 
     private void match(CandidateMatcher matcher) throws IOException {
 
-        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
-            long start = System.nanoTime();
-            Query query = presearcher.buildQuery(matcher.getDocument(), filter);
-            matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
+        long start = System.nanoTime();
+        Query query = buildQuery(matcher.getDocument());
+        matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
 
-            SearchingCollector collector = new SearchingCollector(matcher);
-            match(query, collector);
-            matcher.setQueriesRun(collector.getQueryCount());
+        SearchingCollector collector = new SearchingCollector(matcher);
+        match(query, collector);
+        matcher.setQueriesRun(collector.getQueryCount());
+
+    }
+
+    @VisibleForTesting
+    Query buildQuery(InputDocument doc) throws IOException {
+        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
+            return presearcher.buildQuery(doc, filter);
         }
     }
 
@@ -161,10 +168,7 @@ public class Monitor implements Closeable {
     }
 
     public void match(InputDocument doc, TimedCollector collector) throws IOException {
-        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
-            Query query = presearcher.buildQuery(doc, filter);
-            match(query, collector);
-        }
+        match(buildQuery(doc), collector);
     }
 
     /**

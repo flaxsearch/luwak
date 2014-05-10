@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
 import org.apache.lucene.index.*;
@@ -37,7 +38,7 @@ public class TermsEnumFilter implements DocumentTokenFilter, Closeable {
     public TokenStream filter(String field, TokenStream in) throws IOException {
         Terms terms = reader.fields().terms(field);
         if (terms == null)
-            return in;
+            return new EmptyTokenStream();
         return new Filter(in, terms.iterator(null));
     }
 
