@@ -50,7 +50,7 @@ public abstract class Extractor<T extends Query> {
      * @param extractors the list of extractors to check
      */
     @SuppressWarnings("unchecked")
-    protected static final void extractTerms(Query query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    protected static void extractTerms(Query query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         int termcount = terms.size();
         for (Extractor extractor : extractors) {
             if (extractor.cls.isAssignableFrom(query.getClass())) {

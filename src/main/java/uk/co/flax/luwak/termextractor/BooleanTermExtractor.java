@@ -1,14 +1,14 @@
 package uk.co.flax.luwak.termextractor;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -34,15 +34,15 @@ import java.util.Set;
  */
 public class BooleanTermExtractor extends Extractor<BooleanQuery> {
 
-    private final Set<String> unpreferredFields;
+    private final TermWeightor weightor;
 
-    public BooleanTermExtractor(Set<String> unpreferredFields) {
+    public BooleanTermExtractor(TermWeightor weightor) {
         super(BooleanQuery.class);
-        this.unpreferredFields = unpreferredFields;
+        this.weightor = weightor;
     }
 
     public BooleanTermExtractor() {
-        this(Sets.<String>newHashSet());
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR);
     }
 
     @Override
@@ -60,9 +60,9 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
             for (Query subquery : checker.getConjunctions()) {
                 List<QueryTerm> subTerms = new ArrayList<>();
                 extractTerms(subquery, subTerms, extractors);
-                termlists.add(new QueryTermList(subTerms));
+                termlists.add(new QueryTermList(this.weightor, subTerms));
             }
-            Iterables.addAll(terms, QueryTermList.selectBest(termlists, unpreferredFields));
+            Iterables.addAll(terms, QueryTermList.selectBest(termlists));
         }
     }
 

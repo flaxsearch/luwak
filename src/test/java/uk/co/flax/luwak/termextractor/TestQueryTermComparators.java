@@ -1,8 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
+import uk.co.flax.luwak.termextractor.weights.*;
+
+import java.util.List;
+import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -24,11 +29,13 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestQueryTermComparators {
 
+    private static TermWeightor WEIGHT = CompoundRuleWeightor.newWeightor().build();
+
     @Test
     public void testAnyTokensAreNotPreferred() {
 
-        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTermList list2 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
+        QueryTermList list1 = new QueryTermList(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
 
         assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
                 .containsExactly(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
@@ -38,8 +45,8 @@ public class TestQueryTermComparators {
     @Test
     public void testLongerTokensArePreferred() {
 
-        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTermList list2 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+        QueryTermList list1 = new QueryTermList(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(WEIGHT, new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
 
         assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
                 .containsExactly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
@@ -47,10 +54,22 @@ public class TestQueryTermComparators {
     }
 
     @Test
+    public void testTermListLengthNorms() {
+
+        List<QueryTerm> list1 = Lists.newArrayList(new QueryTerm("f", "t", QueryTerm.Type.EXACT),
+                                                   new QueryTerm("f", "t", QueryTerm.Type.EXACT));
+        List<QueryTerm> list2 = Lists.newArrayList(new QueryTerm("f", "t", QueryTerm.Type.EXACT));
+
+        WeightRule rule = new LengthNorm(3, 0.3f);
+        assertThat(rule.weigh(list2)).isGreaterThan(rule.weigh(list1));
+
+    }
+
+    @Test
     public void testShorterTermListsArePreferred() {
 
-        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
-        QueryTermList list2 = new QueryTermList(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT),
+        QueryTermList list1 = new QueryTermList(WEIGHT, new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(WEIGHT, new QueryTerm("f", "foobar", QueryTerm.Type.EXACT),
                 new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
 
         assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
@@ -60,10 +79,14 @@ public class TestQueryTermComparators {
     @Test
     public void testUndesireableFieldsAreNotPreferred() {
 
-        QueryTermList list1 = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
-        QueryTermList list2 = new QueryTermList(new QueryTerm("g", "bar", QueryTerm.Type.EXACT));
+        TermWeightor weight = CompoundRuleWeightor.newWeightor()
+                .withRule(new FieldWeightRule(Sets.newSet("g"), 0.7f))
+                .build();
 
-        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2), Sets.newSet("g")))
+        QueryTermList list1 = new QueryTermList(weight, new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
+        QueryTermList list2 = new QueryTermList(weight, new QueryTerm("g", "bar", QueryTerm.Type.EXACT));
+
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
                 .containsExactly(new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
 
     }
@@ -71,10 +94,27 @@ public class TestQueryTermComparators {
     @Test
     public void testUndesireableFieldsAreStillSelectedIfNecessary() {
 
-        QueryTermList list = new QueryTermList(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        assertThat(QueryTermList.selectBest(Lists.newArrayList(list, list), Sets.newSet("f")))
+        TermWeightor weight = CompoundRuleWeightor.newWeightor()
+                .withRule(new FieldWeightRule(Sets.newSet("f"), 0.7f)).build();
+
+        QueryTermList list = new QueryTermList(weight, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list, list)))
                 .containsExactly(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
 
+    }
+
+    @Test
+    public void testUndesirableTokensAreNotPreferred() {
+
+        Map<String, Float> termweights = ImmutableMap.of("START", 0.01f);
+        TermWeightor weight = CompoundRuleWeightor.newWeightor()
+                .withRule(new TermWeightRule(termweights)).build();
+
+        QueryTermList list1 = new QueryTermList(weight, new QueryTerm("f", "START", QueryTerm.Type.EXACT));
+        QueryTermList list2 = new QueryTermList(weight, new QueryTerm("f", "a", QueryTerm.Type.EXACT));
+
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
+                .containsExactly(new QueryTerm("f", "a", QueryTerm.Type.EXACT));
     }
 
 }

@@ -7,6 +7,8 @@ import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -41,12 +43,12 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
-        super(filter, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
+    public WildcardNGramPresearcher(DocumentTokenFilter filter, TermWeightor weightor, Extractor... extractors) {
+        super(filter, weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
     }
 
     public WildcardNGramPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), extractors);
+        this(new DocumentTokenFilter.Default(), CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override

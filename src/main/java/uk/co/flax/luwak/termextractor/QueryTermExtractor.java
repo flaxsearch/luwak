@@ -16,11 +16,10 @@ package uk.co.flax.luwak.termextractor;/*
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility class to extract terms from a {@link Query} by walking the query tree.
@@ -41,18 +40,14 @@ public class QueryTermExtractor {
             new NonOverlappingQueryExtractor(),
             new FieldedConjunctionQueryExtractor(),
             new FieldedBooleanQueryExtractor(),
-            new BooleanTermExtractor(),
             new NumericRangeExtractor(),
             new RegexpAnyTermExtractor(),
             new SimpleTermExtractor(),
             new GenericTermExtractor()
     );
 
-    /**
-     * Create a new QueryTermExtractor using the default {@link Extractor} list
-     */
-    public QueryTermExtractor() {
-        extractors.addAll(DEFAULT_EXTRACTORS);
+    public QueryTermExtractor(Extractor<?>... extractors) {
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     /**
@@ -61,12 +56,12 @@ public class QueryTermExtractor {
      *
      * Extractors passed in here will override a default defined on the same query type.
      *
+     * @param weightor   the {@link uk.co.flax.luwak.termextractor.weights.TermWeightor} to use for Boolean clauses
      * @param extractors an array of Extractors
      */
-    public QueryTermExtractor(Extractor<?>... extractors) {
-        for (Extractor<?> extractor : extractors) {
-            this.extractors.add(extractor);
-        }
+    public QueryTermExtractor(TermWeightor weightor, Extractor<?>... extractors) {
+        Collections.addAll(this.extractors, extractors);
+        this.extractors.add(new BooleanTermExtractor(weightor));
         this.extractors.addAll(DEFAULT_EXTRACTORS);
     }
 

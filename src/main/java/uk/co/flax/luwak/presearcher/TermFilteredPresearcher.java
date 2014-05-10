@@ -34,6 +34,8 @@ import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,13 +60,17 @@ public class TermFilteredPresearcher implements Presearcher {
 
     private final DocumentTokenFilter filter;
 
-    public TermFilteredPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
-        this.extractor = new QueryTermExtractor(extractors);
+    public TermFilteredPresearcher(DocumentTokenFilter filter, TermWeightor weightor, Extractor... extractors) {
+        this.extractor = new QueryTermExtractor(weightor, extractors);
         this.filter = filter;
     }
 
+    public TermFilteredPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
+        this(filter, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+    }
+
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(new DocumentTokenFilter.Default(), extractors);
+        this(new DocumentTokenFilter.Default(), CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override
