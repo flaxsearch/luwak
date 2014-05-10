@@ -42,7 +42,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
     public static final String NGRAM_SUFFIX = "XX";
 
-    public static final int MAX_TOKEN_SIZE = 15;
+    public static final int MAX_TOKEN_SIZE = 30;
 
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
