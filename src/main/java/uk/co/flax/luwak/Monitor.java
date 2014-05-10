@@ -16,6 +16,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.Version;
+import uk.co.flax.luwak.presearcher.TermsEnumFilter;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -142,13 +143,15 @@ public class Monitor implements Closeable {
 
     private void match(CandidateMatcher matcher) throws IOException {
 
-        long start = System.nanoTime();
-        Query query = presearcher.buildQuery(matcher.getDocument());
-        matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
+        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
+            long start = System.nanoTime();
+            Query query = presearcher.buildQuery(matcher.getDocument(), filter);
+            matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
 
-        SearchingCollector collector = new SearchingCollector(matcher);
-        match(query, collector);
-        matcher.setQueriesRun(collector.getQueryCount());
+            SearchingCollector collector = new SearchingCollector(matcher);
+            match(query, collector);
+            matcher.setQueriesRun(collector.getQueryCount());
+        }
     }
 
     public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
@@ -158,8 +161,10 @@ public class Monitor implements Closeable {
     }
 
     public void match(InputDocument doc, TimedCollector collector) throws IOException {
-        Query query = presearcher.buildQuery(doc);
-        match(query, collector);
+        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
+            Query query = presearcher.buildQuery(doc, filter);
+            match(query, collector);
+        }
     }
 
     /**
@@ -285,4 +290,5 @@ public class Monitor implements Closeable {
             this.searchTime = searchTime;
         }
     }
+
 }

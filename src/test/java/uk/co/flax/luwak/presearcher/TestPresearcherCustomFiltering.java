@@ -43,10 +43,10 @@ public class TestPresearcherCustomFiltering {
                 .build();
 
         Presearcher presearcher = new TermFilteredPresearcher(new DocumentTokenFilter.FieldFilter("field2"));
-        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc);
+        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, DocumentTokenFilter.PASSTHROUGH);
 
         assertThat(q.clauses())
-                .containsExactly(clause("field1", "foo"), clause("field1", "__ANYTOKEN__"));
+                .containsExactly(clause("field1", "foo"), clause("field1", "__ANYTOKEN__"), clause("field2", "__ANYTOKEN__"));
 
     }
 
@@ -60,7 +60,7 @@ public class TestPresearcherCustomFiltering {
         Set<String> tokensToFilter = ImmutableSet.of("bar");
 
         Presearcher presearcher = new TermFilteredPresearcher(new DocumentTokenFilter.TokensFilter(tokensToFilter));
-        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc);
+        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, DocumentTokenFilter.PASSTHROUGH);
 
         assertThat(q.clauses())
                 .containsOnly(clause("field1", "__ANYTOKEN__"), clause("field1", "foo"), clause("field1", "baz"));
@@ -79,7 +79,7 @@ public class TestPresearcherCustomFiltering {
 
         Presearcher presearcher
                 = new TermFilteredPresearcher(new DocumentTokenFilter.FieldTokensFilter("field1", tokensToFilter));
-        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc);
+        BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, DocumentTokenFilter.PASSTHROUGH);
 
         assertThat(q.clauses())
                 .containsOnly(clause("field1", "__ANYTOKEN__"), clause("field2", "__ANYTOKEN__"), clause("field1", "foo"),

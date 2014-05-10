@@ -27,10 +27,9 @@ import java.util.Set;
 */
 public interface DocumentTokenFilter {
 
-    public TokenStream filter(String field, TokenStream in);
+    public TokenStream filter(String field, TokenStream in) throws IOException;
 
     public static final DocumentTokenFilter PASSTHROUGH = new DocumentTokenFilter() {
-
         @Override
         public TokenStream filter(String field, TokenStream in) {
             return in;

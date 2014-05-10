@@ -34,7 +34,7 @@ public class TestSuffixingNGramTokenizer {
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
             Tokenizer source = new WhitespaceTokenizer(Version.LUCENE_50);
-            TokenStream sink = new SuffixingNGramTokenFilter(new KeywordRepeatFilter(source), "XX", 1, 10);
+            TokenStream sink = new SuffixingNGramTokenFilter(new KeywordRepeatFilter(source), "XX", "ANY", 10);
             return new TokenStreamComponents(source, sink);
         }
     };
@@ -55,6 +55,17 @@ public class TestSuffixingNGramTokenizer {
                 .nextEquals("rXX")
                 .nextEquals("rmXX")
                 .nextEquals("mXX")
+                .isExhausted();
+
+    }
+
+    @Test
+    public void testLengthyTokensAreNotNgrammed() throws IOException {
+
+        TokenStream ts = analyzer.tokenStream("f", "alongtermthatshouldntbengrammed");
+        assertThat(ts)
+                .nextEquals("alongtermthatshouldntbengrammed")
+                .nextEquals("ANY")
                 .isExhausted();
 
     }

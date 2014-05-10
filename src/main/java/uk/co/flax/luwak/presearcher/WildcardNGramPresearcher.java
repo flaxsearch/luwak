@@ -10,6 +10,8 @@ import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
+import java.io.IOException;
+
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
@@ -52,10 +54,10 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     }
 
     @Override
-    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) {
+    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
         TokenStream filtered = super.filterInputDocumentTokens(field, ts);
         TokenStream duped = new KeywordRepeatFilter(filtered);
-        TokenStream ngrammed = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, 1, Integer.MAX_VALUE);
+        TokenStream ngrammed = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, extractor.getAnyToken(), 15);
         return new DuplicateRemovalTokenFilter(ngrammed);
     }
 }
