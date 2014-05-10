@@ -14,6 +14,7 @@ package uk.co.flax.luwak.presearcher;/*
  * limitations under the License.
  */
 
+import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
@@ -54,8 +55,6 @@ public class TermFilteredPresearcher implements Presearcher {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
     }
 
-    public static final String TERMSFIELD = "_terms";
-
     protected final QueryTermExtractor extractor;
 
     private final DocumentTokenFilter filter;
@@ -89,8 +88,6 @@ public class TermFilteredPresearcher implements Presearcher {
                     bq.add(new TermQuery(new Term(field, termAtt.toString())), BooleanClause.Occur.SHOULD);
                 }
 
-                    bq.add(new TermQuery(new Term(field, extractor.getAnyToken())), BooleanClause.Occur.SHOULD);
-
             }
             return bq;
         }
@@ -101,7 +98,24 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
-        return ts;
+
+        return new TokenFilter(ts) {
+
+            boolean finished = false;
+            CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
+
+            @Override
+            public final boolean incrementToken() throws IOException {
+                if (input.incrementToken())
+                    return true;
+                if (finished)
+                    return false;
+                finished = true;
+                termAtt.setEmpty().append(extractor.getAnyToken());
+                return true;
+            }
+        };
+
     }
 
     public static final FieldType QUERYFIELDTYPE;
@@ -116,10 +130,22 @@ public class TermFilteredPresearcher implements Presearcher {
 
         Map<String, StringBuilder> fieldTerms = new HashMap<>();
         for (QueryTerm queryTerm : extractor.extract(query)) {
-            String term = (queryTerm.type == QueryTerm.Type.ANY) ? extractor.getAnyToken() : queryTerm.term;
+
             if (!fieldTerms.containsKey(queryTerm.field))
                 fieldTerms.put(queryTerm.field, new StringBuilder());
-            fieldTerms.get(queryTerm.field).append(" ").append(term);
+
+            //noinspection MismatchedQueryAndUpdateOfStringBuilder
+            StringBuilder termslist = fieldTerms.get(queryTerm.field);
+            switch (queryTerm.type) {
+                case WILDCARD:
+                    termslist.append(" ").append(queryTerm.term);
+                    // fall through
+                case ANY:
+                    termslist.append(" ").append(extractor.getAnyToken());
+                    break;
+                case EXACT:
+                    termslist.append(" ").append(queryTerm.term);
+            }
         }
 
         Document doc = new Document();

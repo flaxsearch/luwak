@@ -42,6 +42,8 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
     public static final String NGRAM_SUFFIX = "XX";
 
+    public static final int MAX_TOKEN_SIZE = 15;
+
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
@@ -55,9 +57,9 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
-        TokenStream filtered = super.filterInputDocumentTokens(field, ts);
-        TokenStream duped = new KeywordRepeatFilter(filtered);
-        TokenStream ngrammed = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, extractor.getAnyToken(), 15);
+        TokenStream duped = new KeywordRepeatFilter(ts);
+        TokenStream ngrammed
+                = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, extractor.getAnyToken(), MAX_TOKEN_SIZE);
         return new DuplicateRemovalTokenFilter(ngrammed);
     }
 }

@@ -1,5 +1,6 @@
 package uk.co.flax.luwak.presearcher;
 
+import com.google.common.base.Strings;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
@@ -53,6 +54,21 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         assertThat(monitor.match(doc1, SimpleMatcher.factory()))
                 .hasQueriesRunCount(0);
+
+    }
+
+    @Test
+    public void testLongTermsStillMatchWildcards() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "/a.*/"));
+
+        InputDocument doc1 = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.MAX_TOKEN_SIZE + 1), WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+                .hasQueriesRunCount(1)
+                .matchesQuery("1");
 
     }
 

@@ -46,7 +46,7 @@ public class TestPresearcherCustomFiltering {
         BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, DocumentTokenFilter.PASSTHROUGH);
 
         assertThat(q.clauses())
-                .containsExactly(clause("field1", "foo"), clause("field1", "__ANYTOKEN__"), clause("field2", "__ANYTOKEN__"));
+                .containsExactly(clause("field1", "foo"), clause("field1", "__ANYTOKEN__"));
 
     }
 

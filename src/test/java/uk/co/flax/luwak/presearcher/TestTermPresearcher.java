@@ -4,8 +4,6 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
-import uk.co.flax.luwak.presearcher.PresearcherTestBase;
-import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
@@ -74,14 +72,14 @@ public class TestTermPresearcher extends PresearcherTestBase {
     @Test
     public void matchesAnyQueries() throws IOException {
 
-        monitor.update(new MonitorQuery("1", "/hell?/"));
+        monitor.update(new MonitorQuery("1", "/hell./"));
 
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "whatever", WHITESPACE)
+                .addField(TEXTFIELD, "hello", WHITESPACE)
                 .build();
 
         assertThat(monitor.match(doc, SimpleMatcher.factory()))
-                .hasMatchCount(0)
+                .hasMatchCount(1)
                 .hasQueriesRunCount(1);
 
     }

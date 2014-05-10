@@ -32,6 +32,6 @@ public class LengthNorm implements WeightRule {
 
     @Override
     public float weigh(List<QueryTerm> terms) {
-        return CompoundRuleWeightor.exp(a, k, terms.size());
+        return 1 + CompoundRuleWeightor.exp(a, k, terms.size());
     }
 }
