@@ -34,12 +34,20 @@ public class TestExtractors {
     public void testRegexpExtractor() {
 
         RegexpNGramTermExtractor extractor = new RegexpNGramTermExtractor("XX");
-        List<QueryTerm> terms = new ArrayList<>();
         RegexpQuery query = new RegexpQuery(new Term("field", "super.*califragilistic"));
 
+        List<QueryTerm> terms = new ArrayList<>();
         extractor.extract(query, terms, null);
 
         assertThat(terms).containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.WILDCARD));
+
+        terms.clear();
+        extractor.extract(new RegexpQuery(new Term("field", "hell.")), terms, null);
+        assertThat(terms).containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.WILDCARD));
+
+        terms.clear();
+        extractor.extract(new RegexpQuery(new Term("field", "hel?o")), terms, null);
+        assertThat(terms).containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.WILDCARD));
 
     }
 

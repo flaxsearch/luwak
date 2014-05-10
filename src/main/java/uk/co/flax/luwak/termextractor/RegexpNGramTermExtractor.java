@@ -40,7 +40,7 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
         this.ngramSuffix = ngramSuffix;
     }
 
-    public static Pattern regexpChars = Pattern.compile("\\.\\*|\\?");
+    public static Pattern regexpChars = Pattern.compile("\\.|\\*|.\\?");
 
     public static Splitter regexpSplitter = Splitter.on(regexpChars);
 
