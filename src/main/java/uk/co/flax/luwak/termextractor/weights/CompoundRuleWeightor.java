@@ -22,6 +22,17 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * TermWeightor that uses a set of {@link WeightRule}s to determine the score for a list
+ * of {@link QueryTerm}s.
+ *
+ * Each CompoundRuleWeightor uses a {@link uk.co.flax.luwak.termextractor.weights.LengthNorm}, a
+ * {@link uk.co.flax.luwak.termextractor.weights.TermTypeNorm} and a
+ * {@link uk.co.flax.luwak.termextractor.weights.TokenLengthNorm}.  Other rules can be added,
+ * and the parameters to these various rules set using a
+ * {@link uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor.Builder}
+ */
 public class CompoundRuleWeightor implements TermWeightor {
     
     private final List<WeightRule> rules;
@@ -39,6 +50,9 @@ public class CompoundRuleWeightor implements TermWeightor {
         return product;
     }
 
+    /**
+     * Returns the value of a * e^(-k * x)
+     */
     public static float exp(float a, float k, float x) {
         return (float) (a * Math.exp(-k * x));
     }
@@ -59,28 +73,33 @@ public class CompoundRuleWeightor implements TermWeightor {
 
         List<WeightRule> rules = new ArrayList<>();
 
+        /** Use these parameters for the length norm */
         public Builder withListLengthNorm(float a, float k) {
             length_a = a;
             length_k = k;
             return this;
         }
 
+        /** Use this parameter for the TermTypeNorm */
         public Builder withAnyTypeWeight(float weight) {
             type_weight = weight;
             return this;
         }
 
+        /** Use these parameters for the token length norm */
         public Builder withTokenLengthNorm(float a, float k) {
             tok_length_a = a;
             tok_length_k = k;
             return this;
         }
 
+        /** Use this rule */
         public Builder withRule(WeightRule rule) {
             rules.add(rule);
             return this;
         }
 
+        /** Build a new CompoundRuleWeightor with the defined parameters and rules */
         public CompoundRuleWeightor build() {
             List<WeightRule> rules = Lists.newArrayList(
                     Iterables.concat(

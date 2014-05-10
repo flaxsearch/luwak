@@ -20,6 +20,10 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.BooleanTermExtractor} to
+ * determine which clauses should be indexed.
+ */
 public interface TermWeightor {
 
     public float weigh(List<QueryTerm> terms);
