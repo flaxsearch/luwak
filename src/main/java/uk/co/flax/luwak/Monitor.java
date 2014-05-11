@@ -149,6 +149,28 @@ public class Monitor implements Closeable {
         manager.maybeRefresh();
     }
 
+    /**
+     * Delete queries from the monitor by ID
+     * @param queryIds the IDs to delete
+     * @throws IOException
+     */
+    public void deleteById(Iterable<String> queryIds) throws IOException {
+        for (String queryId : queryIds) {
+            writer.deleteDocuments(new Term(FIELDS.id, queryId));
+        }
+        writer.commit();
+        manager.maybeRefresh();
+    }
+
+    /**
+     * Delete queries from the monitor by ID
+     * @param queryIds the IDs to delete
+     * @throws IOException
+     */
+    public void deleteById(String... queryIds) throws IOException {
+        deleteById(Arrays.asList(queryIds));
+    }
+
     private void match(CandidateMatcher matcher) throws IOException {
 
         long start = System.nanoTime();

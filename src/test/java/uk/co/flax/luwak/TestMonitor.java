@@ -80,6 +80,23 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(1);
     }
 
+    @Test
+    public void canDeleteById() throws IOException {
+
+        monitor.update(new MonitorQuery("query1", "this"));
+        monitor.update(new MonitorQuery("query2", "that"), new MonitorQuery("query3", "other"));
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(3);
+
+        monitor.deleteById("query2", "query1");
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(1);
+
+        InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "other things", WHITESPACE).build();
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasQueriesRunCount(1)
+                .matchesQuery("query3");
+
+    }
+
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
 }
