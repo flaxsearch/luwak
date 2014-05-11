@@ -58,7 +58,7 @@ public class LuwakDemo {
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
-            SimpleMatcher matches = monitor.match(doc, SimpleMatcher.factory());
+            SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
             outputMatches(matches);
         }
 

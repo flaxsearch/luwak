@@ -74,12 +74,11 @@ public class SimpleMatcher extends CandidateMatcher {
         return matches.size();
     }
 
-    public static MatcherFactory<SimpleMatcher> factory() {
-        return new MatcherFactory<SimpleMatcher>() {
-            @Override
-            public SimpleMatcher createMatcher(InputDocument doc) {
-                return new SimpleMatcher(doc);
-            }
-        };
-    }
+    public static final MatcherFactory<SimpleMatcher> FACTORY = new MatcherFactory<SimpleMatcher>() {
+        @Override
+        public SimpleMatcher createMatcher(InputDocument doc) {
+            return new SimpleMatcher(doc);
+        }
+    };
+
 }

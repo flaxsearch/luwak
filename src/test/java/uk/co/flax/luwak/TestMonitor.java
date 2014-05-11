@@ -55,7 +55,7 @@ public class TestMonitor {
 
         monitor.update(new MonitorQuery("query1", "test"));
 
-        assertThat(monitor.match(doc, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
                 .matches("doc1")
                 .hasMatchCount(1)
                 .matchesQuery("query1");
@@ -69,7 +69,7 @@ public class TestMonitor {
         monitor.update(new MonitorQuery("query1", "that"));
 
         InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "that", WHITESPACE).build();
-        assertThat(monitor.match(doc, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
                 .hasQueriesRunCount(1)
                 .matchesQuery("query1");
     }

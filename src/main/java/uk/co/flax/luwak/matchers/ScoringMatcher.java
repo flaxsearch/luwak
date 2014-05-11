@@ -80,12 +80,11 @@ public class ScoringMatcher extends CandidateMatcher {
         return scores.size();
     }
 
-    public static MatcherFactory<ScoringMatcher> factory() {
-        return new MatcherFactory<ScoringMatcher>() {
-            @Override
-            public ScoringMatcher createMatcher(InputDocument doc) {
-                return new ScoringMatcher(doc);
-            }
-        };
-    }
+    public static final MatcherFactory<ScoringMatcher> FACTORY = new MatcherFactory<ScoringMatcher>() {
+        @Override
+        public ScoringMatcher createMatcher(InputDocument doc) {
+            return new ScoringMatcher(doc);
+        }
+    };
+
 }

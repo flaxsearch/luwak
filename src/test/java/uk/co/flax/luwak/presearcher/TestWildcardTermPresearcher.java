@@ -38,7 +38,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "well hello there", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
                 .hasMatchCount(1);
 
     }
@@ -52,7 +52,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "hellopolis", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
                 .hasQueriesRunCount(0);
 
     }
@@ -66,7 +66,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.MAX_TOKEN_SIZE + 1), WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
                 .hasQueriesRunCount(1)
                 .matchesQuery("1");
 
@@ -81,7 +81,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "Foo foo", WHITESPACE)
                 .build();
 
-        assertThat(monitor.match(doc1, SimpleMatcher.factory()))
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
                 .hasMatchCount(1);
 
     }

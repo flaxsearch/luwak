@@ -46,7 +46,7 @@ public class TestTermsEnumFilter {
         BooleanQuery query = (BooleanQuery) monitor.buildQuery(doc);
 
         assertThat(query.clauses()).hasSize(1);
-        assertThat(monitor.match(doc, SimpleMatcher.factory()).getMatchCount()).isEqualTo(1);
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(1);
 
     }
 

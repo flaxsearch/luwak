@@ -72,12 +72,11 @@ public class IntervalsMatcher extends CandidateMatcher {
         return matches.values();
     }
 
-    public static MatcherFactory<IntervalsMatcher> factory() {
-        return new MatcherFactory<IntervalsMatcher>() {
-            @Override
-            public IntervalsMatcher createMatcher(InputDocument doc) {
-                return new IntervalsMatcher(doc);
-            }
-        };
-    }
+    public static final MatcherFactory<IntervalsMatcher> FACTORY = new MatcherFactory<IntervalsMatcher>() {
+        @Override
+        public IntervalsMatcher createMatcher(InputDocument doc) {
+            return new IntervalsMatcher(doc);
+        }
+    };
+
 }
