@@ -26,6 +26,12 @@ import java.io.IOException;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * A DocumentTokenFilter that filters out all tokens that do not already appear
+ * in an index.  Used by presearchers to reduce the size of the queries produced
+ * by buildQuery().
+ */
 public class TermsEnumFilter implements DocumentTokenFilter, Closeable {
 
     private final AtomicReader reader;
