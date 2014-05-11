@@ -63,7 +63,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         monitor.update(new MonitorQuery("1", "/a.*/"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.MAX_TOKEN_SIZE + 1), WHITESPACE)
+                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
                 .build();
 
         assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
@@ -88,6 +88,6 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new WildcardNGramPresearcher();
+        return WildcardNGramPresearcher.builder().build();
     }
 }

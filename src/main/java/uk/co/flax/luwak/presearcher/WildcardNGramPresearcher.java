@@ -1,16 +1,18 @@
 package uk.co.flax.luwak.presearcher;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -40,26 +42,67 @@ import java.io.IOException;
  */
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
-    public static final String NGRAM_SUFFIX = "XX";
+    public static final String DEFAULT_NGRAM_SUFFIX = "XX";
 
-    public static final int MAX_TOKEN_SIZE = 30;
+    public static final int DEFAULT_MAX_TOKEN_SIZE = 30;
+
+    private final String ngramSuffix;
+
+    private final int maxTokenSize;
 
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher(TermWeightor weightor, Extractor... extractors) {
-        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
-    }
-
-    public WildcardNGramPresearcher(Extractor... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+    protected WildcardNGramPresearcher(TermWeightor weightor, String ngramSuffix, int maxTokenSize,
+                                       Extractor<?>... extractors) {
+        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
+        this.ngramSuffix = ngramSuffix;
+        this.maxTokenSize = maxTokenSize;
     }
 
     @Override
     protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
         TokenStream duped = new KeywordRepeatFilter(ts);
         TokenStream ngrammed
-                = new SuffixingNGramTokenFilter(duped, NGRAM_SUFFIX, extractor.getAnyToken(), MAX_TOKEN_SIZE);
+                = new SuffixingNGramTokenFilter(duped, ngramSuffix, extractor.getAnyToken(), maxTokenSize);
         return new DuplicateRemovalTokenFilter(ngrammed);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private TermWeightor weightor = CompoundRuleWeightor.DEFAULT_WEIGHTOR;
+        private List<Extractor<?>> extractors = Lists.newArrayList();
+        private String ngramSuffix = DEFAULT_NGRAM_SUFFIX;
+        private int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
+
+        public Builder withWeightor(TermWeightor weightor) {
+            this.weightor = weightor;
+            return this;
+        }
+
+        public Builder withExtractor(Extractor<?> extractor) {
+            this.extractors.add(extractor);
+            return this;
+        }
+
+        public Builder withMaxTokenSize(int size) {
+            this.maxTokenSize = size;
+            return this;
+        }
+
+        public Builder withNgramSuffix(String suffix) {
+            this.ngramSuffix = suffix;
+            return this;
+        }
+
+        public WildcardNGramPresearcher build() {
+            return new WildcardNGramPresearcher(weightor, ngramSuffix, maxTokenSize,
+                    extractors.toArray(new Extractor[extractors.size()]));
+        }
+
     }
 }

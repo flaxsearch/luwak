@@ -35,7 +35,7 @@ public class TestTermsEnumFilter {
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), new WildcardNGramPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), WildcardNGramPresearcher.builder().build());
         monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
 
         InputDocument doc = InputDocument.builder("doc")
