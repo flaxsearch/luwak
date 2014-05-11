@@ -28,11 +28,11 @@ import java.io.IOException;
  */
 
 /**
- * A DocumentTokenFilter that filters out all tokens that do not already appear
+ * A PerFieldTokenFilter that filters out all tokens that do not already appear
  * in an index.  Used by presearchers to reduce the size of the queries produced
  * by buildQuery().
  */
-public class TermsEnumFilter implements DocumentTokenFilter, Closeable {
+public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
 
     private final AtomicReader reader;
 

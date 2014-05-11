@@ -42,8 +42,10 @@ import java.util.List;
  */
 public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
+    /** The default suffix with which to mark ngrams */
     public static final String DEFAULT_NGRAM_SUFFIX = "XX";
 
+    /** The default maximum length of an input token before ANYTOKENS are generated */
     public static final int DEFAULT_MAX_TOKEN_SIZE = 30;
 
     private final String ngramSuffix;
@@ -68,6 +70,9 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
         return new DuplicateRemovalTokenFilter(ngrammed);
     }
 
+    /**
+     * @return an object to build a new WildcardNGramPresearcher
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -79,26 +84,50 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
         private String ngramSuffix = DEFAULT_NGRAM_SUFFIX;
         private int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
 
+        /**
+         * Use this TermWeightor
+         * @param weightor the {@link uk.co.flax.luwak.termextractor.weights.TermWeightor}
+         * @return the Builder object
+         */
         public Builder withWeightor(TermWeightor weightor) {
             this.weightor = weightor;
             return this;
         }
 
+        /**
+         * Use this Extractor
+         * @param extractor the Extractor
+         * @return the Builder object
+         */
         public Builder withExtractor(Extractor<?> extractor) {
             this.extractors.add(extractor);
             return this;
         }
 
+        /**
+         * Any tokens larger than this will not be ngrammed, but instead an ANYTOKEN emitted
+         * @param size the maximum token size
+         * @return the Builder object
+         */
         public Builder withMaxTokenSize(int size) {
             this.maxTokenSize = size;
             return this;
         }
 
+        /**
+         * Use this suffix to distinguish ngrams from their parent tokens
+         * @param suffix the suffix to use
+         * @return the Builder object
+         */
         public Builder withNgramSuffix(String suffix) {
             this.ngramSuffix = suffix;
             return this;
         }
 
+        /**
+         * Build a new WildcardNGramPresearcher with the supplied parameters
+         * @return the constructed Presearcher
+         */
         public WildcardNGramPresearcher build() {
             return new WildcardNGramPresearcher(weightor, ngramSuffix, maxTokenSize,
                     extractors.toArray(new Extractor[extractors.size()]));

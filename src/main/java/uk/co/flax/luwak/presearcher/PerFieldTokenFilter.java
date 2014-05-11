@@ -19,11 +19,15 @@ import java.io.IOException;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-public interface DocumentTokenFilter {
+
+/**
+ * Filters a TokenStream based on the TokenStream's field
+ */
+public interface PerFieldTokenFilter {
 
     public TokenStream filter(String field, TokenStream in) throws IOException;
 
-    public static final DocumentTokenFilter PASSTHROUGH = new DocumentTokenFilter() {
+    public static final PerFieldTokenFilter PASSTHROUGH = new PerFieldTokenFilter() {
         @Override
         public TokenStream filter(String field, TokenStream in) {
             return in;

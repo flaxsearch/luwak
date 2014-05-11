@@ -66,7 +66,7 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     @Override
-    public final Query buildQuery(InputDocument doc, DocumentTokenFilter filter) {
+    public final Query buildQuery(InputDocument doc, PerFieldTokenFilter filter) {
         try {
             AtomicReader reader = doc.asAtomicReader();
             BooleanQuery bq = new BooleanQuery();

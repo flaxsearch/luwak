@@ -2,7 +2,7 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.presearcher.DocumentTokenFilter;
+import uk.co.flax.luwak.presearcher.PerFieldTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -39,7 +39,7 @@ public interface Presearcher {
      * @param inputDocument the document to query for
      * @return a Query to run over a Monitor's queryindex
      */
-    public Query buildQuery(InputDocument inputDocument, DocumentTokenFilter filter);
+    public Query buildQuery(InputDocument inputDocument, PerFieldTokenFilter filter);
 
     /**
      * Build a lucene Document to index the query in a Monitor's queryindex
