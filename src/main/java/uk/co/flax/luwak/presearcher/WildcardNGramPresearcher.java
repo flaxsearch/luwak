@@ -47,12 +47,12 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    public WildcardNGramPresearcher(DocumentTokenFilter filter, TermWeightor weightor, Extractor... extractors) {
-        super(filter, weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
+    public WildcardNGramPresearcher(TermWeightor weightor, Extractor... extractors) {
+        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(NGRAM_SUFFIX)));
     }
 
     public WildcardNGramPresearcher(Extractor... extractors) {
-        this(DocumentTokenFilter.PASSTHROUGH, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override

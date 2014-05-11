@@ -57,19 +57,12 @@ public class TermFilteredPresearcher implements Presearcher {
 
     protected final QueryTermExtractor extractor;
 
-    private final DocumentTokenFilter filter;
-
-    public TermFilteredPresearcher(DocumentTokenFilter filter, TermWeightor weightor, Extractor... extractors) {
+    public TermFilteredPresearcher(TermWeightor weightor, Extractor... extractors) {
         this.extractor = new QueryTermExtractor(weightor, extractors);
-        this.filter = filter;
-    }
-
-    public TermFilteredPresearcher(DocumentTokenFilter filter, Extractor... extractors) {
-        this(filter, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(DocumentTokenFilter.PASSTHROUGH, CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override
@@ -80,8 +73,8 @@ public class TermFilteredPresearcher implements Presearcher {
             for (String field : reader.fields()) {
 
                 TermsEnum te = reader.terms(field).iterator(null);
-                TokenStream ts = this.filter.filter(field,
-                        filter.filter(field, filterInputDocumentTokens(field, new TermsEnumTokenStream(te))));
+                TokenStream ts =
+                        filter.filter(field, filterInputDocumentTokens(field, new TermsEnumTokenStream(te)));
 
                 CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
                 while (ts.incrementToken()) {

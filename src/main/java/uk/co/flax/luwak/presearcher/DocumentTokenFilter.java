@@ -1,14 +1,8 @@
 package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.analysis.util.FilteringTokenFilter;
-import org.apache.lucene.util.Version;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -35,60 +29,5 @@ public interface DocumentTokenFilter {
             return in;
         }
     };
-
-    public static class FieldFilter implements DocumentTokenFilter {
-
-        private final String field;
-
-        public FieldFilter(String field) {
-            this.field = field;
-        }
-
-        @Override
-        public TokenStream filter(String field, TokenStream in) {
-            if (this.field.equals(field))
-                return new EmptyTokenStream();
-            return in;
-        }
-    }
-
-    public static class TokensFilter implements DocumentTokenFilter {
-
-        private final CharArraySet tokensToFilter = new CharArraySet(Version.LUCENE_50, 1024, false);
-
-        public TokensFilter(Set<String> tokensToFilter) {
-            this.tokensToFilter.addAll(tokensToFilter);
-        }
-
-        @Override
-        public TokenStream filter(String field, TokenStream in) {
-            return new FilteringTokenFilter(Version.LUCENE_50, in) {
-
-                CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
-
-                @Override
-                protected boolean accept() throws IOException {
-                    return !tokensToFilter.contains(termAtt);
-                }
-            };
-        }
-    }
-
-    public static class FieldTokensFilter extends TokensFilter {
-
-        private final String field;
-
-        public FieldTokensFilter(String field, Set<String> tokensToFilter) {
-            super(tokensToFilter);
-            this.field = field;
-        }
-
-        @Override
-        public TokenStream filter(String field, TokenStream in) {
-            if (!this.field.equals(field))
-                return in;
-            return super.filter(field, in);
-        }
-    }
 
 }
