@@ -2,12 +2,14 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.parsers.LuceneQueryParser;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
@@ -70,6 +72,25 @@ public class TestMonitorErrorHandling {
         assertThat(matcher.getErrors()).hasSize(1);
         assertThat(matcher.getMatchCount()).isEqualTo(1);
         assertThat(matcher.getQueriesRun()).isEqualTo(2);
+    }
+
+    @Test
+    public void testPresearcherErrors() throws Exception {
+
+        Presearcher presearcher = mock(Presearcher.class);
+        when(presearcher.indexQuery(any(Query.class)))
+                .thenReturn(new Document())
+                .thenThrow(new UnsupportedOperationException("Oops"))
+                .thenReturn(new Document());
+
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher);
+        List<QueryError> errors
+                = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
+
+        assertThat(errors).hasSize(1);
+        assertThat(errors.get(0).id).isEqualTo("2");
+        assertThat(monitor.getQueryCount()).isEqualTo(2);
+
     }
 
 }

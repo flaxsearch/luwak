@@ -115,10 +115,10 @@ public class Monitor implements Closeable {
             }
             catch (ExecutionException e) {
                 Throwable t = e.getCause();
-                if (t instanceof MonitorQueryParserException)
-                    errors.add(new QueryError(query.getId(), (MonitorQueryParserException) t));
-                else
-                    throw new RuntimeException(t);
+                errors.add(new QueryError(query.getId(), query.getQuery(), t.getMessage()));
+            }
+            catch (Exception e) {
+                errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
             }
         }
         writer.commit();
