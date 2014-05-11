@@ -97,6 +97,17 @@ public class TestMonitor {
 
     }
 
+    @Test
+    public void canRetrieveQuery() throws IOException {
+
+        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that", "hl"));
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
+
+        MonitorQuery mq = monitor.getQuery("query2");
+        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that", "hl"));
+
+    }
+
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
 }

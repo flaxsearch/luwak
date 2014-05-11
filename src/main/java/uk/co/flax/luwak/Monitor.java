@@ -226,10 +226,27 @@ public class Monitor implements Closeable {
     public void loadAllQueries() throws IOException {
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String queryId, Query matchQuery, Query highlight) {
+            protected void doSearch(String queryId, String matchQuery, String highlight) {
                 // no impl
             }
         });
+    }
+
+    /**
+     * Get the MonitorQuery for a given query id
+     * @param queryId the id of the query to get
+     * @return the MonitorQuery stored for this id, or null if not found
+     * @throws IOException
+     */
+    public MonitorQuery getQuery(String queryId) throws IOException {
+        final MonitorQuery[] queries = new MonitorQuery[]{ null };
+        match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
+            @Override
+            protected void doSearch(String id, String matchQuery, String highlight) {
+                queries[0] = new MonitorQuery(id, matchQuery, highlight);
+            }
+        });
+        return queries[0];
     }
 
     /**
@@ -277,9 +294,11 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        protected void doSearch(String queryId, Query matchQuery, Query highlight) {
+        protected void doSearch(String queryId, String matchQuery, String highlight) {
             try {
-                matcher.matchQuery(queryId, matchQuery, highlight);
+                Query m = queries.getIfPresent(matchQuery);
+                Query h = queries.getIfPresent(highlight);
+                matcher.matchQuery(queryId, m, h);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
@@ -311,7 +330,7 @@ public class Monitor implements Closeable {
          * @param matchQuery the matching query
          * @param highlight an optional highlighting query.  May be null.
          */
-        protected abstract void doSearch(String id, Query matchQuery, Query highlight);
+        protected abstract void doSearch(String id, String matchQuery, String highlight);
 
         private int queryCount = 0;
         private long searchTime = -1;
@@ -327,7 +346,7 @@ public class Monitor implements Closeable {
             highlightDV.get(doc, highlight);
             idDV.get(doc, id);
             queryCount++;
-            doSearch(id.utf8ToString(), queries.getIfPresent(query.utf8ToString()), queries.getIfPresent(highlight.utf8ToString()));
+            doSearch(id.utf8ToString(), query.utf8ToString(), highlight.utf8ToString());
         }
 
         @Override
