@@ -17,6 +17,10 @@ import org.apache.lucene.search.Collector;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * An extension of Collector that records how long a search took.
+ */
 public abstract class TimedCollector extends Collector {
 
     public abstract void setSearchTime(long l);

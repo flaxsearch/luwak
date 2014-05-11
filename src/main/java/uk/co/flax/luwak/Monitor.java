@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -167,7 +168,7 @@ public class Monitor implements Closeable {
         return matcher;
     }
 
-    public void match(InputDocument doc, TimedCollector collector) throws IOException {
+    public void match(InputDocument doc, Collector collector) throws IOException {
         match(buildQuery(doc), collector);
     }
 
@@ -191,7 +192,7 @@ public class Monitor implements Closeable {
         return writer.numDocs();
     }
 
-    private void match(Query query, TimedCollector collector) throws IOException {
+    private void match(Query query, Collector collector) throws IOException {
         IndexSearcher searcher = null;
         long startTime = System.nanoTime();
         try {
@@ -200,7 +201,10 @@ public class Monitor implements Closeable {
         }
         finally {
             manager.release(searcher);
-            collector.setSearchTime((System.nanoTime() - startTime) / 1000000);
+            if (collector instanceof TimedCollector) {
+                long searchTime = TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS);
+                ((TimedCollector) collector).setSearchTime(searchTime);
+            }
         }
     }
 
