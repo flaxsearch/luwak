@@ -27,16 +27,32 @@ Using the monitor
 Basic usage looks like this:
 
 ```java
-Monitor monitor = new Monitor(new TermFilteredPresearcher());
+Monitor monitor = new Monitor(new LuceneQueryParser("field"), WildcardNGramPresearcher.DEFAULT);
 
-MonitorQuery mq = new MonitorQuery("query1", new TermQuery(new Term(textfield, "test")));
+MonitorQuery mq = new MonitorQuery("query1", "field:text");
 monitor.update(mq);
 
 InputDocument doc = InputDocument.builder("doc1")
-                        .addField(textfield, document, WHITESPACE)
+                        .addField(textfield, document, new StandardTokenizer(Version.LUCENE_50))
                         .build();
-DocumentMatches matches = monitor.match(doc);
+SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
 ```
+
+Adding queries
+--------------
+
+The monitor is updated using MonitorQuery objects, which consist of an id, a query string and an
+optional highlight query string.  The monitor uses its provided MonitorQueryParser to parse the
+query strings and cache query objects.
+
+Matching documents
+------------------
+
+Queries selected by the monitor to run against an InputDocument are passed to a CandidateMatcher
+class.  Three implementations are provided:
+* SimpleMatcher - reports which queries matched the InputDocument
+* ScoringMatcher - reports which queries matched, with their scores
+* IntervalsMatcher - reports which queries matched, with the individual matches for each query
 
 Filtering out queries
 ---------------------
@@ -95,13 +111,35 @@ public class CustomQueryExtractor extends Extractor<CustomQuery> {
 Presearcher presearcher = new TermFilteredPresearcher(new CustomQueryExtractor());
 ```
 
+Customizing the existing presearchers
+-------------------------------------
+
+Not all terms extracted from a query need to be indexed, and the fewer terms indexed, the
+more performant the presearcher filter will be.  In general, if a BooleanQuery contains a
+single MUST clause, then only the contents of that clause need be indexed.  Which clause
+to index is decided by a ```TermWeightor```.
+
+By default, the ```TermFilteredPresearcher``` and ```WildcardNGramPresearcher``` use a
+```CompoundRuleWeightor``` which selects clauses based on the number of terms they contain,
+how long those terms are, and whether any of them are ```ANYTOKEN``` terms.  You can also
+add extra rules to suppress certain terms, or certain fields, or create your own rules
+that implement ```WeightRule```.
+
+```java
+TermWeightor weightor = CompoundTermWeightor.newWeightor()
+                            .addRule(new FieldWeightRule("category", 0.01f))
+                            .addRule(new TermWeightRule(ImmutableMap.of("the", 0.3f)))
+                            .build();
+Presearcher presearcher = WildcardNGramPresearcher.builder().withWeightor(weightor).build();
+```
+
 Creating an entirely new type of Presearcher
 --------------------------------------------
 
 You can implement your own query filtering code by subclassing ```Presearcher```.  You will need
-to implement ```buildQuery(InputDocument)``` which converts incoming documents into queries to
+to implement ```buildQuery(InputDocument, PerFieldTokenFilter)``` which converts incoming documents into queries to
 be run against the Monitor's query index, and ```indexQuery(Query)``` which converts registered
 queries into a form that can be indexed.
 
-Note that ```indexQuery(Query)``` may not create fields named 'id' or 'del_id', as these are reserved
+Note that ```indexQuery(Query)``` may not create fields named '_id', '_query' or '_highlight', as these are reserved
 by the Monitor's internal index.

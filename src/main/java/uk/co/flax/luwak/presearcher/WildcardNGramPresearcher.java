@@ -70,6 +70,8 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
         return new DuplicateRemovalTokenFilter(ngrammed);
     }
 
+    public static final WildcardNGramPresearcher DEFAULT = builder().build();
+
     /**
      * @return an object to build a new WildcardNGramPresearcher
      */

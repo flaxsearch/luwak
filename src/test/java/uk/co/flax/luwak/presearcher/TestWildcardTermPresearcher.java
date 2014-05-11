@@ -88,6 +88,6 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return WildcardNGramPresearcher.builder().build();
+        return WildcardNGramPresearcher.DEFAULT;
     }
 }
