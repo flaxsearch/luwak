@@ -37,6 +37,8 @@ public interface Presearcher {
     /**
      * Build a query for a Monitor's queryindex from an InputDocument.
      * @param inputDocument the document to query for
+     * @param filter a PerFieldTokenFilter passed in by the monitor, to aid
+     *               in removing unnecessary clauses
      * @return a Query to run over a Monitor's queryindex
      */
     public Query buildQuery(InputDocument inputDocument, PerFieldTokenFilter filter);

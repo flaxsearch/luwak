@@ -23,6 +23,10 @@ import org.apache.lucene.search.Collector;
  */
 public abstract class TimedCollector extends Collector {
 
+    /**
+     * Set the search time
+     * @param l the search time in ms
+     */
     public abstract void setSearchTime(long l);
 
 }

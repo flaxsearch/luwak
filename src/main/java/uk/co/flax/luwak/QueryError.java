@@ -18,20 +18,30 @@ import java.util.Locale;
  * limitations under the License.
  */
 
+/**
+ * Represents an error due to parsing or indexing a query
+ */
 public class QueryError {
 
+    /** The query Id */
     public final String id;
+
+    /** The query */
     public final String query;
+
+    /** The error */
     public final String error;
 
+    /**
+     * Create a new QueryError
+     * @param id the query id
+     * @param query the query
+     * @param errorMessage the error
+     */
     public QueryError(String id, String query, String errorMessage) {
         this.id = id;
         this.query = query;
         this.error = errorMessage;
-    }
-
-    public QueryError(String id, MonitorQueryParserException e) {
-        this(id, e.getQuery(), e.getMessage());
     }
 
     @Override

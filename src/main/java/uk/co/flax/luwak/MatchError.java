@@ -16,12 +16,22 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
+/**
+ * Class representing an error that occurred during a matcher run
+ */
 public class MatchError {
 
+    /** The query running when the exception happened */
     public final String queryId;
 
+    /** The exception */
     public final Exception error;
 
+    /**
+     * Create a new MatchError
+     * @param queryId the query id
+     * @param error the error
+     */
     public MatchError(String queryId, Exception error) {
         this.queryId = queryId;
         this.error = error;

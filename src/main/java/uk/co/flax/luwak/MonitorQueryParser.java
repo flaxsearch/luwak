@@ -18,8 +18,17 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
+/**
+ * Interface defining how to create lucene Query objects from their String representations
+ */
 public interface MonitorQueryParser {
 
+    /**
+     * Create a new lucene Query
+     * @param queryString the query's string representation
+     * @return a lucene Query
+     * @throws MonitorQueryParserException
+     */
     Query parse(String queryString) throws MonitorQueryParserException;
 
 }
