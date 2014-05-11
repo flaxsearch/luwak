@@ -108,6 +108,15 @@ public class TestMonitor {
 
     }
 
+    @Test
+    public void canClearTheMonitor() throws IOException {
+        monitor.update(new MonitorQuery("query1", "a"), new MonitorQuery("query2", "b"), new MonitorQuery("query3", "c"));
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(3);
+
+        monitor.clear();
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+    }
+
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
 
 }

@@ -171,6 +171,16 @@ public class Monitor implements Closeable {
         deleteById(Arrays.asList(queryIds));
     }
 
+    /**
+     * Delete all queries from the monitor
+     * @throws IOException
+     */
+    public void clear() throws IOException {
+        writer.deleteDocuments(new MatchAllDocsQuery());
+        writer.commit();
+        manager.maybeRefresh();
+    }
+
     private void match(CandidateMatcher matcher) throws IOException {
 
         long start = System.nanoTime();
