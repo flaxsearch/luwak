@@ -126,6 +126,12 @@ public class Monitor implements Closeable {
         return errors;
     }
 
+    /**
+     * Add new queries to the monitor
+     * @param queries the MonitorQueries to add
+     * @return a list of exceptions for queries that could not be added
+     * @throws IOException
+     */
     public List<QueryError> update(MonitorQuery... queries) throws IOException {
         return update(Arrays.asList(queries));
     }
@@ -162,12 +168,28 @@ public class Monitor implements Closeable {
         }
     }
 
+    /**
+     * Match an {@link InputDocument} against the queryindex, calling a {@link CandidateMatcher} produced by the
+     * supplied {@link MatcherFactory} for each matching query.
+     * @param doc the InputDocument to match
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of {@link CandidateMatcher} to return
+     * @return a {@link CandidateMatcher} summarizing the match run.
+     * @throws IOException
+     */
     public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
         T matcher = factory.createMatcher(doc);
         match(matcher);
         return matcher;
     }
 
+    /**
+     * Convert the supplied document to a query using the presearcher, and run it over the query
+     * index, passing each query to the supplied Collector.
+     * @param doc an InputDocument to match against the index
+     * @param collector the Collector to call for each match
+     * @throws IOException
+     */
     public void match(InputDocument doc, Collector collector) throws IOException {
         match(buildQuery(doc), collector);
     }
@@ -188,6 +210,9 @@ public class Monitor implements Closeable {
         });
     }
 
+    /**
+     * @return the number of queries stored in this Monitor
+     */
     public int getQueryCount() {
         return writer.numDocs();
     }
@@ -220,6 +245,7 @@ public class Monitor implements Closeable {
         return doc;
     }
 
+    // For each query selected by the presearcher, pass on to a CandidateMatcher
     private class SearchingCollector extends MonitorQueryCollector {
 
         final CandidateMatcher matcher;
@@ -244,6 +270,9 @@ public class Monitor implements Closeable {
         }
     }
 
+    /**
+     * A Collector that decodes the stored query for each document hit.
+     */
     public abstract class MonitorQueryCollector extends TimedCollector {
 
         protected SortedDocValues queryDV;
@@ -254,6 +283,12 @@ public class Monitor implements Closeable {
         final BytesRef highlight = new BytesRef();
         final BytesRef id = new BytesRef();
 
+        /**
+         * Do something with the matching query
+         * @param id the queryId
+         * @param matchQuery the matching query
+         * @param highlight an optional highlighting query.  May be null.
+         */
         protected abstract void doSearch(String id, Query matchQuery, Query highlight);
 
         private int queryCount = 0;
@@ -274,14 +309,14 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public void setNextReader(AtomicReaderContext context) throws IOException {
+        public final void setNextReader(AtomicReaderContext context) throws IOException {
             this.queryDV = context.reader().getSortedDocValues(Monitor.FIELDS.query);
             this.highlightDV = context.reader().getSortedDocValues(Monitor.FIELDS.highlight);
             this.idDV = context.reader().getSortedDocValues(FIELDS.id);
         }
 
         @Override
-        public boolean acceptsDocsOutOfOrder() {
+        public final boolean acceptsDocsOutOfOrder() {
             return true;
         }
 

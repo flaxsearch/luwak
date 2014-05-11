@@ -22,6 +22,10 @@ import java.util.List;
  * limitations under the License.
  */
 
+/**
+ * Class used to match candidate queries selected by a Presearcher from a Monitor
+ * query index.
+ */
 public abstract class CandidateMatcher {
 
     private final List<MatchError> errors = new ArrayList<>();
@@ -32,32 +36,63 @@ public abstract class CandidateMatcher {
     private long searchTime = -1;
     private int queriesRun = -1;
 
+    /**
+     * Creates a new CandidateMatcher for the supplied InputDocument
+     * @param doc the document to run queries against
+     */
     public CandidateMatcher(InputDocument doc) {
         this.doc = doc;
     }
 
+    /**
+     * Run the supplied query against this CandidateMatcher's InputDocument
+     * @param queryId the query id
+     * @param matchQuery the query to run
+     * @param highlightQuery an optional query to use for highlighting.  May be null
+     * @throws IOException
+     */
     public abstract void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
+    /**
+     * Returns true if a given query matched during the matcher run
+     * @param queryId the query id
+     * @return true if the query matched during the matcher run
+     */
     public abstract boolean matches(String queryId);
 
+    /**
+     * @return the number of queries that matched
+     */
     public abstract int getMatchCount();
 
-    public void reportError(MatchError e) {
+    void reportError(MatchError e) {
         this.errors.add(e);
     }
 
+    /**
+     * @return a List of any MatchErrors created during the matcher run
+     */
     public List<MatchError> getErrors() {
         return errors;
     }
 
+    /**
+     * @return the InputDocument for this CandidateMatcher
+     */
     public InputDocument getDocument() {
         return doc;
     }
 
+    /**
+     * @return the id of the InputDocument for this CandidateMatcher
+     */
     public String docId() {
         return doc.getId();
     }
 
+    /**
+     * @return how long (in ms) it took to build the Presearcher query for the matcher run
+     */
     public long getQueryBuildTime() {
         return queryBuildTime;
     }
@@ -66,6 +101,9 @@ public abstract class CandidateMatcher {
         this.queryBuildTime = queryBuildTime;
     }
 
+    /**
+     * @return how long (in ms) it took to run the selected queries
+     */
     public long getSearchTime() {
         return searchTime;
     }
@@ -74,6 +112,9 @@ public abstract class CandidateMatcher {
         this.searchTime = searchTime;
     }
 
+    /**
+     * @return the number of queries passed to this CandidateMatcher during the matcher run
+     */
     public int getQueriesRun() {
         return queriesRun;
     }
