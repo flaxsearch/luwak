@@ -10,7 +10,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
-import uk.co.flax.luwak.parsers.LuceneQueryParser;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 

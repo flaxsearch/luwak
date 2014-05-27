@@ -14,7 +14,6 @@ import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
-import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
