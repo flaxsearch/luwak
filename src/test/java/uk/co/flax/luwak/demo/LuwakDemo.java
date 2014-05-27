@@ -12,6 +12,7 @@ import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
@@ -54,7 +55,7 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryCache(FIELD, ANALYZER), new TermFilteredPresearcher());
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {

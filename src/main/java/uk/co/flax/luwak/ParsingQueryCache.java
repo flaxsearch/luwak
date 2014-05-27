@@ -22,20 +22,16 @@ import org.apache.lucene.search.Query;
 
 import java.util.concurrent.ExecutionException;
 
-public class ParsingQueryCache implements QueryCache {
-
-    private final MonitorQueryParser parser;
+public abstract class ParsingQueryCache implements QueryCache {
 
     private final LoadingCache<String, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<String, Query>() {
         @Override
         public Query load(String query) throws Exception {
-            return parser.parse(query);
+            return parse(query);
         }
     });
 
-    public ParsingQueryCache(MonitorQueryParser parser) {
-        this.parser = parser;
-    }
+    protected abstract Query parse(String query) throws Exception;
 
     @Override
     public Query get(String query) throws QueryCacheException {
