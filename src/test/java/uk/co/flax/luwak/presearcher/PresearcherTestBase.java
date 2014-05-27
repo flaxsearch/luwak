@@ -5,10 +5,8 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.util.Version;
 import org.junit.Before;
 import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQueryParser;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
-import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;
 
