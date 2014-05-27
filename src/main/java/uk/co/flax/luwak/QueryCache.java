@@ -1,8 +1,6 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.search.Query;
-
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +16,10 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
-/**
- * Interface defining how to create lucene Query objects from their String representations
- */
-public interface MonitorQueryParser {
+import org.apache.lucene.search.Query;
 
-    /**
-     * Create a new lucene Query
-     * @param queryString the query's string representation
-     * @return a lucene Query
-     * @throws MonitorQueryParserException
-     */
-    Query parse(String queryString) throws MonitorQueryParserException;
+public interface QueryCache {
+
+    Query get(String query) throws QueryCacheException;
 
 }

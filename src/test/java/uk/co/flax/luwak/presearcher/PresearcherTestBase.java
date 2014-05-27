@@ -7,6 +7,7 @@ import org.junit.Before;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQueryParser;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 
 import java.io.IOException;
@@ -36,14 +37,10 @@ public abstract class PresearcherTestBase {
     @Before
     public void setUp() throws IOException {
         presearcher = createPresearcher();
-        monitor = new Monitor(createParser(), presearcher);
+        monitor = new Monitor(new LuceneQueryCache(TEXTFIELD, WHITESPACE), presearcher);
     }
 
     protected abstract Presearcher createPresearcher();
-
-    protected MonitorQueryParser createParser() {
-        return new LuceneQueryParser(TEXTFIELD, WHITESPACE);
-    }
 
     public static final String TEXTFIELD = "text";
 

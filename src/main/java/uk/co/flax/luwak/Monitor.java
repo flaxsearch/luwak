@@ -45,20 +45,13 @@ import java.util.concurrent.TimeUnit;
 
 public class Monitor implements Closeable {
 
-    private final MonitorQueryParser parser;
+    //private final MonitorQueryParser parser;
+    private final QueryCache queryCache;
     private final Presearcher presearcher;
 
     private final Directory directory;
     private final IndexWriter writer;
     private final SearcherManager manager;
-
-    // Query cache, using a passed-in QueryParser to build queries on demand.
-    private final LoadingCache<String, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<String, Query>() {
-        @Override
-        public Query load(String query) throws Exception {
-            return parser.parse(query);
-        }
-    });
 
     public static final class FIELDS {
         public static final String id = "_id";
@@ -67,30 +60,24 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Create a new Monitor instance, using an internal RAMDirectory to build the queryindex
-     * @param parser the query parser to use
-     * @param presearcher the presearcher to use
-     * @throws IOException
-     */
-    public Monitor(MonitorQueryParser parser, Presearcher presearcher) throws IOException {
-        this(parser, presearcher, new RAMDirectory());
-    }
-
-    /**
      * Create a new Monitor instance, using a passed in Directory for its queryindex
-     * @param parser the query parser to use
+     * @param queryCache the querycache to use
      * @param presearcher the presearcher to use
      * @param directory the directory where the queryindex is stored
      * @throws IOException
      */
-    public Monitor(MonitorQueryParser parser, Presearcher presearcher, Directory directory) throws IOException {
-        this.parser = parser;
+    public Monitor(QueryCache queryCache, Presearcher presearcher, Directory directory) throws IOException {
+        this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
         this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50,
                 new WhitespaceAnalyzer(Version.LUCENE_50)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
+    }
+
+    public Monitor(QueryCache queryCache, Presearcher presearcher) throws IOException {
+        this(queryCache, presearcher, new RAMDirectory());
     }
 
     @Override
@@ -108,14 +95,10 @@ public class Monitor implements Closeable {
         List<QueryError> errors = new ArrayList<>();
         for (MonitorQuery query : queries) {
             try {
-                Query matchQuery = this.queries.get(query.getQuery());
+                Query matchQuery = this.queryCache.get(query.getQuery());
                 if (!Strings.isNullOrEmpty(query.getHighlightQuery()))
-                    this.queries.get(query.getHighlightQuery()); // force HlQ to be parsed
+                    this.queryCache.get(query.getHighlightQuery()); // force HlQ to be parsed
                 writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
-            }
-            catch (ExecutionException e) {
-                Throwable t = e.getCause();
-                errors.add(new QueryError(query.getId(), query.getQuery(), t.getMessage()));
             }
             catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
@@ -306,8 +289,8 @@ public class Monitor implements Closeable {
         @Override
         protected void doSearch(String queryId, String matchQuery, String highlight) {
             try {
-                Query m = queries.getIfPresent(matchQuery);
-                Query h = queries.getIfPresent(highlight);
+                Query m = queryCache.get(matchQuery);
+                Query h = queryCache.get(highlight);
                 matcher.matchQuery(queryId, m, h);
             }
             catch (Exception e) {
