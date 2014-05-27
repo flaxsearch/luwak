@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.QueryMatch;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
@@ -101,8 +102,8 @@ public class LuwakDemo {
 
     static void outputMatches(SimpleMatcher matches) {
         logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
-        for (String query : matches.getMatchingQueries()) {
-            logger.info("\tQuery: {}", query);
+        for (QueryMatch query : matches) {
+            logger.info("\tQuery: {}", query.getQueryId());
         }
     }
 

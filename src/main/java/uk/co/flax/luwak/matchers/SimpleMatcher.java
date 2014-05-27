@@ -7,9 +7,11 @@ import org.apache.lucene.search.Scorer;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
+import uk.co.flax.luwak.QueryMatch;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -27,16 +29,12 @@ import java.util.Set;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class SimpleMatcher extends CandidateMatcher {
+public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
 
-    private final Set<String> matches = new HashSet<>();
+    private final Set<QueryMatch> matches = new HashSet<>();
 
     public SimpleMatcher(InputDocument doc) {
         super(doc);
-    }
-
-    public Set<String> getMatchingQueries() {
-        return matches;
     }
 
     @Override
@@ -49,7 +47,7 @@ public class SimpleMatcher extends CandidateMatcher {
 
             @Override
             public void collect(int doc) throws IOException {
-                matches.add(queryId);
+                matches.add(new QueryMatch(queryId));
             }
 
             @Override
@@ -81,4 +79,8 @@ public class SimpleMatcher extends CandidateMatcher {
         }
     };
 
+    @Override
+    public Iterator<QueryMatch> iterator() {
+        return matches.iterator();
+    }
 }

@@ -6,9 +6,7 @@ import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -25,9 +23,9 @@ import java.util.Map;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class IntervalsMatcher extends CandidateMatcher {
+public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
 
-    private final Map<String, IntervalsQueryMatch> matches = new HashMap<>();
+    private final Map<String, IntervalsQueryMatch> matches = new LinkedHashMap<>();
 
     public IntervalsMatcher(InputDocument doc) {
         super(doc);
@@ -79,4 +77,8 @@ public class IntervalsMatcher extends CandidateMatcher {
         }
     };
 
+    @Override
+    public Iterator<IntervalsQueryMatch> iterator() {
+        return matches.values().iterator();
+    }
 }

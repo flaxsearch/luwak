@@ -10,8 +10,7 @@ import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -28,9 +27,9 @@ import java.util.Map;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class ScoringMatcher extends CandidateMatcher {
+public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
 
-    private final Map<String, Float> scores = new HashMap<>();
+    private final Map<String, ScoringMatch> scores = new LinkedHashMap<>();
 
     public ScoringMatcher(InputDocument doc) {
         super(doc);
@@ -64,7 +63,7 @@ public class ScoringMatcher extends CandidateMatcher {
             });
             float score = scores[0];
             if (score > 0)
-                ScoringMatcher.this.scores.put(queryId, score);
+                ScoringMatcher.this.scores.put(queryId, new ScoringMatch(queryId, score));
         } catch (IOException e) { // can never happen (RAMDirectory)
             throw new RuntimeException(e);
         }
@@ -87,4 +86,8 @@ public class ScoringMatcher extends CandidateMatcher {
         }
     };
 
+    @Override
+    public Iterator<ScoringMatch> iterator() {
+        return scores.values().iterator();
+    }
 }
