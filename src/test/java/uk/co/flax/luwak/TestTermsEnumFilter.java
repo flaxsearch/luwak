@@ -6,7 +6,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryParser;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class TestTermsEnumFilter {
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), WildcardNGramPresearcher.DEFAULT);
+        Monitor monitor = new Monitor(new LuceneQueryCache("f"), WildcardNGramPresearcher.DEFAULT);
         monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
 
         InputDocument doc = InputDocument.builder("doc")

@@ -9,6 +9,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
@@ -42,23 +43,28 @@ public class TestMonitorErrorHandling {
 
     public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_50);
 
-    private static MonitorQueryParser createMockParser() throws Exception {
+    private static QueryCache createMockCache() throws Exception {
 
-        MonitorQueryParser parser = mock(MonitorQueryParser.class);
-        Query errorQuery = mock(Query.class);
+        final Query errorQuery = mock(Query.class);
         when(errorQuery.rewrite(any(IndexReader.class))).thenThrow(new RuntimeException("Error rewriting"));
 
-        when(parser.parse("unparseable")).thenThrow(new MonitorQueryParserException("unparseable", "Error parsing"));
-        when(parser.parse("test")).thenReturn(new TermQuery(new Term(FIELD, "test")));
-        when(parser.parse("error")).thenReturn(errorQuery);
+        return new ParsingQueryCache() {
+            @Override
+            protected Query parse(String query) throws Exception {
+                if ("unparseable".equals(query))
+                    throw new RuntimeException("Error parsing query [unparseable]");
+                if ("error".equals(query))
+                    return errorQuery;
+                return new TermQuery(new Term(FIELD, query));
+            }
+        };
 
-        return parser;
     }
 
     @Test
     public void testMonitorErrors() throws Exception {
 
-        Monitor monitor = new Monitor(createMockParser(), new MatchAllPresearcher());
+        Monitor monitor = new Monitor(createMockCache(), new MatchAllPresearcher());
         List<QueryError> errors = monitor.update(
                 new MonitorQuery("1", "unparseable"),
                 new MonitorQuery("2", "test"),
@@ -83,7 +89,7 @@ public class TestMonitorErrorHandling {
                 .thenThrow(new UnsupportedOperationException("Oops"))
                 .thenReturn(new Document());
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher);
+        Monitor monitor = new Monitor(new LuceneQueryCache("f"), presearcher);
         List<QueryError> errors
                 = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
 

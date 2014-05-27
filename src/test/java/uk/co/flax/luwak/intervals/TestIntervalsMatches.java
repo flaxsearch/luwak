@@ -10,6 +10,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.parsers.LuceneQueryParser;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 
@@ -48,7 +49,7 @@ public class TestIntervalsMatches {
 
     @Before
     public void setUp() throws IOException {
-        monitor = new Monitor(new LuceneQueryParser(textfield), new MatchAllPresearcher());
+        monitor = new Monitor(new LuceneQueryCache(textfield), new MatchAllPresearcher());
     }
 
     @Test

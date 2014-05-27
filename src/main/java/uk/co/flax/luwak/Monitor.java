@@ -60,16 +60,6 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Create a new Monitor instance, using an internal RAMDirectory to build the queryindex
-     * @param parser the query parser to use
-     * @param presearcher the presearcher to use
-     * @throws IOException
-     */
-    public Monitor(MonitorQueryParser parser, Presearcher presearcher) throws IOException {
-        this(new ParsingQueryCache(parser), presearcher, new RAMDirectory());
-    }
-
-    /**
      * Create a new Monitor instance, using a passed in Directory for its queryindex
      * @param queryCache the querycache to use
      * @param presearcher the presearcher to use
@@ -84,6 +74,10 @@ public class Monitor implements Closeable {
                 new WhitespaceAnalyzer(Version.LUCENE_50)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
+    }
+
+    public Monitor(QueryCache queryCache, Presearcher presearcher) throws IOException {
+        this(queryCache, presearcher, new RAMDirectory());
     }
 
     @Override
