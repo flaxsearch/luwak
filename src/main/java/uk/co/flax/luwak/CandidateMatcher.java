@@ -26,7 +26,7 @@ import java.util.List;
  * Class used to match candidate queries selected by a Presearcher from a Monitor
  * query index.
  */
-public abstract class CandidateMatcher {
+public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
 
     private final List<MatchError> errors = new ArrayList<>();
 
