@@ -5,7 +5,7 @@
     <groupId>uk.co.flax</groupId>
     <artifactId>luwak</artifactId>
     <packaging>jar</packaging>
-    <version>1.1.0-rc1</version>
+    <version>1.1.0-rc2-SNAPSHOT</version>
 
     <properties>
         <lucene.version>r1581360-intervals-1.3-SNAPSHOT</lucene.version>
