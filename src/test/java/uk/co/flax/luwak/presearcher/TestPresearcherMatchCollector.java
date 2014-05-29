@@ -40,7 +40,7 @@ public class TestPresearcherMatchCollector {
         monitor.update(new MonitorQuery("2", "foo bar -baz"));
 
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Version.LUCENE_50))
+                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Version.LUCENE_5_0))
                 .build();
 
         PresearcherMatchCollector collector = new PresearcherMatchCollector();

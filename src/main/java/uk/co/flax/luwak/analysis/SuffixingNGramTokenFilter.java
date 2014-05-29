@@ -54,8 +54,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
      * @param suffix a string to suffix to all ngrams
      */
     public SuffixingNGramTokenFilter(TokenStream input, String suffix, String anyToken, int maxTokenLength) {
-        super(new CodepointCountFilter(Version.LUCENE_50, input, 1, Integer.MAX_VALUE));
-        this.charUtils = CharacterUtils.getInstance(Version.LUCENE_50);
+        super(new CodepointCountFilter(Version.LUCENE_5_0, input, 1, Integer.MAX_VALUE));
+        this.charUtils = CharacterUtils.getInstance(Version.LUCENE_5_0);
 
         this.minGram = 1;
         this.maxGram = Integer.MAX_VALUE;

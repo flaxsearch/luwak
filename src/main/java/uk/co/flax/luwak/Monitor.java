@@ -2,9 +2,6 @@ package uk.co.flax.luwak;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -24,7 +21,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,8 +66,8 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50,
-                new WhitespaceAnalyzer(Version.LUCENE_50)));
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_5_0,
+                new WhitespaceAnalyzer(Version.LUCENE_5_0)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
@@ -343,7 +339,7 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public final void setNextReader(AtomicReaderContext context) throws IOException {
+        public final void doSetNextReader(AtomicReaderContext context) throws IOException {
             this.queryDV = context.reader().getSortedDocValues(Monitor.FIELDS.query);
             this.highlightDV = context.reader().getSortedDocValues(Monitor.FIELDS.highlight);
             this.idDV = context.reader().getSortedDocValues(FIELDS.id);

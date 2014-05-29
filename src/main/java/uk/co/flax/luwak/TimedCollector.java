@@ -1,6 +1,6 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.SimpleCollector;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -21,7 +21,7 @@ import org.apache.lucene.search.Collector;
 /**
  * An extension of Collector that records how long a search took.
  */
-public abstract class TimedCollector extends Collector {
+public abstract class TimedCollector extends SimpleCollector {
 
     /**
      * Set the search time

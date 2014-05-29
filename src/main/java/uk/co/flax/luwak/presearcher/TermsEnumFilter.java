@@ -61,7 +61,7 @@ public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
         private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
         public Filter(TokenStream in, TermsEnum terms) {
-            super(Version.LUCENE_50, in);
+            super(Version.LUCENE_5_0, in);
             this.terms = terms;
         }
 

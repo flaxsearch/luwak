@@ -1,9 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
@@ -39,10 +37,11 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
 
     @Override
     public void matchQuery(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        doc.getSearcher().search(matchQuery, new Collector() {
-            @Override
-            public void setScorer(Scorer scorer) throws IOException {
+        doc.getSearcher().search(matchQuery, new SimpleCollector() {
 
+            @Override
+            public boolean acceptsDocsOutOfOrder() {
+                return true;
             }
 
             @Override
@@ -50,15 +49,6 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
                 matches.add(new QueryMatch(queryId));
             }
 
-            @Override
-            public void setNextReader(AtomicReaderContext context) throws IOException {
-
-            }
-
-            @Override
-            public boolean acceptsDocsOutOfOrder() {
-                return false;
-            }
         });
     }
 

@@ -30,7 +30,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 public class TestTermsEnumFilter {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_50);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_5_0);
 
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {

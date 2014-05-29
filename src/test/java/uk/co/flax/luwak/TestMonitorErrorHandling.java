@@ -40,7 +40,7 @@ public class TestMonitorErrorHandling {
 
     public static final String FIELD = "f";
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_50);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_5_0);
 
     private static QueryCache createMockCache() throws Exception {
 

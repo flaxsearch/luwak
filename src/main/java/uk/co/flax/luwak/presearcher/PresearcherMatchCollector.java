@@ -68,7 +68,7 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
     }
 
     @Override
-    public void setNextReader(AtomicReaderContext context) throws IOException {
+    public void doSetNextReader(AtomicReaderContext context) throws IOException {
         this.reader = context.reader();
         this.idValues = this.reader.getSortedDocValues(Monitor.FIELDS.id);
     }

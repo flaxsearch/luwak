@@ -1,16 +1,17 @@
 package uk.co.flax.luwak.matchers;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -40,7 +41,7 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
         IndexSearcher searcher = doc.getSearcher();
         try {
             final float[] scores = new float[1]; // inits to 0.0f (no match)
-            searcher.search(matchQuery, new Collector() {
+            searcher.search(matchQuery, new SimpleCollector() {
                 private Scorer scorer;
 
                 @Override
@@ -57,9 +58,6 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
                 public boolean acceptsDocsOutOfOrder() {
                     return true;
                 }
-
-                @Override
-                public void setNextReader(AtomicReaderContext context) { }
             });
             float score = scores[0];
             if (score > 0)

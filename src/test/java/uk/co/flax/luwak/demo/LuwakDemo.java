@@ -43,7 +43,7 @@ import java.util.List;
 
 public class LuwakDemo {
 
-    public static final Analyzer ANALYZER = new StandardAnalyzer(Version.LUCENE_50);
+    public static final Analyzer ANALYZER = new StandardAnalyzer(Version.LUCENE_5_0);
 
     public static final String FIELD = "text";
 

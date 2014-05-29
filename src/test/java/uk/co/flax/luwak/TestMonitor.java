@@ -117,6 +117,6 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
     }
 
-    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_5_0);
 
 }

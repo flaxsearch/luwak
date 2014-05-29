@@ -26,11 +26,11 @@ public class LuceneQueryCache extends ParsingQueryCache {
     private final QueryParser parser;
 
     public LuceneQueryCache(String defaultField, Analyzer analyzer) {
-        this.parser = new QueryParser(Version.LUCENE_50, defaultField, analyzer);
+        this.parser = new QueryParser(Version.LUCENE_5_0, defaultField, analyzer);
     }
 
     public LuceneQueryCache(String defaultField) {
-        this(defaultField,  new StandardAnalyzer(Version.LUCENE_50));
+        this(defaultField,  new StandardAnalyzer(Version.LUCENE_5_0));
     }
 
     @Override
