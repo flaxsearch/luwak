@@ -8,6 +8,7 @@
     <version>1.1.0-rc2-SNAPSHOT</version>
 
     <properties>
+        <lucene.group>uk.co.flax.lucene-solr-intervals</lucene.group>
         <lucene.version>r1597299-intervals-1.3.1-SNAPSHOT</lucene.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -27,22 +28,22 @@
     <dependencies>
 
         <dependency>
-            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <groupId>${lucene.group}</groupId>
             <artifactId>lucene-core</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
-            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <groupId>${lucene.group}</groupId>
             <artifactId>lucene-memory</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
-            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <groupId>${lucene.group}</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
-            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <groupId>${lucene.group}</groupId>
             <artifactId>lucene-queries</artifactId>
             <version>${lucene.version}</version>
         </dependency>
@@ -73,7 +74,7 @@
         </dependency>
 
         <dependency>
-            <groupId>uk.co.flax.lucene-solr-intervals</groupId>
+            <groupId>${lucene.group}</groupId>
             <artifactId>lucene-queryparser</artifactId>
             <version>${lucene.version}</version>
         </dependency>
