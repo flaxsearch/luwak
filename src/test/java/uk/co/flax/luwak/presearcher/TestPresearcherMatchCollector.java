@@ -1,8 +1,8 @@
 package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
@@ -40,7 +40,7 @@ public class TestPresearcherMatchCollector {
         monitor.update(new MonitorQuery("2", "foo bar -baz"));
 
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Version.LUCENE_5_0))
+                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Constants.VERSION))
                 .build();
 
         PresearcherMatchCollector collector = new PresearcherMatchCollector();

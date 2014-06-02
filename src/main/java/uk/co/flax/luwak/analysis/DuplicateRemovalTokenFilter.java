@@ -20,7 +20,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
-import org.apache.lucene.util.Version;
+import uk.co.flax.luwak.Constants;
 
 import java.io.IOException;
 
@@ -29,11 +29,11 @@ import java.io.IOException;
  */
 public class DuplicateRemovalTokenFilter extends FilteringTokenFilter {
 
-    private final CharArraySet seenTerms = new CharArraySet(Version.LUCENE_5_0, 1024, false);
+    private final CharArraySet seenTerms = new CharArraySet(Constants.VERSION, 1024, false);
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
     public DuplicateRemovalTokenFilter(TokenStream input) {
-        super(Version.LUCENE_5_0, input);
+        super(Constants.VERSION, input);
     }
 
     @Override

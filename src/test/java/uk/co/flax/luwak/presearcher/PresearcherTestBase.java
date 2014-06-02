@@ -2,8 +2,8 @@ package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.util.Version;
 import org.junit.Before;
+import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
@@ -42,6 +42,6 @@ public abstract class PresearcherTestBase {
 
     public static final String TEXTFIELD = "text";
 
-    public static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_5_0);
+    public static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
 
 }

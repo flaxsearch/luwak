@@ -13,7 +13,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
-import org.apache.lucene.util.Version;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
 
 import java.io.Closeable;
@@ -66,8 +65,8 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_5_0,
-                new WhitespaceAnalyzer(Version.LUCENE_5_0)));
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
+                new WhitespaceAnalyzer(Constants.VERSION)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }

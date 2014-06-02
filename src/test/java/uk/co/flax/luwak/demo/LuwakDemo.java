@@ -4,14 +4,10 @@ import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.util.Version;
 import org.fest.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
@@ -43,7 +39,7 @@ import java.util.List;
 
 public class LuwakDemo {
 
-    public static final Analyzer ANALYZER = new StandardAnalyzer(Version.LUCENE_5_0);
+    public static final Analyzer ANALYZER = new StandardAnalyzer(Constants.VERSION);
 
     public static final String FIELD = "text";
 

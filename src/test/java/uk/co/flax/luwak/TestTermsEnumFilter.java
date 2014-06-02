@@ -3,7 +3,6 @@ package uk.co.flax.luwak;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.util.Version;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
@@ -30,7 +29,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 public class TestTermsEnumFilter {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_5_0);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
 
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {

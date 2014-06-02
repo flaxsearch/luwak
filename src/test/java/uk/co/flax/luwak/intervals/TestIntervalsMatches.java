@@ -3,10 +3,10 @@ package uk.co.flax.luwak.intervals;
 import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.util.Version;
 import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
@@ -36,7 +36,7 @@ public class TestIntervalsMatches {
 
     static final String textfield = "textfield";
 
-    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_5_0);
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
 
     private Monitor monitor;
 

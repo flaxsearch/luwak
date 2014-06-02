@@ -5,8 +5,8 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
-import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.Constants;
 
 import java.io.IOException;
 
@@ -33,7 +33,7 @@ public class TestSuffixingNGramTokenizer {
     Analyzer analyzer = new Analyzer() {
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
-            Tokenizer source = new WhitespaceTokenizer(Version.LUCENE_5_0);
+            Tokenizer source = new WhitespaceTokenizer(Constants.VERSION);
             TokenStream sink = new SuffixingNGramTokenFilter(new KeywordRepeatFilter(source), "XX", "ANY", 10);
             return new TokenStreamComponents(source, sink);
         }
