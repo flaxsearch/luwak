@@ -6,7 +6,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
 import org.apache.lucene.index.*;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.Version;
+import uk.co.flax.luwak.Constants;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -61,7 +61,7 @@ public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
         private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
         public Filter(TokenStream in, TermsEnum terms) {
-            super(Version.LUCENE_50, in);
+            super(Constants.VERSION, in);
             this.terms = terms;
         }
 

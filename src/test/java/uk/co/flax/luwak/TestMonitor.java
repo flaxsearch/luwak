@@ -3,13 +3,12 @@ package uk.co.flax.luwak;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.util.Version;
 import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.io.IOException;
 
@@ -117,6 +116,6 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
     }
 
-    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Version.LUCENE_50);
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
 
 }

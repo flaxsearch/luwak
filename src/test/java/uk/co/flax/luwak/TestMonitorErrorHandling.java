@@ -7,11 +7,10 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.Version;
 import org.junit.Test;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class TestMonitorErrorHandling {
 
     public static final String FIELD = "f";
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Version.LUCENE_50);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
 
     private static QueryCache createMockCache() throws Exception {
 

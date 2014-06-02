@@ -2,9 +2,6 @@ package uk.co.flax.luwak;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -16,7 +13,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
-import org.apache.lucene.util.Version;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
 
 import java.io.Closeable;
@@ -24,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -70,8 +65,8 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Version.LUCENE_50,
-                new WhitespaceAnalyzer(Version.LUCENE_50)));
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
+                new WhitespaceAnalyzer(Constants.VERSION)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
