@@ -3,10 +3,7 @@ package uk.co.flax.luwak;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.SortedDocValuesField;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -263,12 +260,12 @@ public class Monitor implements Closeable {
     protected Document buildIndexableQuery(MonitorQuery mq, Query matchQuery) {
         Document doc = presearcher.indexQuery(matchQuery);
         doc.add(new StringField(Monitor.FIELDS.id, mq.getId(), Field.Store.NO));
-        doc.add(new SortedDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
-        doc.add(new SortedDocValuesField(Monitor.FIELDS.query, new BytesRef(mq.getQuery())));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.query, new BytesRef(mq.getQuery())));
         String hl = mq.getHighlightQuery();
         if (hl == null)
             hl = "";
-        doc.add(new SortedDocValuesField(Monitor.FIELDS.highlight, new BytesRef(hl)));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.highlight, new BytesRef(hl)));
         return doc;
     }
 
@@ -304,9 +301,9 @@ public class Monitor implements Closeable {
      */
     public abstract class MonitorQueryCollector extends TimedCollector {
 
-        protected SortedDocValues queryDV;
-        protected SortedDocValues highlightDV;
-        protected SortedDocValues idDV;
+        protected BinaryDocValues queryDV;
+        protected BinaryDocValues highlightDV;
+        protected BinaryDocValues idDV;
 
         final BytesRef query = new BytesRef();
         final BytesRef highlight = new BytesRef();
@@ -339,9 +336,9 @@ public class Monitor implements Closeable {
 
         @Override
         public final void setNextReader(AtomicReaderContext context) throws IOException {
-            this.queryDV = context.reader().getSortedDocValues(Monitor.FIELDS.query);
-            this.highlightDV = context.reader().getSortedDocValues(Monitor.FIELDS.highlight);
-            this.idDV = context.reader().getSortedDocValues(FIELDS.id);
+            this.queryDV = context.reader().getBinaryDocValues(Monitor.FIELDS.query);
+            this.highlightDV = context.reader().getBinaryDocValues(Monitor.FIELDS.highlight);
+            this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
         }
 
         @Override

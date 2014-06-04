@@ -2,7 +2,7 @@ package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.StoredDocument;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
@@ -37,7 +37,7 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
     private IntervalIterator positions;
     private AtomicReader reader;
     private StoredDocument document;
-    private SortedDocValues idValues;
+    private BinaryDocValues idValues;
     private String currentId;
 
     public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
@@ -70,7 +70,7 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
     @Override
     public void setNextReader(AtomicReaderContext context) throws IOException {
         this.reader = context.reader();
-        this.idValues = this.reader.getSortedDocValues(Monitor.FIELDS.id);
+        this.idValues = this.reader.getBinaryDocValues(Monitor.FIELDS.id);
     }
 
     @Override
