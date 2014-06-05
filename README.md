@@ -9,7 +9,8 @@ instructions.
 Once that's done, you can build and deploy Luwak by running mvn install.
 
 You can find out a bit more about how Flax use Luwak for media monitoring applications in 
-this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8
+this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
+from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
 
 Running the demo
 ----------------
