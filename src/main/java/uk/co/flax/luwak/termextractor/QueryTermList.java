@@ -50,6 +50,10 @@ public class QueryTermList implements Iterable<QueryTerm> {
         return Iterables.getFirst(termlists, null);
     }
 
+    public static QueryTermList selectBest(QueryTermList... termlists) {
+        return selectBest(Arrays.asList(termlists));
+    }
+
     @Override
     public Iterator<QueryTerm> iterator() {
         return terms.iterator();
