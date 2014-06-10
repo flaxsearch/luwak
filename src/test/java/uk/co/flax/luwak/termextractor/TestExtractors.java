@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
@@ -115,4 +116,21 @@ public class TestExtractors {
 
         assertThat(terms).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
+
+    public void testFilteredQueryTermExtractor() {
+
+        QueryTermExtractor qte = new QueryTermExtractor(new FilteredQueryExtractor());
+
+        Query q = new TermQuery(new Term("field", "term"));
+        Filter f = new TermFilter(new Term("field", "filterterm"));
+        FilteredQuery fq = new FilteredQuery(q, f);
+
+        Set<QueryTerm> terms = qte.extract(fq);
+        assertThat(terms).hasSize(1);   // treat filterquery as a conjunction, only need one subclause
+
+        // selects 'filterterm' over 'term' because it's longer
+        assertThat(terms).containsExactly(new QueryTerm("field", "filterterm", QueryTerm.Type.EXACT));
+
+    }
+
 }

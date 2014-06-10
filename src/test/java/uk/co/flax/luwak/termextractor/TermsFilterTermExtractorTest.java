@@ -2,12 +2,9 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
-import org.apache.lucene.search.Filter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.TermsFilterTermExtractor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +23,7 @@ public class TermsFilterTermExtractorTest {
     @Test
     public void testExtractSingleTerm() {
         List<QueryTerm> terms = new LinkedList<>();
-        Filter filter = new TermsFilter(new Term("someField", "123"));
+        TermsFilter filter = new TermsFilter(new Term("someField", "123"));
         extractor.extract(filter, terms);
         Assert.assertEquals(1, terms.size());
         Assert.assertEquals("someField", terms.get(0).field);
@@ -36,7 +33,7 @@ public class TermsFilterTermExtractorTest {
     @Test
     public void testExtractMultipleTerms() {
 
-        Filter filter = new TermsFilter(new Term("field1", "foo"), new Term("field2", "bar"), new Term("field1", "baz"));
+        TermsFilter filter = new TermsFilter(new Term("field1", "foo"), new Term("field2", "bar"), new Term("field1", "baz"));
 
         List<QueryTerm> terms = new LinkedList<>();
         extractor.extract(filter, terms);

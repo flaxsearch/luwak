@@ -2,14 +2,13 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.util.BytesRef;
 
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TermsFilterTermExtractor implements FilterTermExtractor {
+public class TermsFilterTermExtractor extends FilterTermExtractor<TermsFilter> {
 
     private static Field termsField;
     private static Field termsBytesField;
@@ -49,17 +48,19 @@ public class TermsFilterTermExtractor implements FilterTermExtractor {
         }
     }
 
+    public TermsFilterTermExtractor() {
+        super(TermsFilter.class);
+    }
+
     @Override
-    public void extract(Filter filter, List<QueryTerm> terms) {
-        if (filter.getClass() == TermsFilter.class) {
-            try {
-                List<Term> filterTerms = getTermsFromTermsFilter((TermsFilter) filter);
-                for (Term term : filterTerms) {
-                    terms.add(new QueryTerm(term.field(), term.text(), QueryTerm.Type.EXACT));
-                }
-            } catch (IllegalAccessException ex) {
-                throw new RuntimeException("Couldn't extract terms from filter", ex);
+    public void extract(TermsFilter filter, List<QueryTerm> terms) {
+        try {
+            List<Term> filterTerms = getTermsFromTermsFilter(filter);
+            for (Term term : filterTerms) {
+                terms.add(new QueryTerm(term.field(), term.text(), QueryTerm.Type.EXACT));
             }
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException("Couldn't extract terms from filter", ex);
         }
     }
 

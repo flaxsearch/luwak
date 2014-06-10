@@ -1,39 +1,66 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.LinkedList;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FilteredQuery;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     /**
      * The default list of Extractors to use
      */
-    public static final List<FilterTermExtractor> DEFAULT_FILTER_EXTRACTORS;
+    public static final List<FilterTermExtractor<? extends Filter>> DEFAULT_FILTER_EXTRACTORS = ImmutableList.of(
+            new TermsFilterTermExtractor(),
+            new TermFilterTermExtractor(),
+            new GenericFilterTermExtractor()
+    );
 
-    static {
-        DEFAULT_FILTER_EXTRACTORS = new LinkedList<>();
-        DEFAULT_FILTER_EXTRACTORS.add(new TermsFilterTermExtractor());
-    }
+    protected List<FilterTermExtractor<? extends Filter>> filterTermExtractors = new LinkedList<>(DEFAULT_FILTER_EXTRACTORS);
 
-    protected List<FilterTermExtractor> filterTermExtractors = new LinkedList<>();
+    private final TermWeightor weightor;
 
     public FilteredQueryExtractor() {
-        super(FilteredQuery.class);
-        this.filterTermExtractors.addAll(DEFAULT_FILTER_EXTRACTORS);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR);
     }
 
-    public FilteredQueryExtractor(List<? extends FilterTermExtractor> filterTermExtractors) {
-        this();
-        this.filterTermExtractors.addAll(filterTermExtractors);
+    public FilteredQueryExtractor(TermWeightor weightor) {
+        this(weightor, null);
+    }
+
+    public FilteredQueryExtractor(TermWeightor weightor, List<FilterTermExtractor<? extends Filter>> filterTermExtractors) {
+        super(FilteredQuery.class);
+        this.weightor = weightor;
+        if (filterTermExtractors != null) {
+            this.filterTermExtractors.addAll(filterTermExtractors);
+        }
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void extract(FilteredQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+
+        List<QueryTerm> subqueryTerms = new ArrayList<>();
+        extractTerms(query.getQuery(), subqueryTerms, extractors);
+        QueryTermList queryTerms = new QueryTermList(weightor, subqueryTerms);
+
+        List<QueryTerm> subfilterTerms = new ArrayList<>();
         Filter filter = query.getFilter();
         for (FilterTermExtractor extractor : this.filterTermExtractors) {
-            extractor.extract(filter, terms);
+            if (extractor.cls.isAssignableFrom(filter.getClass())) {
+                extractor.extract(filter, subfilterTerms);
+                break;
+            }
         }
+        QueryTermList filterTerms = new QueryTermList(weightor, subfilterTerms);
+
+        Iterables.addAll(terms, QueryTermList.selectBest(queryTerms, filterTerms));
+
     }
 }
