@@ -37,10 +37,17 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
 
     @Override
     public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        float score = score(matchQuery);
+        if (score > 0)
+            scores.put(queryId, new ScoringMatch(queryId, score));
+    }
+
+    protected float score(Query query) {
         IndexSearcher searcher = doc.getSearcher();
         try {
             final float[] scores = new float[1]; // inits to 0.0f (no match)
-            searcher.search(matchQuery, new Collector() {
+            searcher.search(query, new Collector() {
+
                 private Scorer scorer;
 
                 @Override
@@ -61,10 +68,10 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
                 @Override
                 public void setNextReader(AtomicReaderContext context) { }
             });
-            float score = scores[0];
-            if (score > 0)
-                ScoringMatcher.this.scores.put(queryId, new ScoringMatch(queryId, score));
-        } catch (IOException e) { // can never happen (RAMDirectory)
+            return scores[0];
+        }
+        catch (IOException e) {
+            // Shouldn't happen, running on MemoryIndex...
             throw new RuntimeException(e);
         }
     }
