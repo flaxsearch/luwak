@@ -27,6 +27,10 @@ import java.util.*;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * A Matcher that reports the scores of queries run against its InputDocument
+ */
 public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
 
     private final Map<String, ScoringMatch> scores = new LinkedHashMap<>();
@@ -42,6 +46,11 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
             scores.put(queryId, new ScoringMatch(queryId, score));
     }
 
+    /**
+     * Run a query against this matcher's InputDocument and report the score
+     * @param query the query to run
+     * @return the score
+     */
     protected float score(Query query) {
         IndexSearcher searcher = doc.getSearcher();
         try {
@@ -86,6 +95,9 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
         return scores.size();
     }
 
+    /**
+     * A MatcherFactory for ScoringMatcher objects
+     */
     public static final MatcherFactory<ScoringMatcher> FACTORY = new MatcherFactory<ScoringMatcher>() {
         @Override
         public ScoringMatcher createMatcher(InputDocument doc) {
