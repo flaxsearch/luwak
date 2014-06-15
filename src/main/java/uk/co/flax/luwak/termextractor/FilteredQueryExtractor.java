@@ -38,7 +38,7 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
         super(FilteredQuery.class);
         this.weightor = weightor;
         if (filterTermExtractors != null) {
-            this.filterTermExtractors.addAll(filterTermExtractors);
+            this.filterTermExtractors.addAll(0, filterTermExtractors);
         }
     }
 
@@ -47,20 +47,27 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     public void extract(FilteredQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
 
         List<QueryTerm> subqueryTerms = new ArrayList<>();
-        extractTerms(query.getQuery(), subqueryTerms, extractors);
+        if (query.getQuery() != null) {
+            extractTerms(query.getQuery(), subqueryTerms, extractors);
+        }
         QueryTermList queryTerms = new QueryTermList(weightor, subqueryTerms);
 
         List<QueryTerm> subfilterTerms = new ArrayList<>();
         Filter filter = query.getFilter();
-        for (FilterTermExtractor extractor : this.filterTermExtractors) {
-            if (extractor.cls.isAssignableFrom(filter.getClass())) {
-                extractor.extract(filter, subfilterTerms);
-                break;
+        if (filter != null) {
+            for (FilterTermExtractor extractor : this.filterTermExtractors) {
+                if (extractor.cls.isAssignableFrom(filter.getClass())) {
+                    extractor.extract(filter, subfilterTerms);
+                    break;
+                }
             }
         }
         QueryTermList filterTerms = new QueryTermList(weightor, subfilterTerms);
 
-        Iterables.addAll(terms, QueryTermList.selectBest(queryTerms, filterTerms));
-
+        if (queryTerms.length() == 0) {
+            Iterables.addAll(terms, filterTerms);
+        } else {
+            Iterables.addAll(terms, QueryTermList.selectBest(queryTerms, filterTerms));
+        }
     }
 }
