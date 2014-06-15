@@ -2,17 +2,18 @@ package uk.co.flax.luwak.termextractor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.FilteredQuery;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.Filter;
+import static uk.co.flax.luwak.termextractor.Extractor.extractTerms;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 
-public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
+public class ConstantScoreQueryTermExtractor extends Extractor<ConstantScoreQuery> {
+
     /**
      * The default list of Extractors to use
      */
@@ -22,20 +23,22 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
             new GenericFilterTermExtractor()
     );
 
-    protected List<FilterTermExtractor<? extends Filter>> filterTermExtractors = new LinkedList<>(DEFAULT_FILTER_EXTRACTORS);
+    private List<FilterTermExtractor<? extends Filter>> filterTermExtractors
+            = new LinkedList<>(DEFAULT_FILTER_EXTRACTORS);
 
     private final TermWeightor weightor;
 
-    public FilteredQueryExtractor() {
+    public ConstantScoreQueryTermExtractor() {
         this(CompoundRuleWeightor.DEFAULT_WEIGHTOR);
     }
 
-    public FilteredQueryExtractor(TermWeightor weightor) {
+    public ConstantScoreQueryTermExtractor(TermWeightor weightor) {
         this(weightor, null);
     }
 
-    public FilteredQueryExtractor(TermWeightor weightor, List<FilterTermExtractor<? extends Filter>> filterTermExtractors) {
-        super(FilteredQuery.class);
+    public ConstantScoreQueryTermExtractor(TermWeightor weightor,
+            List<FilterTermExtractor<? extends Filter>> filterTermExtractors) {
+        super(ConstantScoreQuery.class);
         this.weightor = weightor;
         if (filterTermExtractors != null) {
             this.filterTermExtractors.addAll(0, filterTermExtractors);
@@ -44,8 +47,7 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public void extract(FilteredQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
-
+    public void extract(ConstantScoreQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         List<QueryTerm> subqueryTerms = new ArrayList<>();
         if (query.getQuery() != null) {
             extractTerms(query.getQuery(), subqueryTerms, extractors);
