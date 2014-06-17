@@ -62,6 +62,7 @@ public class QueryTermExtractor {
     public QueryTermExtractor(TermWeightor weightor, FilterTermExtractor fte, Extractor<?>... extractors) {
         Collections.addAll(this.extractors, extractors);
         this.extractors.add(new BooleanTermExtractor(weightor));
+        this.extractors.add(new PhraseQueryTermExtractor(weightor));
         this.extractors.add(new ConstantScoreQueryExtractor(fte));
         this.extractors.addAll(DEFAULT_EXTRACTORS);
     }

@@ -195,4 +195,17 @@ public class TestExtractors {
 
     }
 
+    @Test
+    public void testPhraseQueryExtractor() {
+
+        QueryTermExtractor qte = new QueryTermExtractor();
+
+        PhraseQuery pq = new PhraseQuery();
+        pq.add(new Term("f", "hello"));
+        pq.add(new Term("f", "encyclopedia"));
+
+        assertThat(qte.extract(pq)).containsOnly(new QueryTerm("f", "encyclopedia", QueryTerm.Type.EXACT));
+
+    }
+
 }
