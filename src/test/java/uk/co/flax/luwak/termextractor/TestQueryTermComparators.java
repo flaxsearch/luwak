@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import uk.co.flax.luwak.termextractor.weights.*;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -73,6 +73,10 @@ public class TestQueryTermComparators {
                 new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
 
         assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, list2)))
+                .containsExactly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+
+        QueryTermList emptyList = new QueryTermList(WEIGHT);
+        assertThat(QueryTermList.selectBest(Lists.newArrayList(list1, emptyList)))
                 .containsExactly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
     }
 

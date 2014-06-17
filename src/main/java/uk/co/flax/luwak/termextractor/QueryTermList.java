@@ -1,10 +1,10 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.*;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.util.*;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -29,7 +29,7 @@ public class QueryTermList implements Iterable<QueryTerm> {
 
     public QueryTermList(TermWeightor weightor, List<QueryTerm> terms) {
         this.terms = terms;
-        this.weight = weightor.weigh(terms);
+        this.weight = terms.size() > 0 ? weightor.weigh(terms) : 0;
     }
 
     public QueryTermList(TermWeightor weightor, QueryTerm... terms) {

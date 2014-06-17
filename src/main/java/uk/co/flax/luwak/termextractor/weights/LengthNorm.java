@@ -1,8 +1,8 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
 import java.util.List;
+
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
