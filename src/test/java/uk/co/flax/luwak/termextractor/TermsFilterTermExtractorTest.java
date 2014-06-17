@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.LinkedList;
-import java.util.List;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 

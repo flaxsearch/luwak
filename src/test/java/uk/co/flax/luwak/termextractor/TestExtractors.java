@@ -1,16 +1,19 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
+import org.apache.lucene.util.Bits;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -117,6 +120,7 @@ public class TestExtractors {
         assertThat(terms).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
 
+    @Test
     public void testFilteredQueryTermExtractor() {
 
         QueryTermExtractor qte = new QueryTermExtractor(new FilteredQueryExtractor());
@@ -130,6 +134,40 @@ public class TestExtractors {
 
         // selects 'filterterm' over 'term' because it's longer
         assertThat(terms).containsExactly(new QueryTerm("field", "filterterm", QueryTerm.Type.EXACT));
+
+    }
+
+    private static class MyFilter extends Filter {
+
+        @Override
+        public DocIdSet getDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
+            return null;
+        }
+    }
+
+    private static class MyFilterTermExtractor extends FilterTermExtractor<MyFilter> {
+
+        protected MyFilterTermExtractor() {
+            super(MyFilter.class);
+        }
+
+        @Override
+        public void extract(MyFilter filter, List<QueryTerm> terms) {
+            terms.add(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
+        }
+    }
+
+    @Test
+    public void testExtendedFilteredQueryExtractor() {
+
+        FilteredQueryExtractor fqe = new FilteredQueryExtractor(new MyFilterTermExtractor());
+        QueryTermExtractor qte = new QueryTermExtractor(fqe);
+
+        Query q = new RegexpQuery(new Term("FILTER", "*"));
+        Filter f = new MyFilter();
+
+        Set<QueryTerm> terms = qte.extract(new FilteredQuery(q, f));
+        assertThat(terms).containsExactly(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
 
     }
 
