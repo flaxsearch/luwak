@@ -1,5 +1,8 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import org.apache.lucene.analysis.TokenStream;
@@ -7,12 +10,10 @@ import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.FilterTermExtractor;
 import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -57,7 +58,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
      */
     protected WildcardNGramPresearcher(TermWeightor weightor, String ngramSuffix, int maxTokenSize,
                                        Extractor<?>... extractors) {
-        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
+        super(weightor, new FilterTermExtractor(), ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
     }

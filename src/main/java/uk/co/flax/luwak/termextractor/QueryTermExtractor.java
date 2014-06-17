@@ -14,12 +14,12 @@ package uk.co.flax.luwak.termextractor;/*
  * limitations under the License.
  */
 
+import java.util.*;
+
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.util.*;
 
 /**
  * Utility class to extract terms from a {@link Query} by walking the query tree.
@@ -47,7 +47,7 @@ public class QueryTermExtractor {
     );
 
     public QueryTermExtractor(Extractor<?>... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, new FilterTermExtractor(), extractors);
     }
 
     /**
@@ -59,9 +59,10 @@ public class QueryTermExtractor {
      * @param weightor   the {@link uk.co.flax.luwak.termextractor.weights.TermWeightor} to use for Boolean clauses
      * @param extractors an array of Extractors
      */
-    public QueryTermExtractor(TermWeightor weightor, Extractor<?>... extractors) {
+    public QueryTermExtractor(TermWeightor weightor, FilterTermExtractor fte, Extractor<?>... extractors) {
         Collections.addAll(this.extractors, extractors);
         this.extractors.add(new BooleanTermExtractor(weightor));
+        this.extractors.add(new ConstantScoreQueryExtractor(fte));
         this.extractors.addAll(DEFAULT_EXTRACTORS);
     }
 

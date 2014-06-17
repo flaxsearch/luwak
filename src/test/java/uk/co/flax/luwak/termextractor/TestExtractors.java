@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermFilter;
+import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
@@ -145,7 +146,7 @@ public class TestExtractors {
         }
     }
 
-    private static class MyFilterTermExtractor extends FilterTermExtractor<MyFilter> {
+    private static class MyFilterTermExtractor extends FilterExtractor<MyFilter> {
 
         protected MyFilterTermExtractor() {
             super(MyFilter.class);
@@ -160,7 +161,8 @@ public class TestExtractors {
     @Test
     public void testExtendedFilteredQueryExtractor() {
 
-        FilteredQueryExtractor fqe = new FilteredQueryExtractor(new MyFilterTermExtractor());
+        FilterTermExtractor fte = new FilterTermExtractor(new MyFilterTermExtractor());
+        FilteredQueryExtractor fqe = new FilteredQueryExtractor(fte);
         QueryTermExtractor qte = new QueryTermExtractor(fqe);
 
         Query q = new RegexpQuery(new Term("FILTER", "*"));
@@ -168,6 +170,28 @@ public class TestExtractors {
 
         Set<QueryTerm> terms = qte.extract(new FilteredQuery(q, f));
         assertThat(terms).containsExactly(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
+
+    }
+
+    @Test
+    public void testConstantScoreQueryExtractor() {
+
+        QueryTermExtractor qte = new QueryTermExtractor();
+
+        BooleanQuery bq = new BooleanQuery();
+        bq.add(new TermQuery(new Term("f", "q1")), BooleanClause.Occur.MUST);
+        bq.add(new TermQuery(new Term("f", "q2")), BooleanClause.Occur.SHOULD);
+
+        Query csqWithQuery = new ConstantScoreQuery(bq);
+        assertThat(qte.extract(csqWithQuery))
+                .containsExactly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT));
+
+
+        TermsFilter tf = new TermsFilter(new Term("f", "q1"), new Term("f", "q22"));
+
+        Query csqWithFilter = new ConstantScoreQuery(tf);
+        assertThat(qte.extract(csqWithFilter))
+                .containsOnly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT), new QueryTerm("f", "q22", QueryTerm.Type.EXACT));
 
     }
 

@@ -1,8 +1,8 @@
 package uk.co.flax.luwak.termextractor;
 
-import org.apache.lucene.search.Filter;
-
 import java.util.List;
+
+import org.apache.lucene.search.ConstantScoreQuery;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -19,15 +19,21 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+public class ConstantScoreQueryExtractor extends Extractor<ConstantScoreQuery> {
 
-public class GenericFilterTermExtractor extends FilterExtractor<Filter> {
+    private final FilterTermExtractor filterExtractor;
 
-    public GenericFilterTermExtractor() {
-        super(Filter.class);
+    protected ConstantScoreQueryExtractor(FilterTermExtractor filterExtractor) {
+        super(ConstantScoreQuery.class);
+        this.filterExtractor = filterExtractor;
     }
 
     @Override
-    public void extract(Filter filter, List<QueryTerm> terms) {
-        terms.add(new QueryTerm("", filter.getClass().getCanonicalName(), QueryTerm.Type.ANY));
+    public void extract(ConstantScoreQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+        if (query.getQuery() != null) {
+            Extractor.extractTerms(query.getQuery(), terms, extractors);
+            return;
+        }
+        terms.addAll(filterExtractor.extract(query.getFilter()));
     }
 }

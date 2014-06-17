@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TermsFilterTermExtractor extends FilterTermExtractor<TermsFilter> {
+public class TermsFilterTermExtractor extends FilterExtractor<TermsFilter> {
 
     private static Field termsField;
     private static Field termsBytesField;

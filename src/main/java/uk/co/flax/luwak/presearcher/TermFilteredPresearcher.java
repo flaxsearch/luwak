@@ -14,6 +14,10 @@ package uk.co.flax.luwak.presearcher;/*
  * limitations under the License.
  */
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -31,16 +35,13 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.FilterTermExtractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -57,12 +58,12 @@ public class TermFilteredPresearcher implements Presearcher {
 
     protected final QueryTermExtractor extractor;
 
-    public TermFilteredPresearcher(TermWeightor weightor, Extractor... extractors) {
-        this.extractor = new QueryTermExtractor(weightor, extractors);
+    public TermFilteredPresearcher(TermWeightor weightor, FilterTermExtractor fte, Extractor... extractors) {
+        this.extractor = new QueryTermExtractor(weightor, fte, extractors);
     }
 
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, new FilterTermExtractor(), extractors);
     }
 
     @Override

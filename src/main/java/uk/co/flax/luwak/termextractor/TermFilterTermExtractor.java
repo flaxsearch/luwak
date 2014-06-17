@@ -20,7 +20,7 @@ import java.util.List;
  * limitations under the License.
  */
 
-public class TermFilterTermExtractor extends FilterTermExtractor<TermFilter> {
+public class TermFilterTermExtractor extends FilterExtractor<TermFilter> {
 
     public TermFilterTermExtractor() {
         super(TermFilter.class);
