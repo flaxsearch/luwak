@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import org.apache.lucene.util.BytesRef;
+
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
@@ -22,8 +24,8 @@ package uk.co.flax.luwak;
 public class MonitorQuery {
 
     private final String id;
-    private final String query;
-    private final String highlightQuery;
+    private final BytesRef query;
+    private final BytesRef highlightQuery;
 
     /**
      * Creates a new MonitorQuery
@@ -31,10 +33,31 @@ public class MonitorQuery {
      * @param query the query to store
      * @param highlightQuery an optional query to use for highlighting.  May be null.
      */
-    public MonitorQuery(String id, String query, String highlightQuery) {
+    public MonitorQuery(String id, BytesRef query, BytesRef highlightQuery) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
+    }
+
+    /**
+     * Creates a new MonitorQuery
+     *
+     * @param id the ID
+     * @param query the query to store
+     * @param highlightQuery an optional query to use for highlighting. May be null.
+     */
+    public MonitorQuery(String id, String query, String highlightQuery) {
+        this.id = id;
+        if (query != null) {
+            this.query = new BytesRef(query);
+        } else {
+            this.query = null;
+        }
+        if (highlightQuery != null) {
+            this.highlightQuery = new BytesRef(highlightQuery);
+        } else {
+            this.highlightQuery = null;
+        }
     }
 
     /**
@@ -56,14 +79,14 @@ public class MonitorQuery {
     /**
      * @return this MonitorQuery's query
      */
-    public String getQuery() {
+    public BytesRef getQuery() {
         return query;
     }
 
     /**
      * @return this MonitorQuery's highlight query.  May be null.
      */
-    public String getHighlightQuery() {
+    public BytesRef getHighlightQuery() {
         return highlightQuery;
     }
 

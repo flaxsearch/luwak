@@ -21,22 +21,23 @@ import com.google.common.cache.LoadingCache;
 import org.apache.lucene.search.Query;
 
 import java.util.concurrent.ExecutionException;
+import org.apache.lucene.util.BytesRef;
 
 public abstract class ParsingQueryCache implements QueryCache {
 
-    private final LoadingCache<String, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<String, Query>() {
+    private final LoadingCache<BytesRef, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<BytesRef, Query>() {
         @Override
-        public Query load(String query) throws Exception {
+        public Query load(BytesRef query) throws Exception {
             return parse(query);
         }
     });
 
-    protected abstract Query parse(String query) throws Exception;
+    protected abstract Query parse(BytesRef query) throws Exception;
 
     @Override
-    public Query get(String query) throws QueryCacheException {
+    public Query get(BytesRef query) throws QueryCacheException {
         try {
-            if (Strings.isNullOrEmpty(query))
+            if (query.length == 0)
                 return null;
             return queries.get(query);
         } catch (ExecutionException e) {
