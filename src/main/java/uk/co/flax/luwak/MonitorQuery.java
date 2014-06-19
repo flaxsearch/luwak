@@ -48,11 +48,10 @@ public class MonitorQuery {
      */
     public MonitorQuery(String id, String query, String highlightQuery) {
         this.id = id;
-        if (query != null) {
-            this.query = new BytesRef(query);
-        } else {
-            this.query = null;
+        if (query == null) {
+            throw new IllegalArgumentException("Null queries are not allowed");
         }
+        this.query = new BytesRef(query);
         if (highlightQuery != null) {
             this.highlightQuery = new BytesRef(highlightQuery);
         } else {
