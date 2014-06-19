@@ -88,12 +88,12 @@ public class Monitor implements Closeable {
         for (MonitorQuery query : queries) {
             try {
                 Query matchQuery = this.queryCache.get(query.getQuery());
-                if (!Strings.isNullOrEmpty(query.getHighlightQuery()))
+                if (query.getHighlightQuery() != null && query.getHighlightQuery().length > 0)
                     this.queryCache.get(query.getHighlightQuery()); // force HlQ to be parsed
                 writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
             }
             catch (Exception e) {
-                errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
+                errors.add(new QueryError(query.getId(), query.getQuery().utf8ToString(), e.getMessage()));
             }
         }
         writer.commit();
@@ -211,7 +211,7 @@ public class Monitor implements Closeable {
     public void loadAllQueries() throws IOException {
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String queryId, String matchQuery, String highlight) {
+            protected void doSearch(String queryId, BytesRef matchQuery, BytesRef highlight) {
                 // no impl
             }
         });
@@ -227,7 +227,7 @@ public class Monitor implements Closeable {
         final MonitorQuery[] queries = new MonitorQuery[]{ null };
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String id, String matchQuery, String highlight) {
+            protected void doSearch(String id, BytesRef matchQuery, BytesRef highlight) {
                 queries[0] = new MonitorQuery(id, matchQuery, highlight);
             }
         });
@@ -261,11 +261,11 @@ public class Monitor implements Closeable {
         Document doc = presearcher.indexQuery(matchQuery);
         doc.add(new StringField(Monitor.FIELDS.id, mq.getId(), Field.Store.NO));
         doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.query, new BytesRef(mq.getQuery())));
-        String hl = mq.getHighlightQuery();
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.query, mq.getQuery()));
+        BytesRef hl = mq.getHighlightQuery();
         if (hl == null)
-            hl = "";
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.highlight, new BytesRef(hl)));
+            hl = new BytesRef("");
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.highlight, hl));
         return doc;
     }
 
@@ -279,7 +279,7 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        protected void doSearch(String queryId, String matchQuery, String highlight) {
+        protected void doSearch(String queryId, BytesRef matchQuery, BytesRef highlight) {
             try {
                 Query m = queryCache.get(matchQuery);
                 Query h = queryCache.get(highlight);
@@ -315,7 +315,7 @@ public class Monitor implements Closeable {
          * @param matchQuery the matching query
          * @param highlight an optional highlighting query.  May be null.
          */
-        protected abstract void doSearch(String id, String matchQuery, String highlight);
+        protected abstract void doSearch(String id, BytesRef matchQuery, BytesRef highlight);
 
         private int queryCount = 0;
         private long searchTime = -1;
@@ -331,7 +331,7 @@ public class Monitor implements Closeable {
             highlightDV.get(doc, highlight);
             idDV.get(doc, id);
             queryCount++;
-            doSearch(id.utf8ToString(), query.utf8ToString(), highlight.utf8ToString());
+            doSearch(id.utf8ToString(), query, highlight);
         }
 
         @Override

@@ -13,6 +13,7 @@ import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 
 import java.util.List;
+import org.apache.lucene.util.BytesRef;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -48,10 +49,10 @@ public class TestMonitorErrorHandling {
 
         return new ParsingQueryCache() {
             @Override
-            protected Query parse(String query) throws Exception {
-                if ("unparseable".equals(query))
+            protected Query parse(BytesRef query) throws Exception {
+                if ("unparseable".equals(query.utf8ToString()))
                     throw new RuntimeException("Error parsing query [unparseable]");
-                if ("error".equals(query))
+                if ("error".equals(query.utf8ToString()))
                     return errorQuery;
                 return new TermQuery(new Term(FIELD, query));
             }
