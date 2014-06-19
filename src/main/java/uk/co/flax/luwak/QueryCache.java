@@ -20,6 +20,6 @@ import org.apache.lucene.search.Query;
 
 public interface QueryCache {
 
-    Query get(String query) throws QueryCacheException;
+    QueryCacheEntry get(MonitorQuery mq) throws QueryCacheException;
 
 }

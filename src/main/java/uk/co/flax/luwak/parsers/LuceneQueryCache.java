@@ -18,6 +18,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.ParsingQueryCache;
 
@@ -34,7 +35,7 @@ public class LuceneQueryCache extends ParsingQueryCache {
     }
 
     @Override
-    protected Query parse(String query) throws Exception {
-        return parser.parse(query);
+    protected Query parse(BytesRef query) throws Exception {
+        return parser.parse(query.utf8ToString());
     }
 }

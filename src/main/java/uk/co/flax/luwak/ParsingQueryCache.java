@@ -21,24 +21,29 @@ import com.google.common.cache.LoadingCache;
 import org.apache.lucene.search.Query;
 
 import java.util.concurrent.ExecutionException;
+import org.apache.lucene.util.BytesRef;
 
 public abstract class ParsingQueryCache implements QueryCache {
 
-    private final LoadingCache<String, Query> queries = CacheBuilder.newBuilder().build(new CacheLoader<String, Query>() {
+    private final LoadingCache<MonitorQuery, QueryCacheEntry> queries
+            = CacheBuilder.newBuilder().build(new CacheLoader<MonitorQuery, QueryCacheEntry>() {
         @Override
-        public Query load(String query) throws Exception {
-            return parse(query);
+        public QueryCacheEntry load(MonitorQuery mq) throws Exception {
+            Query highlightQuery = null;
+            if (mq.getHighlightQuery() != null && mq.getHighlightQuery().length > 0)
+                highlightQuery = parse(mq.getHighlightQuery());
+            return new QueryCacheEntry(parse(mq.getQuery()), highlightQuery);
         }
     });
 
-    protected abstract Query parse(String query) throws Exception;
+    protected abstract Query parse(BytesRef query) throws Exception;
 
     @Override
-    public Query get(String query) throws QueryCacheException {
+    public QueryCacheEntry get(MonitorQuery mq) throws QueryCacheException {
         try {
-            if (Strings.isNullOrEmpty(query))
+            if (mq.getQuery() == null || mq.getQuery().length == 0)
                 return null;
-            return queries.get(query);
+            return queries.get(mq);
         } catch (ExecutionException e) {
             Throwable t = e.getCause();
             throw new QueryCacheException(t);
