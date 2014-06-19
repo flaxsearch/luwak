@@ -115,7 +115,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
          * @return the Builder object
          */
         public Builder withFilterExtractor(FilterTermExtractor extractor) {
-            this.filterTermExtractor = filterTermExtractor;
+            this.filterTermExtractor = extractor;
             return this;
         }
 
