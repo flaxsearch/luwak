@@ -25,6 +25,7 @@ import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
 
 import java.io.IOException;
+import uk.co.flax.luwak.QueryMatch;
 
 /**
  * a specialized Collector that uses an {@link IntervalIterator} to collect
@@ -46,9 +47,11 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
 
     @Override
     public void collect(int doc) throws IOException {
-        positions.scorerAdvanced(doc);
-        while(positions.next() != null) {
-            positions.collect(this);
+        if (positions != null) {
+            positions.scorerAdvanced(doc);
+            while(positions.next() != null) {
+                positions.collect(this);
+            }
         }
     }
 
