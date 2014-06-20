@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.lucene.util.BytesRef;
 
 /**
@@ -23,7 +24,10 @@ import org.apache.lucene.util.BytesRef;
  */
 public class MonitorQuery {
 
+    private static final AtomicLong sequence = new AtomicLong(0);
+
     private final String id;
+    private final long seqId;
     private final BytesRef query;
     private final BytesRef highlightQuery;
 
@@ -35,6 +39,22 @@ public class MonitorQuery {
      */
     public MonitorQuery(String id, BytesRef query, BytesRef highlightQuery) {
         this.id = id;
+        this.seqId = sequence.incrementAndGet();
+        this.query = query;
+        this.highlightQuery = highlightQuery;
+    }
+
+    /**
+     * Creates a new MonitorQuery
+     *
+     * @param id the ID
+     * @param query the query to store
+     * @param highlightQuery an optional query to use for highlighting. May be null.
+     * @param seqId Sequence identifier
+     */
+    public MonitorQuery(String id, BytesRef query, BytesRef highlightQuery, long seqId) {
+        this.id = id;
+        this.seqId = seqId;
         this.query = query;
         this.highlightQuery = highlightQuery;
     }
@@ -48,6 +68,7 @@ public class MonitorQuery {
      */
     public MonitorQuery(String id, String query, String highlightQuery) {
         this.id = id;
+        this.seqId = sequence.incrementAndGet();
         if (query == null) {
             throw new IllegalArgumentException("Null queries are not allowed");
         }
@@ -83,6 +104,13 @@ public class MonitorQuery {
     }
 
     /**
+     * @return Sequence number of a query
+     */
+    public long getSeqId() {
+        return seqId;
+    }
+
+    /**
      * @return this MonitorQuery's highlight query.  May be null.
      */
     public BytesRef getHighlightQuery() {
@@ -96,10 +124,8 @@ public class MonitorQuery {
 
         MonitorQuery that = (MonitorQuery) o;
 
-        if (highlightQuery != null ? !highlightQuery.equals(that.highlightQuery) : that.highlightQuery != null)
-            return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (query != null ? !query.equals(that.query) : that.query != null) return false;
+        if (seqId != that.seqId) return false;
 
         return true;
     }
@@ -107,8 +133,7 @@ public class MonitorQuery {
     @Override
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (query != null ? query.hashCode() : 0);
-        result = 31 * result + (highlightQuery != null ? highlightQuery.hashCode() : 0);
+        result = 31 * result + (int)seqId;
         return result;
     }
 }

@@ -11,6 +11,7 @@ import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 
 import java.io.IOException;
+import org.apache.lucene.util.BytesRef;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -99,11 +100,12 @@ public class TestMonitor {
     @Test
     public void canRetrieveQuery() throws IOException {
 
-        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that", "hl"));
+        monitor.update(new MonitorQuery("query1", "this"),
+                new MonitorQuery("query2", new BytesRef("that"), new BytesRef("hl"), 5));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
 
         MonitorQuery mq = monitor.getQuery("query2");
-        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that", "hl"));
+        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", new BytesRef("that"), new BytesRef("hl"), 5));
 
     }
 
