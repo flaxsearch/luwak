@@ -10,9 +10,9 @@ import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
 
-    private final Set<QueryMatch> matches = new HashSet<>();
+    private final List<QueryMatch> matches = new LinkedList<>();
 
     public SimpleMatcher(InputDocument doc) {
         super(doc);
