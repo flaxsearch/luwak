@@ -17,9 +17,10 @@ package uk.co.flax.luwak;
  */
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 
 public interface QueryCache {
 
-    Query get(String query) throws QueryCacheException;
+    Query get(BytesRef query) throws QueryCacheException;
 
 }
