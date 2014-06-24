@@ -1,10 +1,10 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.search.Query;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.lucene.search.Query;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -65,7 +65,11 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      */
     public abstract int getMatchCount();
 
-    void reportError(MatchError e) {
+    /**
+     * Called by the Monitor if running a query throws an Exception
+     * @param e the MatchError detailing the problem
+     */
+    protected void reportError(MatchError e) {
         this.errors.add(e);
     }
 
