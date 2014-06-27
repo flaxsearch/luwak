@@ -1,4 +1,6 @@
-package uk.co.flax.luwak;/*
+package uk.co.flax.luwak;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +16,12 @@ package uk.co.flax.luwak;/*
  * limitations under the License.
  */
 
-import org.apache.lucene.search.Query;
-import org.apache.lucene.util.BytesRef;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
-
-import static org.fest.assertions.api.Assertions.assertThat;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
 
 public class TestParsingQueryCache {
-
-    @Test
-    public void testQueryOnlyParsesOnce() throws QueryCacheException {
-        LuceneQueryCache cache = new LuceneQueryCache("f");
-        Query query1 = cache.get(new BytesRef("test"));
-        Query query2 = cache.get(new BytesRef("test"));
-
-        assertThat(query1).isSameAs(query2);
-    }
 
     @Rule
     public ExpectedException expected = ExpectedException.none();
@@ -43,7 +32,8 @@ public class TestParsingQueryCache {
 
         expected.expect(QueryCacheException.class);
         expected.expectMessage("Was expecting one of");
-        cache.get(new BytesRef("test (+hello"));
+
+        cache.put(new MonitorQuery("1", "test (+hello"));
     }
 
 }

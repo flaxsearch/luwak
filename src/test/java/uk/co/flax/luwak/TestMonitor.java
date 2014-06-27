@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -7,10 +9,8 @@ import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-
-import java.io.IOException;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 

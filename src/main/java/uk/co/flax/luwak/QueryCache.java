@@ -21,6 +21,21 @@ import org.apache.lucene.util.BytesRef;
 
 public interface QueryCache {
 
-    Query get(BytesRef query) throws QueryCacheException;
+    public Entry get(BytesRef hash) throws QueryCacheException;
+
+    public BytesRef put(MonitorQuery query) throws QueryCacheException;
+
+    public static class Entry {
+
+        public final MonitorQuery mq;
+        public final Query matchQuery;
+        public final Query highlightQuery;
+
+        public Entry(MonitorQuery mq, Query matchQuery, Query highlightQuery) {
+            this.mq = mq;
+            this.matchQuery = matchQuery;
+            this.highlightQuery = highlightQuery;
+        }
+    }
 
 }

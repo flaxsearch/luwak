@@ -5,7 +5,7 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
 
 import java.io.IOException;

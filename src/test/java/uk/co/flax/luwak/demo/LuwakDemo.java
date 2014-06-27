@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 
 import java.io.BufferedReader;

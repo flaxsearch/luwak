@@ -10,7 +10,7 @@ import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 
 import java.io.IOException;

@@ -1,6 +1,8 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.util.BytesRef;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -24,8 +26,9 @@ import org.apache.lucene.util.BytesRef;
 public class MonitorQuery {
 
     private final String id;
-    private final BytesRef query;
-    private final BytesRef highlightQuery;
+    private final String query;
+    private final String highlightQuery;
+    private final ImmutableMap<String, String> metadata;
 
     /**
      * Creates a new MonitorQuery
@@ -33,39 +36,31 @@ public class MonitorQuery {
      * @param query the query to store
      * @param highlightQuery an optional query to use for highlighting.  May be null.
      */
-    public MonitorQuery(String id, BytesRef query, BytesRef highlightQuery) {
+    public MonitorQuery(String id, String query, String highlightQuery, Map<String, String> metadata) {
         this.id = id;
         this.query = query;
         this.highlightQuery = highlightQuery;
+        this.metadata = ImmutableMap.copyOf(metadata);
     }
 
     /**
-     * Creates a new MonitorQuery
-     *
-     * @param id the ID
-     * @param query the query to store
-     * @param highlightQuery an optional query to use for highlighting. May be null.
+     * Creates a new MonitorQuery with no highlight query
      */
-    public MonitorQuery(String id, String query, String highlightQuery) {
-        this.id = id;
-        if (query == null) {
-            throw new IllegalArgumentException("Null queries are not allowed");
-        }
-        this.query = new BytesRef(query);
-        if (highlightQuery != null) {
-            this.highlightQuery = new BytesRef(highlightQuery);
-        } else {
-            this.highlightQuery = null;
-        }
+    public MonitorQuery(String id, String query, Map<String, String> metadata) {
+        this(id, query, null, metadata);
+    }
+
+    public MonitorQuery(String id, String query, String highlight) {
+        this(id, query, highlight, ImmutableMap.<String, String>of());
     }
 
     /**
-     * Creates a new MonitorQuery, with no highlight query
+     * Creates a new MonitorQuery, with no highlight query and no metadata
      * @param id the ID
      * @param query the query to store
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, null);
+        this(id, query, null, ImmutableMap.<String, String>of());
     }
 
     /**
@@ -78,15 +73,19 @@ public class MonitorQuery {
     /**
      * @return this MonitorQuery's query
      */
-    public BytesRef getQuery() {
+    public String getQuery() {
         return query;
     }
 
     /**
      * @return this MonitorQuery's highlight query.  May be null.
      */
-    public BytesRef getHighlightQuery() {
+    public String getHighlightQuery() {
         return highlightQuery;
+    }
+
+    public Map<String, String> getMetadata() {
+        return metadata;
     }
 
     @Override

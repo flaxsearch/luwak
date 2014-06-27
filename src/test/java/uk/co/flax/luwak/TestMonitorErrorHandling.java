@@ -1,5 +1,8 @@
 package uk.co.flax.luwak;
 
+import java.util.List;
+import java.util.Map;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
@@ -9,11 +12,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-
-import java.util.List;
-import org.apache.lucene.util.BytesRef;
+import uk.co.flax.luwak.querycache.LuceneQueryCache;
+import uk.co.flax.luwak.querycache.ParsingQueryCache;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -49,10 +50,10 @@ public class TestMonitorErrorHandling {
 
         return new ParsingQueryCache() {
             @Override
-            protected Query parse(BytesRef query) throws Exception {
-                if ("unparseable".equals(query.utf8ToString()))
+            protected Query parse(String query, Map<String, String> metadata) throws Exception {
+                if ("unparseable".equals(query))
                     throw new RuntimeException("Error parsing query [unparseable]");
-                if ("error".equals(query.utf8ToString()))
+                if ("error".equals(query))
                     return errorQuery;
                 return new TermQuery(new Term(FIELD, query));
             }

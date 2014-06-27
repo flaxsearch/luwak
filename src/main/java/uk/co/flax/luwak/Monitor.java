@@ -1,9 +1,18 @@
 package uk.co.flax.luwak;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.BinaryDocValuesField;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -11,13 +20,6 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -37,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 
 public class Monitor implements Closeable {
 
-    //private final MonitorQueryParser parser;
     private final QueryCache queryCache;
     private final Presearcher presearcher;
 
@@ -47,8 +48,7 @@ public class Monitor implements Closeable {
 
     public static final class FIELDS {
         public static final String id = "_id";
-        public static final String query = "_query";
-        public static final String highlight = "_highlight";
+        public static final String hash = "_hash";
     }
 
     /**
@@ -87,13 +87,12 @@ public class Monitor implements Closeable {
         List<QueryError> errors = new ArrayList<>();
         for (MonitorQuery query : queries) {
             try {
-                Query matchQuery = this.queryCache.get(query.getQuery());
-                if (query.getHighlightQuery() != null && query.getHighlightQuery().length > 0)
-                    this.queryCache.get(query.getHighlightQuery()); // force HlQ to be parsed
-                writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()), buildIndexableQuery(query, matchQuery));
+                BytesRef hash = this.queryCache.put(query);
+                writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()),
+                                        buildIndexableQuery(query.getId(), hash, this.queryCache.get(hash).matchQuery));
             }
             catch (Exception e) {
-                errors.add(new QueryError(query.getId(), query.getQuery().utf8ToString(), e.getMessage()));
+                errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
             }
         }
         writer.commit();
@@ -202,22 +201,6 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Ensures that all queries in the queryindex have been parsed.  Call this if you
-     * have stored queries in an external Directory and want to to ensure that they are
-     * all loaded and parsed before any documents are passed in.
-     *
-     * @throws IOException
-     */
-    public void loadAllQueries() throws IOException {
-        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
-            @Override
-            protected void doSearch(String queryId, BytesRef matchQuery, BytesRef highlight) {
-                // no impl
-            }
-        });
-    }
-
-    /**
      * Get the MonitorQuery for a given query id
      * @param queryId the id of the query to get
      * @return the MonitorQuery stored for this id, or null if not found
@@ -227,8 +210,12 @@ public class Monitor implements Closeable {
         final MonitorQuery[] queries = new MonitorQuery[]{ null };
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String id, BytesRef matchQuery, BytesRef highlight) {
-                queries[0] = new MonitorQuery(id, matchQuery, highlight);
+            protected void doSearch(String id, BytesRef hash) {
+                try {
+                    queries[0] = queryCache.get(hash).mq;
+                } catch (QueryCacheException e) {
+                    queries[0] = null;
+                }
             }
         });
         return queries[0];
@@ -257,15 +244,11 @@ public class Monitor implements Closeable {
         }
     }
 
-    protected Document buildIndexableQuery(MonitorQuery mq, Query matchQuery) {
+    protected Document buildIndexableQuery(String id, BytesRef hash, Query matchQuery) {
         Document doc = presearcher.indexQuery(matchQuery);
-        doc.add(new StringField(Monitor.FIELDS.id, mq.getId(), Field.Store.NO));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(mq.getId())));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.query, mq.getQuery()));
-        BytesRef hl = mq.getHighlightQuery();
-        if (hl == null)
-            hl = new BytesRef("");
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.highlight, hl));
+        doc.add(new StringField(Monitor.FIELDS.id, id, Field.Store.NO));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(id)));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.hash, hash));
         return doc;
     }
 
@@ -279,11 +262,10 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        protected void doSearch(String queryId, BytesRef matchQuery, BytesRef highlight) {
+        protected void doSearch(String queryId, BytesRef hash) {
             try {
-                Query m = queryCache.get(matchQuery);
-                Query h = queryCache.get(highlight);
-                matcher.matchQuery(queryId, m, h);
+                QueryCache.Entry entry = queryCache.get(hash);
+                matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQuery);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
@@ -299,23 +281,20 @@ public class Monitor implements Closeable {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public abstract class MonitorQueryCollector extends TimedCollector {
+    public static abstract class MonitorQueryCollector extends TimedCollector {
 
-        protected BinaryDocValues queryDV;
-        protected BinaryDocValues highlightDV;
+        protected BinaryDocValues hashDV;
         protected BinaryDocValues idDV;
 
-        final BytesRef query = new BytesRef();
-        final BytesRef highlight = new BytesRef();
+        final BytesRef hash = new BytesRef();
         final BytesRef id = new BytesRef();
 
         /**
          * Do something with the matching query
          * @param id the queryId
-         * @param matchQuery the matching query
-         * @param highlight an optional highlighting query.  May be null.
+         * @param hash the hash value to use to look up the query in QueryCache
          */
-        protected abstract void doSearch(String id, BytesRef matchQuery, BytesRef highlight);
+        protected abstract void doSearch(String id, BytesRef hash);
 
         private int queryCount = 0;
         private long searchTime = -1;
@@ -327,17 +306,15 @@ public class Monitor implements Closeable {
 
         @Override
         public final void collect(int doc) throws IOException {
-            queryDV.get(doc, query);
-            highlightDV.get(doc, highlight);
+            hashDV.get(doc, hash);
             idDV.get(doc, id);
             queryCount++;
-            doSearch(id.utf8ToString(), query, highlight);
+            doSearch(id.utf8ToString(), hash);
         }
 
         @Override
         public final void setNextReader(AtomicReaderContext context) throws IOException {
-            this.queryDV = context.reader().getBinaryDocValues(Monitor.FIELDS.query);
-            this.highlightDV = context.reader().getBinaryDocValues(Monitor.FIELDS.highlight);
+            this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
             this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
         }
 
