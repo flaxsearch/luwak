@@ -41,6 +41,10 @@ public class FilterTermExtractor {
         filterExtractors.addAll(DEFAULT_FILTER_EXTRACTORS);
     }
 
+    public void addExtractors(FilterExtractor<? extends Filter>... extractors) {
+        filterExtractors.addAll(0, Arrays.asList(extractors));
+    }
+
     public final List<QueryTerm> extract(Filter filter) {
         return FilterExtractor.extractTerms(filter, filterExtractors);
     }
