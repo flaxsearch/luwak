@@ -62,10 +62,16 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
-                new WhitespaceAnalyzer(Constants.VERSION)));
 
+        TieredMergePolicy tieredMergePolicy = new TieredMergePolicy();
+        tieredMergePolicy.setSegmentsPerTier(4);
+        IndexWriterConfig indexWriterConfig
+                = new IndexWriterConfig(Constants.VERSION, new WhitespaceAnalyzer(Constants.VERSION));
+        indexWriterConfig.setMergePolicy(tieredMergePolicy);
+
+        this.writer = new IndexWriter(directory, indexWriterConfig);
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
+
     }
 
     public Monitor(QueryCache queryCache, Presearcher presearcher) throws IOException {
