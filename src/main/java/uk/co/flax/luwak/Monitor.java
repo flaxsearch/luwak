@@ -1,7 +1,6 @@
 package uk.co.flax.luwak;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -40,6 +39,7 @@ public class Monitor implements Closeable {
     //private final MonitorQueryParser parser;
     private final QueryCache queryCache;
     private final Presearcher presearcher;
+    private final MonitorQueryCollectorFactory collectorFactory;
 
     private final Directory directory;
     private final IndexWriter writer;
@@ -54,18 +54,33 @@ public class Monitor implements Closeable {
     /**
      * Create a new Monitor instance, using a passed in Directory for its queryindex
      * @param queryCache the querycache to use
+     * @param collectorFactory collector factory to use
      * @param presearcher the presearcher to use
      * @param directory the directory where the queryindex is stored
      * @throws IOException
      */
-    public Monitor(QueryCache queryCache, Presearcher presearcher, Directory directory) throws IOException {
+    public Monitor(QueryCache queryCache, MonitorQueryCollectorFactory collectorFactory,
+            Presearcher presearcher, Directory directory) throws IOException {
         this.queryCache = queryCache;
+        this.collectorFactory = collectorFactory;
         this.presearcher = presearcher;
         this.directory = directory;
         this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
                 new WhitespaceAnalyzer(Constants.VERSION)));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
+    }
+
+    /**
+     * Create a new Monitor instance, using a passed in Directory for its queryindex
+     *
+     * @param queryCache the querycache to use
+     * @param presearcher the presearcher to use
+     * @param directory the directory where the queryindex is stored
+     * @throws IOException
+     */
+    public Monitor(QueryCache queryCache, Presearcher presearcher, Directory directory) throws IOException {
+        this(queryCache, new SearchingCollectorFactory(), presearcher, directory);
     }
 
     public Monitor(QueryCache queryCache, Presearcher presearcher) throws IOException {
@@ -162,10 +177,10 @@ public class Monitor implements Closeable {
         Query query = buildQuery(matcher.getDocument());
         matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
 
-        SearchingCollector collector = new SearchingCollector(matcher);
+        MonitorQueryCollector collector = collectorFactory.get(queryCache, matcher);
         match(query, collector);
+        collector.finish();
         matcher.setQueriesRun(collector.getQueryCount());
-
     }
 
     @VisibleForTesting
@@ -214,6 +229,11 @@ public class Monitor implements Closeable {
             protected void doSearch(String queryId, BytesRef matchQuery, BytesRef highlight) {
                 // no impl
             }
+
+            @Override
+            protected void finish() {
+                // no impl
+            }
         });
     }
 
@@ -229,6 +249,11 @@ public class Monitor implements Closeable {
             @Override
             protected void doSearch(String id, BytesRef matchQuery, BytesRef highlight) {
                 queries[0] = new MonitorQuery(id, matchQuery, highlight);
+            }
+
+            @Override
+            protected void finish() {
+                // no impl
             }
         });
         return queries[0];
@@ -270,11 +295,13 @@ public class Monitor implements Closeable {
     }
 
     // For each query selected by the presearcher, pass on to a CandidateMatcher
-    private class SearchingCollector extends MonitorQueryCollector {
+    public static class SearchingCollector extends MonitorQueryCollector {
 
+        final QueryCache queryCache;
         final CandidateMatcher matcher;
 
-        private SearchingCollector(CandidateMatcher matcher) {
+        private SearchingCollector(QueryCache queryCache, CandidateMatcher matcher) {
+            this.queryCache = queryCache;
             this.matcher = matcher;
         }
 
@@ -294,70 +321,19 @@ public class Monitor implements Closeable {
         public void setSearchTime(long searchTime) {
             matcher.setSearchTime(searchTime);
         }
-    }
-
-    /**
-     * A Collector that decodes the stored query for each document hit.
-     */
-    public abstract class MonitorQueryCollector extends TimedCollector {
-
-        protected BinaryDocValues queryDV;
-        protected BinaryDocValues highlightDV;
-        protected BinaryDocValues idDV;
-
-        final BytesRef query = new BytesRef();
-        final BytesRef highlight = new BytesRef();
-        final BytesRef id = new BytesRef();
-
-        /**
-         * Do something with the matching query
-         * @param id the queryId
-         * @param matchQuery the matching query
-         * @param highlight an optional highlighting query.  May be null.
-         */
-        protected abstract void doSearch(String id, BytesRef matchQuery, BytesRef highlight);
-
-        private int queryCount = 0;
-        private long searchTime = -1;
 
         @Override
-        public void setScorer(Scorer scorer) throws IOException {
-
-        }
-
-        @Override
-        public final void collect(int doc) throws IOException {
-            queryDV.get(doc, query);
-            highlightDV.get(doc, highlight);
-            idDV.get(doc, id);
-            queryCount++;
-            doSearch(id.utf8ToString(), query, highlight);
-        }
-
-        @Override
-        public final void setNextReader(AtomicReaderContext context) throws IOException {
-            this.queryDV = context.reader().getBinaryDocValues(Monitor.FIELDS.query);
-            this.highlightDV = context.reader().getBinaryDocValues(Monitor.FIELDS.highlight);
-            this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
-        }
-
-        @Override
-        public final boolean acceptsDocsOutOfOrder() {
-            return true;
-        }
-
-        public int getQueryCount() {
-            return queryCount;
-        }
-
-        public long getSearchTime() {
-            return searchTime;
-        }
-
-        @Override
-        public void setSearchTime(long searchTime) {
-            this.searchTime = searchTime;
+        protected void finish() {
+            // no impl
         }
     }
 
+    private static class SearchingCollectorFactory implements MonitorQueryCollectorFactory {
+
+        @Override
+        public MonitorQueryCollector get(QueryCache queryCache, CandidateMatcher matcher) {
+            return new SearchingCollector(queryCache, matcher);
+        }
+
+    }
 }
