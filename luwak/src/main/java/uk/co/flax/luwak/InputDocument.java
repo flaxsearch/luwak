@@ -5,6 +5,8 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.Similarity;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -47,9 +49,9 @@ public class InputDocument {
         this.id = id;
     }
 
-    private void finish() {
-        index.freeze();
+    private void finish(Similarity similarity) {
         searcher = index.createSearcher();
+        searcher.setSimilarity(similarity);
     }
 
     /**
@@ -78,6 +80,7 @@ public class InputDocument {
     public static class Builder {
 
         private final InputDocument doc;
+        private Similarity similarity = new DefaultSimilarity();
 
         /**
          * Create a new Builder for an InputDocument with the given id
@@ -115,11 +118,21 @@ public class InputDocument {
         }
 
         /**
+         * Set the {@code Similarity} to be used when scoring this InputDocument
+         * @param similarity the Similarity
+         * @return the Builder object
+         */
+        public Builder setSimilarity(Similarity similarity) {
+            this.similarity = similarity;
+            return this;
+        }
+
+        /**
          * Build the InputDocument
          * @return the InputDocument
          */
         public InputDocument build() {
-            doc.finish();
+            doc.finish(this.similarity);
             return doc;
         }
 
