@@ -28,7 +28,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalsQueryMatchAssert matchesQuery(String queryId) {
-        for (IntervalsQueryMatch match : actual.getMatches()) {
+        for (IntervalsQueryMatch match : actual) {
             if (match.getQueryId().equals(queryId))
                 return new IntervalsQueryMatchAssert((IntervalsQueryMatch) match);
         }
@@ -46,7 +46,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalMatchesAssert hasMatchCount(int count) {
-        Assertions.assertThat(actual.getMatches()).hasSize(count);
+        Assertions.assertThat(actual.getMatchCount()).isEqualTo(count);
         return this;
     }
 
@@ -64,7 +64,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
-        for (IntervalsQueryMatch match : actual.getMatches()) {
+        for (IntervalsQueryMatch match : actual) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
         return this;

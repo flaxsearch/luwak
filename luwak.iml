@@ -4,14 +4,20 @@
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-core:r1581360-intervals-1.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-memory:r1581360-intervals-1.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-analyzers-common:r1581360-intervals-1.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-queries:r1581360-intervals-1.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-queryparser:r1581360-intervals-1.3-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-sandbox:r1581360-intervals-1.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-core:r1581360-intervals-1.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-memory:r1581360-intervals-1.3-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: uk.co.flax.lucene-solr-intervals:lucene-analyzers-common:r1581360-intervals-1.3-SNAPSHOT" level="project" />
