@@ -1,9 +1,18 @@
 package uk.co.flax.luwak;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.BinaryDocValuesField;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -11,13 +20,6 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -62,14 +64,27 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
-                new WhitespaceAnalyzer(Constants.VERSION)));
+
+        IndexWriterConfig iwc = new IndexWriterConfig(Constants.VERSION, new WhitespaceAnalyzer(Constants.VERSION));
+        this.writer = new IndexWriter(directory, configureIndexWriterConfig(iwc));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
 
     public Monitor(QueryCache queryCache, Presearcher presearcher) throws IOException {
         this(queryCache, presearcher, new RAMDirectory());
+    }
+
+    /**
+     * Configure the IndexWriterConfig for the internal query cache
+     * @param iwc the default IndexWriterConfig
+     * @return the IndexWriterConfig to use
+     */
+    protected IndexWriterConfig configureIndexWriterConfig(IndexWriterConfig iwc) {
+        TieredMergePolicy mergePolicy = new TieredMergePolicy();
+        mergePolicy.setSegmentsPerTier(4);
+        iwc.setMergePolicy(mergePolicy);
+        return iwc;
     }
 
     @Override
