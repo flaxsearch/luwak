@@ -1,10 +1,9 @@
 package uk.co.flax.luwak;
 
-import org.apache.lucene.search.Query;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import org.apache.lucene.search.Query;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -29,6 +28,7 @@ import java.util.List;
 public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
 
     private final List<MatchError> errors = new ArrayList<>();
+    private final Map<String, T> matches = new HashMap<>();
 
     protected final InputDocument doc;
 
@@ -45,25 +45,50 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
     }
 
     /**
-     * Run the supplied query against this CandidateMatcher's InputDocument
+     * Runs the supplied query against this CandidateMatcher's InputDocument, storing any
+     * resulting match.
+     *
      * @param queryId the query id
      * @param matchQuery the query to run
      * @param highlightQuery an optional query to use for highlighting.  May be null
      * @throws IOException
      */
-    public abstract void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public final void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        T match = doMatch(queryId, matchQuery, highlightQuery);
+        if (match != null)
+            matches.put(match.getQueryId(), match);
+    }
+
+    /**
+     * Run the supplied query against this CandidateMatcher's InputDocument
+     * @param queryId the query id
+     * @param matchQuery the query to run
+     * @param highlightQuery an optional query to use for highlighting.  May be null
+     * @return a QueryMatch object if the query matched, otherwise null
+     * @throws IOException
+     */
+    protected abstract T doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
     /**
      * Returns true if a given query matched during the matcher run
      * @param queryId the query id
      * @return true if the query matched during the matcher run
      */
-    public abstract boolean matches(String queryId);
+    public boolean matches(String queryId) {
+        return matches.containsKey(queryId);
+    }
 
     /**
      * @return the number of queries that matched
      */
-    public abstract int getMatchCount();
+    public int getMatchCount() {
+        return matches.size();
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return matches.values().iterator();
+    }
 
     void reportError(MatchError e) {
         this.errors.add(e);
