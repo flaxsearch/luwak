@@ -15,6 +15,8 @@ import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.apache.lucene.util.Bits;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.extractors.FilteredQueryExtractor;
+import uk.co.flax.luwak.termextractor.extractors.RegexpNGramTermExtractor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 

@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,9 @@ import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryTermList;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**

@@ -1,7 +1,9 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.intervals.NonOverlappingQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.lang.reflect.Field;
 import java.util.List;

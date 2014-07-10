@@ -10,7 +10,7 @@ import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
+import uk.co.flax.luwak.termextractor.extractors.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 

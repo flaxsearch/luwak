@@ -18,6 +18,7 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.termextractor.extractors.*;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 

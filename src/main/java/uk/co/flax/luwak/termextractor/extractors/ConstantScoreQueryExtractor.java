@@ -1,8 +1,10 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import java.util.List;
 
 import org.apache.lucene.search.ConstantScoreQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -21,7 +23,7 @@ import org.apache.lucene.search.ConstantScoreQuery;
  */
 public class ConstantScoreQueryExtractor extends Extractor<ConstantScoreQuery> {
 
-    protected ConstantScoreQueryExtractor() {
+    public ConstantScoreQueryExtractor() {
         super(ConstantScoreQuery.class);
     }
 

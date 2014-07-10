@@ -1,6 +1,8 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
-import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.TermQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.util.List;
 
@@ -21,19 +23,17 @@ import java.util.List;
  */
 
 /**
- * Extract terms from a NumericRangeQuery
- *
- * Currently just returns QueryTerm.Type.ANY
+ * An Extractor for TermQueries
  */
-public class NumericRangeExtractor extends Extractor<NumericRangeQuery> {
+public class SimpleTermExtractor extends Extractor<TermQuery> {
 
-    public NumericRangeExtractor() {
-        super(NumericRangeQuery.class);
+    public SimpleTermExtractor() {
+        super(TermQuery.class);
     }
 
     @Override
-    public void extract(NumericRangeQuery query, List<QueryTerm> terms,
+    public void extract(TermQuery query, List<QueryTerm> terms,
                         List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
+        terms.add(new QueryTerm(query.getTerm().field(), query.getTerm().text(), QueryTerm.Type.EXACT));
     }
 }

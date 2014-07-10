@@ -1,11 +1,13 @@
-package uk.co.flax.luwak.termextractor;
-
-import org.apache.lucene.search.TermQuery;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import java.util.List;
 
+import org.apache.lucene.queries.TermFilter;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+
 /**
- * Copyright (c) 2013 Lemur Consulting Ltd.
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +22,14 @@ import java.util.List;
  * limitations under the License.
  */
 
-/**
- * An Extractor for TermQueries
- */
-public class SimpleTermExtractor extends Extractor<TermQuery> {
+public class TermFilterTermExtractor extends Extractor<TermFilter> {
 
-    public SimpleTermExtractor() {
-        super(TermQuery.class);
+    public TermFilterTermExtractor() {
+        super(TermFilter.class);
     }
 
     @Override
-    public void extract(TermQuery query, List<QueryTerm> terms,
-                        List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(query.getTerm().field(), query.getTerm().text(), QueryTerm.Type.EXACT));
+    public void extract(TermFilter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+        terms.add(new QueryTerm(filter.getTerm().field(), filter.getTerm().text(), QueryTerm.Type.EXACT));
     }
 }

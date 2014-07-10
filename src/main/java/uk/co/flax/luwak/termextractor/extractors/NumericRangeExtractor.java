@@ -1,6 +1,8 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
-import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.NumericRangeQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.util.List;
 
@@ -21,16 +23,18 @@ import java.util.List;
  */
 
 /**
- * An extractor that will replace wildcard terms with an ANY token
+ * Extract terms from a NumericRangeQuery
+ *
+ * Currently just returns QueryTerm.Type.ANY
  */
-public class RegexpAnyTermExtractor extends Extractor<RegexpQuery> {
+public class NumericRangeExtractor extends Extractor<NumericRangeQuery> {
 
-    public RegexpAnyTermExtractor() {
-        super(RegexpQuery.class);
+    public NumericRangeExtractor() {
+        super(NumericRangeQuery.class);
     }
 
     @Override
-    public void extract(RegexpQuery query, List<QueryTerm> terms,
+    public void extract(NumericRangeQuery query, List<QueryTerm> terms,
                         List<Extractor<?>> extractors) {
         terms.add(new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
     }

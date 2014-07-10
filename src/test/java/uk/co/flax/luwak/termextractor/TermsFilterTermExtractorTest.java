@@ -9,6 +9,7 @@ import org.apache.lucene.queries.TermsFilter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.extractors.TermsFilterTermExtractor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 

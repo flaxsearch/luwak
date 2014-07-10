@@ -1,11 +1,13 @@
-package uk.co.flax.luwak.termextractor.weights;
+package uk.co.flax.luwak.termextractor.extractors;
 
+import org.apache.lucene.search.RegexpQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.util.List;
 
 /**
- * Copyright (c) 2014 Lemur Consulting Ltd.
+ * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +23,17 @@ import java.util.List;
  */
 
 /**
- * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor} to
- * determine which clauses should be indexed.
+ * An extractor that will replace wildcard terms with an ANY token
  */
-public interface TermWeightor {
+public class RegexpAnyTermExtractor extends Extractor<RegexpQuery> {
 
-    public float weigh(List<QueryTerm> terms);
+    public RegexpAnyTermExtractor() {
+        super(RegexpQuery.class);
+    }
 
+    @Override
+    public void extract(RegexpQuery query, List<QueryTerm> terms,
+                        List<Extractor<?>> extractors) {
+        terms.add(new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
+    }
 }
