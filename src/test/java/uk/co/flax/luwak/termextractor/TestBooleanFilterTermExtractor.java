@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.BooleanFilter;
@@ -12,7 +12,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 
-    private static final FilterTermExtractor termExtractor = new FilterTermExtractor();
+    private static final QueryTermExtractor termExtractor = new QueryTermExtractor();
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {
@@ -20,7 +20,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(new TermFilter(new Term("field1", "term2")), BooleanClause.Occur.SHOULD);
 
-        List<QueryTerm> terms = termExtractor.extract(booleanFilter);
+        Set<QueryTerm> terms = termExtractor.extract(booleanFilter);
 
         assertThat(terms).containsOnly(
                 new QueryTerm("field1", "term1", QueryTerm.Type.EXACT),
@@ -57,7 +57,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(new TermFilter(new Term("field2", "term2")), BooleanClause.Occur.MUST);
 
-        List<QueryTerm> terms = termExtractor.extract(booleanFilter);
+        Set<QueryTerm> terms = termExtractor.extract(booleanFilter);
         assertThat(terms).hasSize(1);
         assertThat(terms).containsOnly(new QueryTerm("field2", "term2", QueryTerm.Type.EXACT));
     }

@@ -2,7 +2,6 @@ package uk.co.flax.luwak.termextractor;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -147,14 +146,14 @@ public class TestExtractors {
         }
     }
 
-    private static class MyFilterTermExtractor extends FilterExtractor<MyFilter> {
+    private static class MyFilterTermExtractor extends Extractor<MyFilter> {
 
         protected MyFilterTermExtractor() {
             super(MyFilter.class);
         }
 
         @Override
-        public void extract(MyFilter filter, List<QueryTerm> terms, Collection<FilterExtractor<?>> extractors) {
+        public void extract(MyFilter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
             terms.add(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
         }
     }
@@ -162,9 +161,7 @@ public class TestExtractors {
     @Test
     public void testExtendedFilteredQueryExtractor() {
 
-        FilterTermExtractor fte = new FilterTermExtractor(new MyFilterTermExtractor());
-        FilteredQueryExtractor fqe = new FilteredQueryExtractor(fte);
-        QueryTermExtractor qte = new QueryTermExtractor(fqe);
+        QueryTermExtractor qte = new QueryTermExtractor(new MyFilterTermExtractor());
 
         Query q = new RegexpQuery(new Term("FILTER", "*"));
         Filter f = new MyFilter();

@@ -1,14 +1,14 @@
 package uk.co.flax.luwak.termextractor;
 
-import com.google.common.collect.Iterables;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.collect.Iterables;
+import org.apache.lucene.queries.BooleanFilter;
+import org.apache.lucene.queries.FilterClause;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -32,32 +32,30 @@ import java.util.List;
  * If the query is a pure conjunction, then this extractor will select the best
  * matching term from all the clauses and only extract that.
  */
-public class BooleanTermExtractor extends Extractor<BooleanQuery> {
+public abstract class BooleanTermExtractor<T> extends Extractor<T> {
 
     private final TermWeightor weightor;
 
-    public BooleanTermExtractor(TermWeightor weightor) {
-        super(BooleanQuery.class);
+    public BooleanTermExtractor(Class<T> cls, TermWeightor weightor) {
+        super(cls);
         this.weightor = weightor;
     }
 
-    public BooleanTermExtractor() {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR);
-    }
+    protected abstract Clauses analyze(T query);
 
     @Override
-    public void extract(BooleanQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    public void extract(T query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
 
-        Analyzer checker = new Analyzer(query);
+        Clauses clauses = analyze(query);
 
-        if (checker.isDisjunctionQuery()) {
-            for (Query subquery : checker.getDisjunctions()) {
+        if (clauses.isDisjunctionQuery()) {
+            for (Object subquery : clauses.getDisjunctions()) {
                 extractTerms(subquery, terms, extractors);
             }
         }
-        else if (checker.isConjunctionQuery()) {
+        else if (clauses.isConjunctionQuery()) {
             List<QueryTermList> termlists = new ArrayList<>();
-            for (Query subquery : checker.getConjunctions()) {
+            for (Object subquery : clauses.getConjunctions()) {
                 List<QueryTerm> subTerms = new ArrayList<>();
                 extractTerms(subquery, subTerms, extractors);
                 termlists.add(new QueryTermList(this.weightor, subTerms));
@@ -66,21 +64,10 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
         }
     }
 
-    public static class Analyzer {
+    public static class Clauses {
 
-        List<Query> disjunctions = new ArrayList<>();
-        List<Query> conjunctions = new ArrayList<>();
-
-        public Analyzer(BooleanQuery query) {
-            for (BooleanClause clause : query.getClauses()) {
-                if (clause.getOccur() == BooleanClause.Occur.MUST) {
-                    conjunctions.add(clause.getQuery());
-                }
-                if (clause.getOccur() == BooleanClause.Occur.SHOULD) {
-                    disjunctions.add(clause.getQuery());
-                }
-            }
-        }
+        final List<Object> disjunctions = new ArrayList<>();
+        final List<Object> conjunctions = new ArrayList<>();
 
         public boolean isConjunctionQuery() {
             return conjunctions.size() > 0;
@@ -90,12 +77,55 @@ public class BooleanTermExtractor extends Extractor<BooleanQuery> {
             return !isConjunctionQuery() && disjunctions.size() > 0;
         }
 
-        public List<Query> getDisjunctions() {
+        public List<Object> getDisjunctions() {
             return disjunctions;
         }
 
-        public List<Query> getConjunctions() {
+        public List<Object> getConjunctions() {
             return conjunctions;
         }
     }
+
+    public static class QueryExtractor extends BooleanTermExtractor<BooleanQuery> {
+
+        public QueryExtractor(TermWeightor weightor) {
+            super(BooleanQuery.class, weightor);
+        }
+
+        @Override
+        protected Clauses analyze(BooleanQuery query) {
+            Clauses clauses = new Clauses();
+            for (BooleanClause clause : query.getClauses()) {
+                if (clause.getOccur() == BooleanClause.Occur.MUST) {
+                    clauses.conjunctions.add(clause.getQuery());
+                }
+                if (clause.getOccur() == BooleanClause.Occur.SHOULD) {
+                    clauses.disjunctions.add(clause.getQuery());
+                }
+            }
+            return clauses;
+        }
+    }
+
+    public static class FilterExtractor extends BooleanTermExtractor<BooleanFilter> {
+
+        public FilterExtractor(TermWeightor weightor) {
+            super(BooleanFilter.class, weightor);
+        }
+
+        @Override
+        protected Clauses analyze(BooleanFilter filter) {
+            Clauses clauses = new Clauses();
+            for (FilterClause clause : filter.clauses()) {
+                if (clause.getOccur() == BooleanClause.Occur.MUST) {
+                    clauses.conjunctions.add(clause.getFilter());
+                }
+                if (clause.getOccur() == BooleanClause.Occur.SHOULD) {
+                    clauses.disjunctions.add(clause.getFilter());
+                }
+            }
+            return clauses;
+        }
+    }
+
 }

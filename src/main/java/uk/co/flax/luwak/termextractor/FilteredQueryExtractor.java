@@ -11,7 +11,6 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
 
-    private final FilterTermExtractor fte;
     private final TermWeightor weightor;
 
     public FilteredQueryExtractor() {
@@ -19,17 +18,8 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     }
 
     public FilteredQueryExtractor(TermWeightor weightor) {
-        this(weightor, new FilterTermExtractor(weightor));
-    }
-
-    public FilteredQueryExtractor(FilterTermExtractor fte) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, fte);
-    }
-
-    public FilteredQueryExtractor(TermWeightor weightor, FilterTermExtractor fte) {
         super(FilteredQuery.class);
         this.weightor = weightor;
-        this.fte = fte;
     }
 
     @Override
@@ -40,7 +30,9 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
         extractTerms(query.getQuery(), subqueryTerms, extractors);
         QueryTermList queryTerms = new QueryTermList(weightor, subqueryTerms);
 
-        QueryTermList filterTerms = new QueryTermList(weightor, fte.extract(query.getFilter()));
+        List<QueryTerm> subfilterTerms = new ArrayList<>();
+        extractTerms(query.getFilter(), subfilterTerms, extractors);
+        QueryTermList filterTerms = new QueryTermList(weightor, subfilterTerms);
 
         Iterables.addAll(terms, QueryTermList.selectBest(queryTerms, filterTerms));
 

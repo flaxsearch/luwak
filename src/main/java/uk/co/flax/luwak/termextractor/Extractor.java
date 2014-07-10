@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.termextractor;
 
-import org.apache.lucene.search.Query;
-
 import java.util.List;
 
 /**
@@ -21,13 +19,13 @@ import java.util.List;
  */
 
 /**
- * Abstract base class for extracting terms from a query.
+ * Abstract base class for extracting terms from a query or filter.
  *
  * Subclasses should pass in their own types as a parameter to super().
  *
- * @param <T> the type of the Query to extract terms from
+ * @param <T> the type of the Query or Filter to extract terms from
  */
-public abstract class Extractor<T extends Query> {
+public abstract class Extractor<T> {
 
     public final Class<T> cls;
 
@@ -50,7 +48,7 @@ public abstract class Extractor<T extends Query> {
      * @param extractors the list of extractors to check
      */
     @SuppressWarnings("unchecked")
-    protected static void extractTerms(Query query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    protected static void extractTerms(Object query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         int termcount = terms.size();
         for (Extractor extractor : extractors) {
             if (extractor.cls.isAssignableFrom(query.getClass())) {

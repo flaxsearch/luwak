@@ -1,6 +1,5 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.Filter;
@@ -21,14 +20,14 @@ import org.apache.lucene.search.Filter;
  * limitations under the License.
  */
 
-public class GenericFilterTermExtractor extends FilterExtractor<Filter> {
+public class GenericFilterTermExtractor extends Extractor<Filter> {
 
     public GenericFilterTermExtractor() {
         super(Filter.class);
     }
 
     @Override
-    public void extract(Filter filter, List<QueryTerm> terms, Collection<FilterExtractor<?>> extractors) {
+    public void extract(Filter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
         terms.add(new QueryTerm("", filter.getClass().getCanonicalName(), QueryTerm.Type.ANY));
     }
 }

@@ -43,12 +43,15 @@ public class QueryTermExtractor {
             new NumericRangeExtractor(),
             new RegexpAnyTermExtractor(),
             new SimpleTermExtractor(),
+            new FilteredQueryExtractor(),
+            new TermsFilterTermExtractor(),
+            new TermFilterTermExtractor(),
+            new GenericFilterTermExtractor(),
             new GenericTermExtractor()
     );
 
     public QueryTermExtractor(Extractor<?>... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR,
-                new FilterTermExtractor(CompoundRuleWeightor.DEFAULT_WEIGHTOR), extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     /**
@@ -60,11 +63,12 @@ public class QueryTermExtractor {
      * @param weightor   the {@link uk.co.flax.luwak.termextractor.weights.TermWeightor} to use for Boolean clauses
      * @param extractors an array of Extractors
      */
-    public QueryTermExtractor(TermWeightor weightor, FilterTermExtractor fte, Extractor<?>... extractors) {
+    public QueryTermExtractor(TermWeightor weightor, Extractor<?>... extractors) {
         Collections.addAll(this.extractors, extractors);
-        this.extractors.add(new BooleanTermExtractor(weightor));
+        this.extractors.add(new BooleanTermExtractor.QueryExtractor(weightor));
+        this.extractors.add(new BooleanTermExtractor.FilterExtractor(weightor));
         this.extractors.add(new PhraseQueryTermExtractor(weightor));
-        this.extractors.add(new ConstantScoreQueryExtractor(fte));
+        this.extractors.add(new ConstantScoreQueryExtractor());
         this.extractors.addAll(DEFAULT_EXTRACTORS);
     }
 
@@ -73,7 +77,7 @@ public class QueryTermExtractor {
      * @param query the query to extract terms from
      * @return a Set of {@link QueryTerm}s
      */
-    public final Set<QueryTerm> extract(Query query) {
+    public final Set<QueryTerm> extract(Object query) {
         List<QueryTerm> terms = new ArrayList<>();
         Extractor.extractTerms(query, terms, extractors);
         return new HashSet<>(terms);
