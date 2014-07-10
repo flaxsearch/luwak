@@ -26,14 +26,14 @@ public abstract class FilterExtractor<T extends Filter> {
      * @param filter the Filter to extract terms from
      * @param terms the List to add the extracted terms to
      */
-    public abstract void extract(T filter, List<QueryTerm> terms);
+    public abstract void extract(T filter, List<QueryTerm> terms, Collection<FilterExtractor<?>> filterExtractors);
 
     @SuppressWarnings("unchecked")
-    public static List<QueryTerm> extractTerms(Filter filter, Collection<FilterExtractor<?>> filterExtractors) {
+    public static List<QueryTerm> extractTerms(Filter filter, Collection<FilterExtractor<? extends Filter>> filterExtractors) {
         List<QueryTerm> subfilterTerms = new ArrayList<>();
         for (FilterExtractor extractor : filterExtractors) {
             if (extractor.cls.isAssignableFrom(filter.getClass())) {
-                extractor.extract(filter, subfilterTerms);
+                extractor.extract(filter, subfilterTerms, filterExtractors);
                 break;
             }
         }

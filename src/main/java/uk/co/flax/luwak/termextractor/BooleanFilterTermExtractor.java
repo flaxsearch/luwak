@@ -1,8 +1,10 @@
 package uk.co.flax.luwak.termextractor;
 
-import com.google.common.collect.Iterables;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import com.google.common.collect.Iterables;
 import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
@@ -12,27 +14,25 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 public class BooleanFilterTermExtractor extends FilterExtractor<BooleanFilter> {
 
     private TermWeightor termWeightor;
-    private FilterTermExtractor fte;
 
-    public BooleanFilterTermExtractor(TermWeightor weightor, FilterTermExtractor filterTermExtractor) {
+    public BooleanFilterTermExtractor(TermWeightor weightor) {
         super(BooleanFilter.class);
         this.termWeightor = weightor;
-        this.fte = filterTermExtractor;
     }
 
     @Override
-    public void extract(BooleanFilter filter, List<QueryTerm> terms) {
+    public void extract(BooleanFilter filter, List<QueryTerm> terms, Collection<FilterExtractor<? extends Filter>> extractors) {
 
         Analyzer checker = new Analyzer(filter);
 
         if (checker.isDisjunctionFilter()) {
             for (Filter subfilter : checker.getDisjunctions()) {
-                terms.addAll(fte.extract(subfilter));
+                terms.addAll(extractTerms(subfilter, extractors));
             }
         } else if (checker.isConjunctionFilter()) {
             List<QueryTermList> termlists = new ArrayList<>();
             for (Filter subfilter : checker.getConjunctions()) {
-                List<QueryTerm> subTerms = fte.extract(subfilter);
+                List<QueryTerm> subTerms = extractTerms(subfilter, extractors);
                 termlists.add(new QueryTermList(this.termWeightor, subTerms));
             }
             Iterables.addAll(terms, QueryTermList.selectBest(termlists));

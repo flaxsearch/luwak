@@ -1,25 +1,18 @@
 package uk.co.flax.luwak.termextractor;
 
 import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause;
-import static org.fest.assertions.api.Assertions.assertThat;
-import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+
+import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 
-    private FilterTermExtractor termExtractor;
-
-    @Before
-    public void setUp() {
-         termExtractor = new FilterTermExtractor();
-         termExtractor.addExtractors(
-                 new BooleanFilterTermExtractor(CompoundRuleWeightor.DEFAULT_WEIGHTOR, termExtractor));
-    }
+    private static final FilterTermExtractor termExtractor = new FilterTermExtractor();
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {

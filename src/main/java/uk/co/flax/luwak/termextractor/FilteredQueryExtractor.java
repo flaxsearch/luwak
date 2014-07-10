@@ -19,7 +19,7 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     }
 
     public FilteredQueryExtractor(TermWeightor weightor) {
-        this(weightor, new FilterTermExtractor());
+        this(weightor, new FilterTermExtractor(weightor));
     }
 
     public FilteredQueryExtractor(FilterTermExtractor fte) {

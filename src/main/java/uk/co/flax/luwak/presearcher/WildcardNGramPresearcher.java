@@ -86,7 +86,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
         private List<Extractor<?>> extractors = Lists.newArrayList();
         private String ngramSuffix = DEFAULT_NGRAM_SUFFIX;
         private int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
-        private FilterTermExtractor filterTermExtractor = new FilterTermExtractor();
+        private FilterTermExtractor filterTermExtractor = new FilterTermExtractor(weightor);
 
         /**
          * Use this TermWeightor

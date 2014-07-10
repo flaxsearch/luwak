@@ -1,12 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.util.BytesRef;
-
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
 
 public class TermsFilterTermExtractor extends FilterExtractor<TermsFilter> {
 
@@ -53,7 +54,7 @@ public class TermsFilterTermExtractor extends FilterExtractor<TermsFilter> {
     }
 
     @Override
-    public void extract(TermsFilter filter, List<QueryTerm> terms) {
+    public void extract(TermsFilter filter, List<QueryTerm> terms, Collection<FilterExtractor<?>> extractors) {
         try {
             List<Term> filterTerms = getTermsFromTermsFilter(filter);
             for (Term term : filterTerms) {

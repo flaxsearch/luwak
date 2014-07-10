@@ -47,7 +47,8 @@ public class QueryTermExtractor {
     );
 
     public QueryTermExtractor(Extractor<?>... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, new FilterTermExtractor(), extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR,
+                new FilterTermExtractor(CompoundRuleWeightor.DEFAULT_WEIGHTOR), extractors);
     }
 
     /**

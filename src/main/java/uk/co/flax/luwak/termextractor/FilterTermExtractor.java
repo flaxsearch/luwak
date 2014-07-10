@@ -1,9 +1,13 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Filter;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -35,14 +39,15 @@ public class FilterTermExtractor {
     protected final List<FilterExtractor<? extends Filter>> filterExtractors;
 
     public FilterTermExtractor(FilterExtractor<? extends Filter>... extractors) {
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+    }
+
+    public FilterTermExtractor(TermWeightor weightor, FilterExtractor<? extends Filter>... extractors) {
         filterExtractors = new LinkedList<>();
         if (extractors != null)
             filterExtractors.addAll(Arrays.asList(extractors));
+        filterExtractors.add(new BooleanFilterTermExtractor(weightor));
         filterExtractors.addAll(DEFAULT_FILTER_EXTRACTORS);
-    }
-
-    public void addExtractors(FilterExtractor<? extends Filter>... extractors) {
-        filterExtractors.addAll(0, Arrays.asList(extractors));
     }
 
     public final List<QueryTerm> extract(Filter filter) {

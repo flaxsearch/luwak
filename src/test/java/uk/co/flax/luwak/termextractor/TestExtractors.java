@@ -2,6 +2,7 @@ package uk.co.flax.luwak.termextractor;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -153,7 +154,7 @@ public class TestExtractors {
         }
 
         @Override
-        public void extract(MyFilter filter, List<QueryTerm> terms) {
+        public void extract(MyFilter filter, List<QueryTerm> terms, Collection<FilterExtractor<?>> extractors) {
             terms.add(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
         }
     }

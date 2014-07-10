@@ -1,5 +1,6 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class TermsFilterTermExtractorTest {
     public void testExtractSingleTerm() {
         List<QueryTerm> terms = new LinkedList<>();
         TermsFilter filter = new TermsFilter(new Term("someField", "123"));
-        extractor.extract(filter, terms);
+        extractor.extract(filter, terms, Collections.EMPTY_LIST);
         Assert.assertEquals(1, terms.size());
         Assert.assertEquals("someField", terms.get(0).field);
         Assert.assertEquals("123", terms.get(0).term);
@@ -36,7 +37,7 @@ public class TermsFilterTermExtractorTest {
         TermsFilter filter = new TermsFilter(new Term("field1", "foo"), new Term("field2", "bar"), new Term("field1", "baz"));
 
         List<QueryTerm> terms = new LinkedList<>();
-        extractor.extract(filter, terms);
+        extractor.extract(filter, terms, Collections.EMPTY_LIST);
 
         assertThat(terms).hasSize(3);
         assertThat(terms).contains(new QueryTerm("field1", "foo", QueryTerm.Type.EXACT));
