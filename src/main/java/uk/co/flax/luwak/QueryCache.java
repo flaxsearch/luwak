@@ -16,23 +16,41 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
+import java.util.Map;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
+import uk.co.flax.luwak.querycache.MonitorQueryHasher;
 
-public interface QueryCache {
+public abstract class QueryCache {
 
-    public Entry get(BytesRef hash) throws QueryCacheException;
+    private final MonitorQueryHasher hasher;
 
-    public BytesRef put(MonitorQuery query) throws QueryCacheException;
+    protected QueryCache(MonitorQueryHasher hasher) {
+        this.hasher = hasher;
+    }
+
+    protected QueryCache() {
+        this(new MonitorQueryHasher.MD5Hasher());
+    }
+
+    public final Entry getCacheEntry(MonitorQuery mq) throws Exception {
+        return new Entry(mq, hasher.hash(mq), getQuery(mq.getQuery(), mq.getMetadata()),
+                            getQuery(mq.getHighlightQuery(), mq.getMetadata()));
+    }
+
+    protected abstract Query getQuery(String queryString, Map<String, String> metadata) throws Exception;
 
     public static class Entry {
 
         public final MonitorQuery mq;
         public final Query matchQuery;
         public final Query highlightQuery;
+        public final BytesRef hash;
 
-        public Entry(MonitorQuery mq, Query matchQuery, Query highlightQuery) {
+        public Entry(MonitorQuery mq, BytesRef hash, Query matchQuery, Query highlightQuery) {
             this.mq = mq;
+            this.hash = hash;
             this.matchQuery = matchQuery;
             this.highlightQuery = highlightQuery;
         }

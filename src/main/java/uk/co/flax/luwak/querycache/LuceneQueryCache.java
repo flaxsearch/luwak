@@ -16,13 +16,15 @@ package uk.co.flax.luwak.querycache;/*
 
 import java.util.Map;
 
+import com.google.common.base.Strings;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.Constants;
+import uk.co.flax.luwak.QueryCache;
 
-public class LuceneQueryCache extends ParsingQueryCache {
+public class LuceneQueryCache extends QueryCache {
 
     private final QueryParser parser;
 
@@ -36,7 +38,9 @@ public class LuceneQueryCache extends ParsingQueryCache {
     }
 
     @Override
-    protected Query parse(String query, Map<String, String> metadata) throws Exception {
+    protected Query getQuery(String query, Map<String, String> metadata) throws Exception {
+        if (Strings.isNullOrEmpty(query))
+            return null;
         return parser.parse(query);
     }
 }

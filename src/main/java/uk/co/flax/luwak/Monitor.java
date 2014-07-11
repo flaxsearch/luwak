@@ -5,7 +5,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -46,6 +50,14 @@ public class Monitor implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager manager;
 
+    /* Used to cache updates while a purge is ongoing */
+    private volatile Map<BytesRef, QueryCache.Entry> purgeCache = null;
+
+    /* Used to lock around the creation of the purgeCache */
+    private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
+
+    private Map<BytesRef, QueryCache.Entry> queries = new ConcurrentHashMap<>();
+
     public static final class FIELDS {
         public static final String id = "_id";
         public static final String hash = "_hash";
@@ -74,6 +86,99 @@ public class Monitor implements Closeable {
     }
 
     /**
+     * Statistics for the query cache and query index
+     */
+    public static class CacheStats {
+
+        /** Total number of queries in the query index */
+        public final int queries;
+
+        /** Total number of queries int the query cache */
+        public final int cachedQueries;
+
+        public CacheStats(int queries, int cachedQueries) {
+            this.queries = queries;
+            this.cachedQueries = cachedQueries;
+        }
+    }
+
+    /**
+     * @return Statistics for the internal query cache
+     */
+    public CacheStats getStats() {
+        return new CacheStats(this.writer.numDocs(), this.queries.size());
+    }
+
+    private void commit(List<QueryCache.Entry> updates) throws IOException {
+        purgeLock.readLock().lock();
+        try {
+            if (updates != null) {
+                for (QueryCache.Entry update : updates) {
+                    this.queries.put(update.hash, update);
+                    if (purgeCache != null)
+                        purgeCache.put(update.hash, update);
+                }
+            }
+            writer.commit();
+            manager.maybeRefresh();
+        }
+        finally {
+            purgeLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Remove unused queries from the query cache
+     * @throws IOException
+     */
+    public synchronized void purgeCache() throws IOException {
+
+        /*
+            Note on implementation
+
+            The purge works by scanning the query index and creating a new query cache populated
+            for each query in the index.  When the scan is complete, the old query cache is swapped
+            for the new, allowing it to be garbage-collected.
+
+            In order to not drop cached queries that have been added while a purge is ongoing,
+            we use a ReadWriteLock to guard the creation and removal of an update log.  Commits take
+            the read lock.  If the update log has been created, then a purge is ongoing, and queries
+            are added to the update log within the read lock guard.
+
+            The purge takes the write lock when creating the update log, and then when swapping out
+            the old query cache.  Within the second write lock guard, the contents of the update log
+            are added to the new query cache, and the update log itself is removed.
+         */
+
+        final Map<BytesRef, QueryCache.Entry> newCache = new ConcurrentHashMap<>();
+
+        purgeLock.writeLock().lock();
+        try {
+            purgeCache = new ConcurrentHashMap<>();
+        }
+        finally {
+            purgeLock.writeLock().unlock();
+        }
+
+        match(new MatchAllDocsQuery(), new SearchingCollector() {
+            @Override
+            protected void doSearch(String id, BytesRef hash) {
+                newCache.put(hash.clone(), queries.get(hash));
+            }
+        });
+
+        purgeLock.writeLock().lock();
+        try {
+            newCache.putAll(purgeCache);
+            purgeCache = null;
+            Monitor.this.queries = newCache;
+        }
+        finally {
+            purgeLock.writeLock().unlock();
+        }
+    }
+
+    /**
      * Configure the IndexWriterConfig for the internal query cache
      * @param iwc the default IndexWriterConfig
      * @return the IndexWriterConfig to use
@@ -97,19 +202,22 @@ public class Monitor implements Closeable {
      * @throws IOException
      */
     public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
+
         List<QueryError> errors = new ArrayList<>();
+        List<QueryCache.Entry> updates = new ArrayList<>();
+
         for (MonitorQuery query : queries) {
             try {
-                BytesRef hash = this.queryCache.put(query);
+                QueryCache.Entry cacheEntry = this.queryCache.getCacheEntry(query);
+                updates.add(cacheEntry);
                 writer.updateDocument(new Term(Monitor.FIELDS.id, query.getId()),
-                                        buildIndexableQuery(query.getId(), hash, this.queryCache.get(hash).matchQuery));
-            }
-            catch (Exception e) {
+                        buildIndexableQuery(query.getId(), cacheEntry));
+            } catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
             }
         }
-        writer.commit();
-        manager.maybeRefresh();
+
+        commit(updates);
         return errors;
     }
 
@@ -132,8 +240,7 @@ public class Monitor implements Closeable {
         for (MonitorQuery mq : queries) {
             writer.deleteDocuments(new Term(Monitor.FIELDS.id, mq.getId()));
         }
-        writer.commit();
-        manager.maybeRefresh();
+        commit(null);
     }
 
     /**
@@ -145,8 +252,7 @@ public class Monitor implements Closeable {
         for (String queryId : queryIds) {
             writer.deleteDocuments(new Term(FIELDS.id, queryId));
         }
-        writer.commit();
-        manager.maybeRefresh();
+        commit(null);
     }
 
     /**
@@ -164,8 +270,7 @@ public class Monitor implements Closeable {
      */
     public void clear() throws IOException {
         writer.deleteDocuments(new MatchAllDocsQuery());
-        writer.commit();
-        manager.maybeRefresh();
+        commit(null);
     }
 
     private void match(CandidateMatcher matcher) throws IOException {
@@ -174,7 +279,7 @@ public class Monitor implements Closeable {
         Query query = buildQuery(matcher.getDocument());
         matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
 
-        SearchingCollector collector = new SearchingCollector(matcher);
+        MatchingCollector collector = new MatchingCollector(matcher);
         match(query, collector);
         matcher.setQueriesRun(collector.getQueryCount());
 
@@ -209,7 +314,7 @@ public class Monitor implements Closeable {
      * @param collector the Collector to call for each match
      * @throws IOException
      */
-    public void match(InputDocument doc, Collector collector) throws IOException {
+    public void match(InputDocument doc, MonitorQueryCollector collector) throws IOException {
         match(buildQuery(doc), collector);
     }
 
@@ -220,18 +325,14 @@ public class Monitor implements Closeable {
      * @throws IOException
      */
     public MonitorQuery getQuery(String queryId) throws IOException {
-        final MonitorQuery[] queries = new MonitorQuery[]{ null };
-        match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
+        final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
+        match(new TermQuery(new Term(FIELDS.id, queryId)), new SearchingCollector() {
             @Override
             protected void doSearch(String id, BytesRef hash) {
-                try {
-                    queries[0] = queryCache.get(hash).mq;
-                } catch (QueryCacheException e) {
-                    queries[0] = null;
-                }
+                queryHolder[0] = queries.get(hash).mq;
             }
         });
-        return queries[0];
+        return queryHolder[0];
     }
 
     /**
@@ -241,43 +342,42 @@ public class Monitor implements Closeable {
         return writer.numDocs();
     }
 
-    private void match(Query query, Collector collector) throws IOException {
+    private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
         long startTime = System.nanoTime();
         try {
             searcher = manager.acquire();
+            collector.setQueryMap(this.queries);
             searcher.search(query, collector);
         }
         finally {
             manager.release(searcher);
-            if (collector instanceof TimedCollector) {
-                long searchTime = TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS);
-                ((TimedCollector) collector).setSearchTime(searchTime);
-            }
+            long searchTime = TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS);
+            collector.setSearchTime(searchTime);
         }
     }
 
-    protected Document buildIndexableQuery(String id, BytesRef hash, Query matchQuery) {
-        Document doc = presearcher.indexQuery(matchQuery);
+    protected Document buildIndexableQuery(String id, QueryCache.Entry query) {
+        Document doc = presearcher.indexQuery(query.matchQuery);
         doc.add(new StringField(Monitor.FIELDS.id, id, Field.Store.NO));
         doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(id)));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.hash, hash));
+        doc.add(new BinaryDocValuesField(Monitor.FIELDS.hash, query.hash));
         return doc;
     }
 
     // For each query selected by the presearcher, pass on to a CandidateMatcher
-    private class SearchingCollector extends MonitorQueryCollector {
+    private static class MatchingCollector extends SearchingCollector {
 
         final CandidateMatcher matcher;
 
-        private SearchingCollector(CandidateMatcher matcher) {
+        private MatchingCollector(CandidateMatcher matcher) {
             this.matcher = matcher;
         }
 
         @Override
         protected void doSearch(String queryId, BytesRef hash) {
             try {
-                QueryCache.Entry entry = queryCache.get(hash);
+                QueryCache.Entry entry = queries.get(hash);
                 matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQuery);
             }
             catch (Exception e) {
@@ -291,16 +391,7 @@ public class Monitor implements Closeable {
         }
     }
 
-    /**
-     * A Collector that decodes the stored query for each document hit.
-     */
-    public static abstract class MonitorQueryCollector extends TimedCollector {
-
-        protected BinaryDocValues hashDV;
-        protected BinaryDocValues idDV;
-
-        final BytesRef hash = new BytesRef();
-        final BytesRef id = new BytesRef();
+    public static abstract class SearchingCollector extends MonitorQueryCollector {
 
         /**
          * Do something with the matching query
@@ -308,14 +399,6 @@ public class Monitor implements Closeable {
          * @param hash the hash value to use to look up the query in QueryCache
          */
         protected abstract void doSearch(String id, BytesRef hash);
-
-        private int queryCount = 0;
-        private long searchTime = -1;
-
-        @Override
-        public void setScorer(Scorer scorer) throws IOException {
-
-        }
 
         @Override
         public final void collect(int doc) throws IOException {
@@ -325,14 +408,43 @@ public class Monitor implements Closeable {
             doSearch(id.utf8ToString(), hash);
         }
 
+    }
+
+    /**
+     * A Collector that decodes the stored query for each document hit.
+     */
+    public static abstract class MonitorQueryCollector extends TimedCollector {
+
+        protected BinaryDocValues hashDV;
+        protected BinaryDocValues idDV;
+        protected AtomicReader reader;
+
+        final BytesRef hash = new BytesRef();
+        final BytesRef id = new BytesRef();
+
+        protected Map<BytesRef, QueryCache.Entry> queries;
+
+        void setQueryMap(Map<BytesRef, QueryCache.Entry> queries) {
+            this.queries = queries;
+        }
+
+        protected int queryCount = 0;
+        private long searchTime = -1;
+
+        @Override
+        public void setScorer(Scorer scorer) throws IOException {
+
+        }
+
         @Override
         public final void setNextReader(AtomicReaderContext context) throws IOException {
+            this.reader = context.reader();
             this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
             this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
         }
 
         @Override
-        public final boolean acceptsDocsOutOfOrder() {
+        public boolean acceptsDocsOutOfOrder() {
             return true;
         }
 

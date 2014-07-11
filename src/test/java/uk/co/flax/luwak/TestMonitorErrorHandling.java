@@ -14,7 +14,6 @@ import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.querycache.LuceneQueryCache;
-import uk.co.flax.luwak.querycache.ParsingQueryCache;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -48,9 +47,11 @@ public class TestMonitorErrorHandling {
         final Query errorQuery = mock(Query.class);
         when(errorQuery.rewrite(any(IndexReader.class))).thenThrow(new RuntimeException("Error rewriting"));
 
-        return new ParsingQueryCache() {
+        return new QueryCache() {
             @Override
-            protected Query parse(String query, Map<String, String> metadata) throws Exception {
+            protected Query getQuery(String query, Map<String, String> metadata) throws Exception {
+                if (query == null)
+                    return null;
                 if ("unparseable".equals(query))
                     throw new RuntimeException("Error parsing query [unparseable]");
                 if ("error".equals(query))
