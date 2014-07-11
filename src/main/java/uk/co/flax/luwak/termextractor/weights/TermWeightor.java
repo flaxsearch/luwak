@@ -21,7 +21,7 @@ import java.util.List;
  */
 
 /**
- * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.BooleanTermExtractor} to
+ * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor} to
  * determine which clauses should be indexed.
  */
 public interface TermWeightor {

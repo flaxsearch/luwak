@@ -1,7 +1,9 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.intervals.FieldedConjunctionQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.List;
 /**
  * Extract terms from a FieldedConjunctionQuery
  *
- * See {@link BooleanTermExtractor}
+ * See {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor}
  */
 public class FieldedConjunctionQueryExtractor extends Extractor<FieldedConjunctionQuery> {
 

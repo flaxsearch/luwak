@@ -37,7 +37,6 @@ import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.FilterTermExtractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
@@ -58,12 +57,12 @@ public class TermFilteredPresearcher implements Presearcher {
 
     protected final QueryTermExtractor extractor;
 
-    public TermFilteredPresearcher(TermWeightor weightor, FilterTermExtractor fte, Extractor... extractors) {
-        this.extractor = new QueryTermExtractor(weightor, fte, extractors);
+    public TermFilteredPresearcher(TermWeightor weightor, Extractor... extractors) {
+        this.extractor = new QueryTermExtractor(weightor, extractors);
     }
 
     public TermFilteredPresearcher(Extractor... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, new FilterTermExtractor(), extractors);
+        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
     }
 
     @Override

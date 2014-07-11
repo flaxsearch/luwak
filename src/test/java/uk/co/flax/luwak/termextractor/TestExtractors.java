@@ -15,6 +15,8 @@ import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.apache.lucene.util.Bits;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.extractors.FilteredQueryExtractor;
+import uk.co.flax.luwak.termextractor.extractors.RegexpNGramTermExtractor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -146,14 +148,14 @@ public class TestExtractors {
         }
     }
 
-    private static class MyFilterTermExtractor extends FilterExtractor<MyFilter> {
+    private static class MyFilterTermExtractor extends Extractor<MyFilter> {
 
         protected MyFilterTermExtractor() {
             super(MyFilter.class);
         }
 
         @Override
-        public void extract(MyFilter filter, List<QueryTerm> terms) {
+        public void extract(MyFilter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
             terms.add(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
         }
     }
@@ -161,9 +163,7 @@ public class TestExtractors {
     @Test
     public void testExtendedFilteredQueryExtractor() {
 
-        FilterTermExtractor fte = new FilterTermExtractor(new MyFilterTermExtractor());
-        FilteredQueryExtractor fqe = new FilteredQueryExtractor(fte);
-        QueryTermExtractor qte = new QueryTermExtractor(fqe);
+        QueryTermExtractor qte = new QueryTermExtractor(new MyFilterTermExtractor());
 
         Query q = new RegexpQuery(new Term("FILTER", "*"));
         Filter f = new MyFilter();
@@ -192,6 +192,19 @@ public class TestExtractors {
         Query csqWithFilter = new ConstantScoreQuery(tf);
         assertThat(qte.extract(csqWithFilter))
                 .containsOnly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT), new QueryTerm("f", "q22", QueryTerm.Type.EXACT));
+
+    }
+
+    @Test
+    public void testPhraseQueryExtractor() {
+
+        QueryTermExtractor qte = new QueryTermExtractor();
+
+        PhraseQuery pq = new PhraseQuery();
+        pq.add(new Term("f", "hello"));
+        pq.add(new Term("f", "encyclopedia"));
+
+        assertThat(qte.extract(pq)).containsOnly(new QueryTerm("f", "encyclopedia", QueryTerm.Type.EXACT));
 
     }
 

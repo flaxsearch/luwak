@@ -1,7 +1,9 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.util.HashSet;
 import java.util.List;

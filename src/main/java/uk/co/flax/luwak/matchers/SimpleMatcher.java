@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
+import java.io.IOException;
+
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Query;
@@ -8,11 +10,6 @@ import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -31,15 +28,16 @@ import java.util.Set;
  */
 public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
 
-    private final Set<QueryMatch> matches = new HashSet<>();
-
     public SimpleMatcher(InputDocument doc) {
         super(doc);
     }
 
     @Override
-    public void matchQuery(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+
+    public QueryMatch doMatch(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        final QueryMatch[] match = new QueryMatch[] { null };
         doc.getSearcher().search(matchQuery, new Collector() {
+
             @Override
             public void setScorer(Scorer scorer) throws IOException {
 
@@ -47,7 +45,7 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
 
             @Override
             public void collect(int doc) throws IOException {
-                matches.add(new QueryMatch(queryId));
+                match[0] = new QueryMatch(queryId);
             }
 
             @Override
@@ -60,16 +58,7 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
                 return false;
             }
         });
-    }
-
-    @Override
-    public boolean matches(String queryId) {
-        return matches.contains(queryId);
-    }
-
-    @Override
-    public int getMatchCount() {
-        return matches.size();
+        return match[0];
     }
 
     public static final MatcherFactory<SimpleMatcher> FACTORY = new MatcherFactory<SimpleMatcher>() {
@@ -79,8 +68,4 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
         }
     };
 
-    @Override
-    public Iterator<QueryMatch> iterator() {
-        return matches.iterator();
-    }
 }

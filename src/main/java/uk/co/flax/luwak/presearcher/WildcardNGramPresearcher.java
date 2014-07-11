@@ -10,8 +10,7 @@ import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.FilterTermExtractor;
-import uk.co.flax.luwak.termextractor.RegexpNGramTermExtractor;
+import uk.co.flax.luwak.termextractor.extractors.RegexpNGramTermExtractor;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
@@ -57,8 +56,8 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
     protected WildcardNGramPresearcher(TermWeightor weightor, String ngramSuffix, int maxTokenSize,
-                                       FilterTermExtractor filterTermExtractor, Extractor<?>... extractors) {
-        super(weightor, filterTermExtractor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
+                                       Extractor<?>... extractors) {
+        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
     }
@@ -86,7 +85,6 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
         private List<Extractor<?>> extractors = Lists.newArrayList();
         private String ngramSuffix = DEFAULT_NGRAM_SUFFIX;
         private int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
-        private FilterTermExtractor filterTermExtractor = new FilterTermExtractor();
 
         /**
          * Use this TermWeightor
@@ -105,17 +103,6 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
          */
         public Builder withExtractor(Extractor<?> extractor) {
             this.extractors.add(extractor);
-            return this;
-        }
-
-        /**
-         * Use this filter term extractor
-         *
-         * @param extractor the Extractor
-         * @return the Builder object
-         */
-        public Builder withFilterExtractor(FilterTermExtractor extractor) {
-            this.filterTermExtractor = extractor;
             return this;
         }
 
@@ -144,7 +131,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
          * @return the constructed Presearcher
          */
         public WildcardNGramPresearcher build() {
-            return new WildcardNGramPresearcher(weightor, ngramSuffix, maxTokenSize, filterTermExtractor,
+            return new WildcardNGramPresearcher(weightor, ngramSuffix, maxTokenSize,
                     extractors.toArray(new Extractor[extractors.size()]));
         }
 

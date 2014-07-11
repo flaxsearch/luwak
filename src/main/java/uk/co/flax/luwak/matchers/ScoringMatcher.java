@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
+import java.io.IOException;
+
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
@@ -8,9 +10,6 @@ import org.apache.lucene.search.Scorer;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -33,17 +32,17 @@ import java.util.*;
  */
 public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
 
-    private final Map<String, ScoringMatch> scores = new LinkedHashMap<>();
-
     public ScoringMatcher(InputDocument doc) {
         super(doc);
     }
 
     @Override
-    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public ScoringMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        ScoringMatch match = null;
         float score = score(matchQuery);
         if (score > 0)
-            scores.put(queryId, new ScoringMatch(queryId, score));
+            match = new ScoringMatch(queryId, score);
+        return match;
     }
 
     /**
@@ -85,16 +84,6 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
         }
     }
 
-    @Override
-    public boolean matches(String queryId) {
-        return scores.containsKey(queryId);
-    }
-
-    @Override
-    public int getMatchCount() {
-        return scores.size();
-    }
-
     /**
      * A MatcherFactory for ScoringMatcher objects
      */
@@ -105,8 +94,4 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
         }
     };
 
-    @Override
-    public Iterator<ScoringMatch> iterator() {
-        return scores.values().iterator();
-    }
 }

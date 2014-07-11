@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.intervals;
 
+import java.io.IOException;
+
 import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -12,8 +14,6 @@ import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-
-import java.io.IOException;
 
 import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
 
@@ -121,7 +121,7 @@ public class TestIntervalsMatches {
 
         IntervalsMatcher matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY);
 
-        IntervalsQueryMatch match = Iterables.getFirst(matcher.getMatches(), null);
+        IntervalsQueryMatch match = Iterables.getFirst(matcher, null);
         Assertions.assertThat(match).isNotNull();
         Assertions.assertThat(match.getHitCount()).isEqualTo(1);
     }

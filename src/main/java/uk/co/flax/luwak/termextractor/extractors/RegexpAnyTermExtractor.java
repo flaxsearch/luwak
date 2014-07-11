@@ -1,6 +1,8 @@
-package uk.co.flax.luwak.termextractor;
+package uk.co.flax.luwak.termextractor.extractors;
 
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.RegexpQuery;
+import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 import java.util.List;
 
@@ -21,17 +23,17 @@ import java.util.List;
  */
 
 /**
- * An Extractor for TermQueries
+ * An extractor that will replace wildcard terms with an ANY token
  */
-public class SimpleTermExtractor extends Extractor<TermQuery> {
+public class RegexpAnyTermExtractor extends Extractor<RegexpQuery> {
 
-    public SimpleTermExtractor() {
-        super(TermQuery.class);
+    public RegexpAnyTermExtractor() {
+        super(RegexpQuery.class);
     }
 
     @Override
-    public void extract(TermQuery query, List<QueryTerm> terms,
+    public void extract(RegexpQuery query, List<QueryTerm> terms,
                         List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(query.getTerm().field(), query.getTerm().text(), QueryTerm.Type.EXACT));
+        terms.add(new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
     }
 }
