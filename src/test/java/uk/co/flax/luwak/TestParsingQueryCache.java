@@ -28,8 +28,8 @@ public class TestParsingQueryCache {
     @Test
     public void testQueryOnlyParsesOnce() throws QueryCacheException {
         LuceneQueryCache cache = new LuceneQueryCache("f");
-        Query query1 = cache.get(new BytesRef("test"));
-        Query query2 = cache.get(new BytesRef("test"));
+        QueryCacheEntry query1 = cache.get(new MonitorQuery("1", new BytesRef("test"), null, 10));
+        QueryCacheEntry query2 = cache.get(new MonitorQuery("1", new BytesRef("test"), null, 10));
 
         assertThat(query1).isSameAs(query2);
     }
@@ -43,7 +43,7 @@ public class TestParsingQueryCache {
 
         expected.expect(QueryCacheException.class);
         expected.expectMessage("Was expecting one of");
-        cache.get(new BytesRef("test (+hello"));
+        cache.get(new MonitorQuery("id", "test (+hello"));
     }
 
 }
