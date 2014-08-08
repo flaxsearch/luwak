@@ -38,6 +38,8 @@ public class TermsEnumTokenStream extends TokenStream {
 
     @Override
     public final boolean incrementToken() throws IOException {
+    	clearAttributes();
+    	
         BytesRef bytes = termsEnum.next();
         if (bytes == null)
             return false;
