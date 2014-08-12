@@ -1,14 +1,14 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Test;
 import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
-
-import java.io.IOException;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ public class TestPresearcherMatchCollector {
     @Test
     public void testMatchCollectorShowMatches() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache(TEXTFIELD), new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher());
         monitor.update(new MonitorQuery("1", "test"));
         monitor.update(new MonitorQuery("2", "foo bar -baz"));
 

@@ -13,7 +13,7 @@ import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -42,14 +42,14 @@ public class TestMonitorErrorHandling {
 
     public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
 
-    private static QueryCache createMockCache() throws Exception {
+    private static MonitorQueryParser createMockCache() throws Exception {
 
         final Query errorQuery = mock(Query.class);
         when(errorQuery.rewrite(any(IndexReader.class))).thenThrow(new RuntimeException("Error rewriting"));
 
-        return new QueryCache() {
+        return new MonitorQueryParser() {
             @Override
-            protected Query getQuery(String query, Map<String, String> metadata) throws Exception {
+            public Query parse(String query, Map<String, String> metadata) throws Exception {
                 if (query == null)
                     return null;
                 if ("unparseable".equals(query))
@@ -90,7 +90,7 @@ public class TestMonitorErrorHandling {
                 .thenThrow(new UnsupportedOperationException("Oops"))
                 .thenReturn(new Document());
 
-        Monitor monitor = new Monitor(new LuceneQueryCache("f"), presearcher);
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher);
         List<QueryError> errors
                 = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
 

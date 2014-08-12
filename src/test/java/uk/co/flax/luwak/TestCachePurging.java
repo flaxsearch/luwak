@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -43,9 +43,7 @@ public class TestCachePurging {
     @Test
     public void testQueryCacheCanBePurged() throws IOException {
 
-        QueryCache cache = new LuceneQueryCache("field");
-
-        Monitor monitor = new Monitor(cache, new MatchAllPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
         MonitorQuery[] queries = new MonitorQuery[] {
                 new MonitorQuery("1", "test1"),
                 new MonitorQuery("2", "test2"),
@@ -83,8 +81,7 @@ public class TestCachePurging {
         final CountDownLatch startUpdating = new CountDownLatch(1);
         final CountDownLatch finishUpdating = new CountDownLatch(1);
 
-        final QueryCache cache = new LuceneQueryCache("field");
-        final Monitor monitor = new Monitor(cache, new MatchAllPresearcher());
+        final Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
 
         Runnable updaterThread = new Runnable() {
             @Override

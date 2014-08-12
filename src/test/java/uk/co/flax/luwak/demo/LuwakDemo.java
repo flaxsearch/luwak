@@ -1,5 +1,14 @@
 package uk.co.flax.luwak.demo;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import org.apache.lucene.analysis.Analyzer;
@@ -9,17 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -51,7 +51,7 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache(FIELD, ANALYZER), new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher());
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {

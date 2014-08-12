@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -40,7 +40,7 @@ public class TestMonitor {
 
     @Before
     public void setUp() throws IOException {
-        monitor = new Monitor(new LuceneQueryCache(TEXTFIELD, ANALYZER),
+        monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER),
                 new MatchAllPresearcher());
     }
 

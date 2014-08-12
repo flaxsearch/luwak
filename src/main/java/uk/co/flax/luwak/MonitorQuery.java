@@ -1,8 +1,12 @@
 package uk.co.flax.luwak;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import org.apache.lucene.util.BytesRef;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -109,5 +113,21 @@ public class MonitorQuery {
         result = 31 * result + (query != null ? query.hashCode() : 0);
         result = 31 * result + (highlightQuery != null ? highlightQuery.hashCode() : 0);
         return result;
+    }
+
+    public BytesRef hash() {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(query.getBytes(Charsets.UTF_8));
+            if (highlightQuery != null)
+                md5.update(highlightQuery.getBytes(Charsets.UTF_8));
+            for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                md5.update(entry.getKey().getBytes(Charsets.UTF_8));
+                md5.update(entry.getValue().getBytes(Charsets.UTF_8));
+            }
+            return new BytesRef(md5.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Can't use MD5 hash on this system", e);
+        }
     }
 }

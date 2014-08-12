@@ -1,5 +1,11 @@
-package uk.co.flax.luwak;/*
- * Copyright (c) 2013 Lemur Consulting Ltd.
+package uk.co.flax.luwak;
+
+import java.util.Map;
+
+import org.apache.lucene.search.Query;
+
+/**
+ * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +20,8 @@ package uk.co.flax.luwak;/*
  * limitations under the License.
  */
 
-public class QueryCacheException extends Exception {
-    public QueryCacheException(Throwable t) {
-        super(t);
-    }
+public interface MonitorQueryParser {
+
+    public Query parse(String queryString, Map<String, String> metadata) throws Exception;
+
 }

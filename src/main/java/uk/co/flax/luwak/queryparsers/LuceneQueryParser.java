@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.querycache;/*
+package uk.co.flax.luwak.queryparsers;/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +16,28 @@ package uk.co.flax.luwak.querycache;/*
 
 import java.util.Map;
 
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.Constants;
-import uk.co.flax.luwak.QueryCache;
+import uk.co.flax.luwak.MonitorQueryParser;
 
-public class LuceneQueryCache extends QueryCache {
+public class LuceneQueryParser implements MonitorQueryParser {
 
     private final QueryParser parser;
 
-    public LuceneQueryCache(String defaultField, Analyzer analyzer) {
+    public LuceneQueryParser(String defaultField, Analyzer analyzer) {
         super();
         this.parser = new QueryParser(Constants.VERSION, defaultField, analyzer);
     }
 
-    public LuceneQueryCache(String defaultField) {
+    public LuceneQueryParser(String defaultField) {
         this(defaultField,  new StandardAnalyzer(Constants.VERSION));
     }
 
     @Override
-    protected Query getQuery(String query, Map<String, String> metadata) throws Exception {
-        if (Strings.isNullOrEmpty(query))
-            return null;
+    public Query parse(String query, Map<String, String> metadata) throws Exception {
         return parser.parse(query);
     }
 }

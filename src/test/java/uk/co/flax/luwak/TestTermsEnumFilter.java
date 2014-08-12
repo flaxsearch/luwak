@@ -1,14 +1,14 @@
 package uk.co.flax.luwak;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.querycache.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
-
-import java.io.IOException;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -34,7 +34,7 @@ public class TestTermsEnumFilter {
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache("f"), WildcardNGramPresearcher.DEFAULT);
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), WildcardNGramPresearcher.DEFAULT);
         monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
 
         InputDocument doc = InputDocument.builder("doc")
