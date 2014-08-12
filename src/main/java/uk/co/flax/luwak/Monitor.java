@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -66,6 +68,10 @@ public class Monitor implements Closeable {
         public static final String hash = "_hash";
     }
 
+    private final ScheduledExecutorService purgeExecutor;
+
+    private long lastPurged = -1;
+
     /**
      * Create a new Monitor instance, using a passed in Directory for its queryindex
      * @param queryParser the query parser to use
@@ -82,6 +88,21 @@ public class Monitor implements Closeable {
         this.writer = new IndexWriter(directory, configureIndexWriterConfig(iwc));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
+
+        this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
+
+        long purgeFrequency = configurePurgeFrequency();
+        this.purgeExecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    purgeCache();
+                }
+                catch (Exception e) {
+                    // TODO: How to deal with exceptions here?
+                }
+            }
+        }, purgeFrequency, purgeFrequency, TimeUnit.SECONDS);
     }
 
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
@@ -99,9 +120,13 @@ public class Monitor implements Closeable {
         /** Total number of queries int the query cache */
         public final int cachedQueries;
 
-        public CacheStats(int queries, int cachedQueries) {
+        /** Time the query cache was last purged */
+        public final long lastPurged;
+
+        public CacheStats(int queries, int cachedQueries, long lastPurged) {
             this.queries = queries;
             this.cachedQueries = cachedQueries;
+            this.lastPurged = lastPurged;
         }
     }
 
@@ -124,7 +149,7 @@ public class Monitor implements Closeable {
      * @return Statistics for the internal query index and cache
      */
     public CacheStats getStats() {
-        return new CacheStats(this.writer.numDocs(), this.queries.size());
+        return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
     }
 
     private void commit(List<CacheEntry> updates) throws IOException {
@@ -146,7 +171,10 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Remove unused queries from the query cache
+     * Remove unused queries from the query cache.
+     *
+     * This is normally called from a background thread at a rate set by configurePurgeFrequency().
+     *
      * @throws IOException
      */
     public synchronized void purgeCache() throws IOException {
@@ -190,6 +218,7 @@ public class Monitor implements Closeable {
             newCache.putAll(purgeCache);
             purgeCache = null;
             Monitor.this.queries = newCache;
+            lastPurged = System.nanoTime();
         }
         finally {
             purgeLock.writeLock().unlock();
@@ -208,8 +237,20 @@ public class Monitor implements Closeable {
         return iwc;
     }
 
+    /**
+     * Configure the frequency with which the query cache will be purged.
+     *
+     * Default = 5 minutes
+     *
+     * @return the frequency (in seconds)
+     */
+    protected long configurePurgeFrequency() {
+        return 300;
+    }
+
     @Override
     public void close() throws IOException {
+        purgeExecutor.shutdown();
         IOUtils.closeWhileHandlingException(manager, writer, directory);
     }
 

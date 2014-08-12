@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Rule;
@@ -71,7 +72,8 @@ public class TestCachePurging {
 
     @Test
     public void testConcurrentPurges() throws Exception {
-        for (int i = 0; i < 20; i++) {
+        int iters = Integer.getInteger("purgeIters", 2);
+        for (int i = 0; i < iters; i++) {
             doConcurrentPurgesAndUpdatesTest();
         }
     }
@@ -135,6 +137,32 @@ public class TestCachePurging {
 
     private static MonitorQuery newMonitorQuery(int id) {
         return new MonitorQuery(Integer.toString(id), "+test " + Integer.toString(id));
+    }
+
+    @Test
+    public void testBackgroundPurges() throws IOException, InterruptedException {
+
+        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()) {
+            @Override
+            protected long configurePurgeFrequency() {
+                return 2;
+            }
+        };
+
+        assertThat(monitor.getStats().lastPurged).isEqualTo(-1);
+
+        for (int i = 0; i < 100; i++) {
+            monitor.update(newMonitorQuery(i));
+        }
+        monitor.deleteById("5");
+        assertThat(monitor.getStats().queries).isEqualTo(99);
+        assertThat(monitor.getStats().cachedQueries).isEqualTo(100);
+
+        TimeUnit.SECONDS.sleep(3);
+        assertThat(monitor.getStats().queries).isEqualTo(99);
+        assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
+        assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
+
     }
 
 }
