@@ -16,28 +16,29 @@ package uk.co.flax.luwak.analysis;
  * limitations under the License.
  */
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
-
-import java.io.IOException;
+import org.apache.lucene.util.BytesRefIterator;
 
 /**
  * A TokenStream created from a {@link org.apache.lucene.index.TermsEnum}
  */
 public class TermsEnumTokenStream extends TokenStream {
 
-    private final TermsEnum termsEnum;
+    private final BytesRefIterator termsEnum;
     private final CharTermAttribute charTerm = addAttribute(CharTermAttribute.class);
 
     /** Create a new TermsEnumTokenStream using a TermsEnum */
-    public TermsEnumTokenStream(TermsEnum termsEnum) {
+    public TermsEnumTokenStream(BytesRefIterator termsEnum) {
         this.termsEnum = termsEnum;
     }
 
     @Override
     public final boolean incrementToken() throws IOException {
+        clearAttributes();
         BytesRef bytes = termsEnum.next();
         if (bytes == null)
             return false;
