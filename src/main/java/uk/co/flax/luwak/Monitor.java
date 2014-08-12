@@ -341,13 +341,13 @@ public class Monitor implements Closeable {
 
     private void match(CandidateMatcher matcher) throws IOException {
 
-        long start = System.nanoTime();
+        long buildTime = System.nanoTime();
         Query query = buildQuery(matcher.getDocument());
-        matcher.setQueryBuildTime((System.nanoTime() - start) / 1000000);
+        buildTime = (System.nanoTime() - buildTime) / 1000000;
 
         MatchingCollector collector = new MatchingCollector(matcher);
         match(query, collector);
-        matcher.setQueriesRun(collector.getQueryCount());
+        matcher.finish(buildTime, collector.getQueryCount());
 
     }
 

@@ -5,8 +5,6 @@ import java.util.*;
 
 import org.apache.lucene.search.Query;
 
-import org.apache.lucene.search.Query;
-
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -30,7 +28,7 @@ import org.apache.lucene.search.Query;
 public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
 
     private final List<MatchError> errors = new ArrayList<>();
-    private final Map<String, T> matches = new HashMap<>();
+    protected final Map<String, T> matches = new HashMap<>();
 
     protected final InputDocument doc;
 
@@ -55,7 +53,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      * @param highlightQuery an optional query to use for highlighting.  May be null
      * @throws IOException
      */
-    public final void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
         T match = doMatch(queryId, matchQuery, highlightQuery);
         if (match != null)
             matches.put(match.getQueryId(), match);
@@ -96,7 +94,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      * Called by the Monitor if running a query throws an Exception
      * @param e the MatchError detailing the problem
      */
-    protected void reportError(MatchError e) {
+    public void reportError(MatchError e) {
         this.errors.add(e);
     }
 
@@ -128,10 +126,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
         return queryBuildTime;
     }
 
-    void setQueryBuildTime(long queryBuildTime) {
-        this.queryBuildTime = queryBuildTime;
-    }
-
     /**
      * @return how long (in ms) it took to run the selected queries
      */
@@ -150,8 +144,8 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
         return queriesRun;
     }
 
-    void setQueriesRun(int queriesRun) {
-        this.queriesRun = queriesRun;
+    public void finish(long buildTime, int queryCount) {
+        this.queryBuildTime = buildTime;
+        this.queriesRun = queryCount;
     }
-
 }
