@@ -29,7 +29,13 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
     }
 
     @Override
-    public IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        IntervalsQueryMatch match = doMatch(queryId, matchQuery, highlightQuery);
+        if (match != null)
+            matches.put(queryId, match);
+    }
+
+    private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
 
         QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(queryId);
         doc.getSearcher().search(matchQuery, collector);

@@ -2,11 +2,7 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
-import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
@@ -26,39 +22,15 @@ import uk.co.flax.luwak.QueryMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
+public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
 
     public SimpleMatcher(InputDocument doc) {
         super(doc);
     }
 
     @Override
-
-    public QueryMatch doMatch(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        final QueryMatch[] match = new QueryMatch[] { null };
-        doc.getSearcher().search(matchQuery, new Collector() {
-
-            @Override
-            public void setScorer(Scorer scorer) throws IOException {
-
-            }
-
-            @Override
-            public void collect(int doc) throws IOException {
-                match[0] = new QueryMatch(queryId);
-            }
-
-            @Override
-            public void setNextReader(AtomicReaderContext context) throws IOException {
-
-            }
-
-            @Override
-            public boolean acceptsDocsOutOfOrder() {
-                return false;
-            }
-        });
-        return match[0];
+    protected QueryMatch doMatch(String queryId, Scorer scorer) throws IOException {
+        return new QueryMatch(queryId);
     }
 
     public static final MatcherFactory<SimpleMatcher> FACTORY = new MatcherFactory<SimpleMatcher>() {

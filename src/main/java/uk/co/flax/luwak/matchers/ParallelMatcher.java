@@ -25,7 +25,11 @@ import uk.co.flax.luwak.*;
  */
 
 /**
- * Matcher class that runs matching queries in parallel
+ * Matcher class that runs matching queries in parallel.
+ *
+ * This class delegates the actual matching to separate CandidateMatcher classes,
+ * built from a passed in MatcherFactory.
+ *
  * @param <T> the QueryMatch type returned
  */
 public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
@@ -56,12 +60,6 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
         } catch (InterruptedException e) {
             throw new IOException("Interrupted during match");
         }
-    }
-
-    @Override
-    protected T doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        return null;
-        // TODO clean this up - maybe move doMatch to SimpleMatcher?
     }
 
     @Override

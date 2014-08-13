@@ -54,21 +54,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      * @param highlightQuery an optional query to use for highlighting.  May be null
      * @throws IOException
      */
-    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        T match = doMatch(queryId, matchQuery, highlightQuery);
-        if (match != null)
-            matches.put(match.getQueryId(), match);
-    }
-
-    /**
-     * Run the supplied query against this CandidateMatcher's InputDocument
-     * @param queryId the query id
-     * @param matchQuery the query to run
-     * @param highlightQuery an optional query to use for highlighting.  May be null
-     * @return a QueryMatch object if the query matched, otherwise null
-     * @throws IOException
-     */
-    protected abstract T doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public abstract void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
     /**
      * Returns true if a given query matched during the matcher run
