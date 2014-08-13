@@ -410,7 +410,6 @@ public class Monitor implements Closeable {
 
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
-        long startTime = System.nanoTime();
         try {
             searcher = manager.acquire();
             collector.setQueryMap(this.queries);
@@ -418,8 +417,6 @@ public class Monitor implements Closeable {
         }
         finally {
             manager.release(searcher);
-            long searchTime = TimeUnit.MILLISECONDS.convert((System.nanoTime() - startTime), TimeUnit.NANOSECONDS);
-            collector.setSearchTime(searchTime);
         }
     }
 
@@ -451,10 +448,6 @@ public class Monitor implements Closeable {
             }
         }
 
-        @Override
-        public void setSearchTime(long searchTime) {
-            matcher.setSearchTime(searchTime);
-        }
     }
 
     public static abstract class SearchingCollector extends MonitorQueryCollector {
@@ -479,7 +472,7 @@ public class Monitor implements Closeable {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public static abstract class MonitorQueryCollector extends TimedCollector {
+    public static abstract class MonitorQueryCollector extends Collector {
 
         protected BinaryDocValues hashDV;
         protected BinaryDocValues idDV;
@@ -495,7 +488,6 @@ public class Monitor implements Closeable {
         }
 
         protected int queryCount = 0;
-        private long searchTime = -1;
 
         @Override
         public void setScorer(Scorer scorer) throws IOException {
@@ -518,14 +510,6 @@ public class Monitor implements Closeable {
             return queryCount;
         }
 
-        public long getSearchTime() {
-            return searchTime;
-        }
-
-        @Override
-        public void setSearchTime(long searchTime) {
-            this.searchTime = searchTime;
-        }
     }
 
 }

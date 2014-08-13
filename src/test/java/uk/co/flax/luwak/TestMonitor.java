@@ -62,6 +62,21 @@ public class TestMonitor {
     }
 
     @Test
+    public void matchStatisticsAreReported() throws IOException {
+        String document = "This is a test document";
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, document, WHITESPACE)
+                .build();
+
+        monitor.update(new MonitorQuery("query1", "test"));
+
+        SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Assertions.assertThat(matches.getQueriesRun()).isEqualTo(1);
+        Assertions.assertThat(matches.getQueryBuildTime()).isGreaterThan(-1);
+        Assertions.assertThat(matches.getSearchTime()).isGreaterThan(-1);
+    }
+
+    @Test
     public void updatesOverwriteOldQueries() throws IOException {
         monitor.update(new MonitorQuery("query1", "this"));
 

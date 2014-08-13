@@ -2,6 +2,7 @@ package uk.co.flax.luwak;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 
@@ -33,7 +34,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
     protected final InputDocument doc;
 
     private long queryBuildTime = -1;
-    private long searchTime = -1;
+    private long searchTime = System.nanoTime();
     private int queriesRun = -1;
 
     /**
@@ -133,10 +134,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
         return searchTime;
     }
 
-    void setSearchTime(long searchTime) {
-        this.searchTime = searchTime;
-    }
-
     /**
      * @return the number of queries passed to this CandidateMatcher during the matcher run
      */
@@ -147,5 +144,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
     public void finish(long buildTime, int queryCount) {
         this.queryBuildTime = buildTime;
         this.queriesRun = queryCount;
+        this.searchTime = TimeUnit.MILLISECONDS.convert(System.nanoTime() - searchTime, TimeUnit.NANOSECONDS);
     }
 }

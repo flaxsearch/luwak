@@ -83,8 +83,4 @@ public class PresearcherMatchCollector extends Monitor.MonitorQueryCollector imp
 
     }
 
-    @Override
-    public void setSearchTime(long l) {
-
-    }
 }
