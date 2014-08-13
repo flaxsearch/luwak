@@ -153,13 +153,28 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     /**
      * Create a new ParallelMatcherFactory
      * @param executor the ExecutorService to use
-     * @param matcherFactory the MatcherFactory to use
+     * @param matcherFactory the MatcherFactory to use to create submatchers
      * @param threads the number of threads to use
-     * @param <T> the type of QueryMatch to return
+     * @param <T> the type of QueryMatch generated
      * @return a ParallelMatcherFactory
      */
     public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor, MatcherFactory<? extends CandidateMatcher<T>> matcherFactory, int threads) {
         return new ParallelMatcherFactory<>(executor, matcherFactory, threads);
     }
 
+    /**
+     * Create a new ParallelMatcherFactory
+     *
+     * This factory will create a ParallelMatcher that uses as many threads as there are cores available
+     * to the JVM (as determined by {@code Runtime.getRuntime().availableProcessors()}).
+     *
+     * @param executor the ExecutorService to use
+     * @param matcherFactory the MatcherFactory to use to create submatchers
+     * @param <T> the type of QueryMatch generated
+     * @return a ParallelMatcherFactory
+     */
+    public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor, MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
+        int threads = Runtime.getRuntime().availableProcessors();
+        return new ParallelMatcherFactory<>(executor, matcherFactory, threads);
+    }
 }
