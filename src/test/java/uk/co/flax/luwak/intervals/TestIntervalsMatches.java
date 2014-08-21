@@ -8,7 +8,6 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.fest.assertions.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
@@ -36,7 +35,7 @@ public class TestIntervalsMatches {
 
     static final String textfield = "textfield";
 
-    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer();
 
     private Monitor monitor;
 

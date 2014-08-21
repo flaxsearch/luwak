@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import java.util.List;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
@@ -11,8 +13,6 @@ import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-
-import java.util.List;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -39,7 +39,7 @@ public class TestMonitorErrorHandling {
 
     public static final String FIELD = "f";
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     private static QueryCache createMockCache() throws Exception {
 

@@ -1,14 +1,13 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Test;
-import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
-
-import java.io.IOException;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -40,7 +39,7 @@ public class TestPresearcherMatchCollector {
         monitor.update(new MonitorQuery("2", "foo bar -baz"));
 
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Constants.VERSION))
+                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
                 .build();
 
         PresearcherMatchCollector collector = new PresearcherMatchCollector();

@@ -1,17 +1,5 @@
 package uk.co.flax.luwak.demo;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.fest.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
-import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -20,6 +8,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.fest.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.parsers.LuceneQueryCache;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -39,7 +42,7 @@ import java.util.List;
 
 public class LuwakDemo {
 
-    public static final Analyzer ANALYZER = new StandardAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new StandardAnalyzer();
 
     public static final String FIELD = "text";
 

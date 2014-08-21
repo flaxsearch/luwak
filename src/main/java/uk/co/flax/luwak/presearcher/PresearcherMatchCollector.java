@@ -1,5 +1,9 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.BinaryDocValues;
@@ -12,10 +16,6 @@ import org.apache.lucene.search.intervals.IntervalIterator;
 import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.TimedCollector;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -42,13 +42,13 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
 
     public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-    private final BytesRef scratch = new BytesRef();
+    BytesRef scratch;
 
     @Override
     public void collect(int doc) throws IOException {
 
         document = reader.document(doc);
-        idValues.get(doc, scratch);
+        scratch = idValues.get(doc);
         this.currentId = scratch.utf8ToString();
 
         positions.scorerAdvanced(doc);

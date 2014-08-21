@@ -18,7 +18,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.ParsingQueryCache;
 
 public class LuceneQueryCache extends ParsingQueryCache {
@@ -26,11 +25,11 @@ public class LuceneQueryCache extends ParsingQueryCache {
     private final QueryParser parser;
 
     public LuceneQueryCache(String defaultField, Analyzer analyzer) {
-        this.parser = new QueryParser(Constants.VERSION, defaultField, analyzer);
+        this.parser = new QueryParser(defaultField, analyzer);
     }
 
     public LuceneQueryCache(String defaultField) {
-        this(defaultField,  new StandardAnalyzer(Constants.VERSION));
+        this(defaultField,  new StandardAnalyzer());
     }
 
     @Override

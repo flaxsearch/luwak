@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
@@ -7,8 +9,6 @@ import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
-
-import java.io.IOException;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -29,7 +29,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 public class TestTermsEnumFilter {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {

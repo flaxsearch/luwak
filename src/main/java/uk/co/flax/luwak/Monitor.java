@@ -1,9 +1,19 @@
 package uk.co.flax.luwak;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.BinaryDocValuesField;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
@@ -11,13 +21,6 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -62,8 +65,7 @@ public class Monitor implements Closeable {
         this.queryCache = queryCache;
         this.presearcher = presearcher;
         this.directory = directory;
-        this.writer = new IndexWriter(directory, new IndexWriterConfig(Constants.VERSION,
-                new WhitespaceAnalyzer(Constants.VERSION)));
+        this.writer = new IndexWriter(directory, new IndexWriterConfig(new WhitespaceAnalyzer()));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
     }
@@ -305,9 +307,9 @@ public class Monitor implements Closeable {
         protected BinaryDocValues highlightDV;
         protected BinaryDocValues idDV;
 
-        final BytesRef query = new BytesRef();
-        final BytesRef highlight = new BytesRef();
-        final BytesRef id = new BytesRef();
+        BytesRef query;
+        BytesRef highlight;
+        BytesRef id;
 
         /**
          * Do something with the matching query
@@ -327,9 +329,9 @@ public class Monitor implements Closeable {
 
         @Override
         public final void collect(int doc) throws IOException {
-            queryDV.get(doc, query);
-            highlightDV.get(doc, highlight);
-            idDV.get(doc, id);
+            query = queryDV.get(doc);
+            highlight = highlightDV.get(doc);
+            id = idDV.get(doc);
             queryCount++;
             doSearch(id.utf8ToString(), query.utf8ToString(), highlight.utf8ToString());
         }
