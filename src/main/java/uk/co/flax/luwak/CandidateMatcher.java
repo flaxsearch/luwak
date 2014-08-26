@@ -53,16 +53,16 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      * @param matchQuery the query to run
      * @param highlightQuery an optional query to use for highlighting.  May be null
      * @throws IOException
+     * @return true if the query matches
      */
-    public abstract void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
     /**
-     * Returns true if a given query matched during the matcher run
+     * Returns the QueryMatch for the given query, or null if it did not match
      * @param queryId the query id
-     * @return true if the query matched during the matcher run
      */
-    public boolean matches(String queryId) {
-        return matches.containsKey(queryId);
+    public T matches(String queryId) {
+        return matches.get(queryId);
     }
 
     /**

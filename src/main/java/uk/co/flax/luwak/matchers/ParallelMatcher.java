@@ -54,12 +54,13 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     }
 
     @Override
-    public void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
         try {
             queue.put(new MatcherTask(queryId, matchQuery, highlightQuery));
         } catch (InterruptedException e) {
             throw new IOException("Interrupted during match");
         }
+        return null;
     }
 
     @Override
