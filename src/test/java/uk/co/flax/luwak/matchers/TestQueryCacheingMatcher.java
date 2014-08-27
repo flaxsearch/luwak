@@ -43,7 +43,14 @@ public class TestQueryCacheingMatcher {
 
         QueryCacheingMatcher<QueryMatch> match = monitor.match(doc1, QueryCacheingMatcher.factory(SimpleMatcher.FACTORY));
         assertThat(match.matches("1")).isNotNull();
+        assertThat(match.matches("2")).isNull();
         assertThat(match.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
+
+        QueryCacheingMatcher<ExplainingMatch> match2 = monitor.match(doc1, QueryCacheingMatcher.factory(ExplainingMatcher.FACTORY));
+        assertThat(match2.matches("1")).isNotNull();
+        assertThat(match2.matches("2")).isNull();
+        assertThat(match2.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
+        assertThat(match2.matches("1").wrappedMatch.getExplanation().isMatch()).isTrue();
 
     }
 
