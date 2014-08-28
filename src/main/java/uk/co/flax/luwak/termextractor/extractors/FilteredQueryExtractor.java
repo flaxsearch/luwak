@@ -7,7 +7,6 @@ import com.google.common.collect.Iterables;
 import org.apache.lucene.search.FilteredQuery;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTermList;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
@@ -29,15 +28,17 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
     @SuppressWarnings("unchecked")
     public void extract(FilteredQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
 
+        List<List<QueryTerm>> allTerms = new ArrayList<>();
+
         List<QueryTerm> subqueryTerms = new ArrayList<>();
         extractTerms(query.getQuery(), subqueryTerms, extractors);
-        QueryTermList queryTerms = new QueryTermList(weightor, subqueryTerms);
+        allTerms.add(subqueryTerms);
 
         List<QueryTerm> subfilterTerms = new ArrayList<>();
         extractTerms(query.getFilter(), subfilterTerms, extractors);
-        QueryTermList filterTerms = new QueryTermList(weightor, subfilterTerms);
+        allTerms.add(subfilterTerms);
 
-        Iterables.addAll(terms, QueryTermList.selectBest(queryTerms, filterTerms));
+        Iterables.addAll(terms, weightor.selectBest(allTerms));
 
     }
 

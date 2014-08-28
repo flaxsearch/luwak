@@ -5,6 +5,8 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
+import uk.co.flax.luwak.termextractor.weights.ReportingWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
@@ -37,7 +39,9 @@ public class TestBooleanClauseWeightings {
                 )
                 .build();
 
-        QueryTermExtractor extractor = new QueryTermExtractor();
+        QueryTermExtractor extractor
+                = new QueryTermExtractor(new ReportingWeightor(new ReportingWeightor.SystemOutReporter(),
+                                                            CompoundRuleWeightor.DEFAULT_WEIGHTOR));
 
         assertThat(extractor.extract(bq))
                 .hasSize(2);

@@ -1,8 +1,8 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
 import java.util.List;
+
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -19,7 +19,7 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class ReportingWeightor implements TermWeightor {
+public class ReportingWeightor extends TermWeightor {
 
     private final TermWeightor delegate;
     private final Reporter reporter;
@@ -29,14 +29,40 @@ public class ReportingWeightor implements TermWeightor {
         this.reporter = reporter;
     }
 
+    public ReportingWeightor(TermWeightor delegate) {
+        this(new SystemOutReporter(), delegate);
+    }
+
     @Override
     public float weigh(List<QueryTerm> terms) {
         float weight = delegate.weigh(terms);
-        reporter.report(weight, terms);
+        reporter.reportTerm(weight, terms);
         return weight;
     }
 
+    @Override
+    protected List<QueryTerm> selectWeighted(List<WeightedTermsList> weightedTerms) {
+        List<QueryTerm> selected =  delegate.selectWeighted(weightedTerms);
+        reporter.reportSelection(weightedTerms, selected);
+        return selected;
+    }
+
     public static interface Reporter {
-        void report(float weight, List<QueryTerm> terms);
+
+        void reportTerm(float weight, List<QueryTerm> terms);
+
+        void reportSelection(List<WeightedTermsList> terms, List<QueryTerm> selected);
+
+    }
+
+    public static class SystemOutReporter implements Reporter {
+        @Override
+        public void reportTerm(float weight, List<QueryTerm> terms) {
+        }
+
+        @Override
+        public void reportSelection(List<TermWeightor.WeightedTermsList> terms, List<QueryTerm> selected) {
+            System.out.println("Selected: " + selected + "\n  from: " + terms);
+        }
     }
 }

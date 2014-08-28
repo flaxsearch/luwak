@@ -1,11 +1,11 @@
 package uk.co.flax.luwak.termextractor.weights;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -33,7 +33,7 @@ import java.util.List;
  * and the parameters to these various rules set using a
  * {@link uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor.Builder}
  */
-public class CompoundRuleWeightor implements TermWeightor {
+public class CompoundRuleWeightor extends TermWeightor {
     
     private final List<WeightRule> rules;
 
@@ -43,6 +43,8 @@ public class CompoundRuleWeightor implements TermWeightor {
 
     @Override
     public float weigh(List<QueryTerm> terms) {
+        if (terms.size() == 0)
+            return 0;
         float product = 1;
         for (WeightRule rule : rules) {
             product *= rule.weigh(terms);

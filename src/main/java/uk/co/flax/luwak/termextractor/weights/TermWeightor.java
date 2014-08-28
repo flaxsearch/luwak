@@ -1,8 +1,11 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -24,8 +27,40 @@ import java.util.List;
  * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor} to
  * determine which clauses should be indexed.
  */
-public interface TermWeightor {
+public abstract class TermWeightor {
 
-    public float weigh(List<QueryTerm> terms);
+    protected abstract float weigh(List<QueryTerm> terms);
 
+    public class WeightedTermsList {
+        private final float weight;
+        private final List<QueryTerm> terms;
+
+        WeightedTermsList(List<QueryTerm> terms) {
+            this.terms = terms;
+            this.weight = weigh(terms);
+        }
+
+        @Override
+        public String toString() {
+            return weight + ": " + terms.toString();
+        }
+    }
+
+    public List<QueryTerm> selectBest(List<List<QueryTerm>> termlists) {
+        List<WeightedTermsList> weightedTerms = new ArrayList<>(termlists.size());
+        for (List<QueryTerm> terms : termlists) {
+            weightedTerms.add(new WeightedTermsList(terms));
+        }
+        return selectWeighted(weightedTerms);
+    }
+
+    protected List<QueryTerm> selectWeighted(List<WeightedTermsList> weightedTerms) {
+        Collections.sort(weightedTerms, new Comparator<WeightedTermsList>() {
+            @Override
+            public int compare(WeightedTermsList o1, WeightedTermsList o2) {
+                return Float.compare(o2.weight, o1.weight);
+            }
+        });
+        return weightedTerms.get(0).terms;
+    }
 }

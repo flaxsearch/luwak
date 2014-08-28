@@ -10,7 +10,6 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTermList;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**
@@ -57,13 +56,13 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
             }
         }
         else if (clauses.isConjunctionQuery()) {
-            List<QueryTermList> termlists = new ArrayList<>();
+            List<List<QueryTerm>> termlists = new ArrayList<>();
             for (Object subquery : clauses.getConjunctions()) {
                 List<QueryTerm> subTerms = new ArrayList<>();
                 extractTerms(subquery, subTerms, extractors);
-                termlists.add(new QueryTermList(this.weightor, subTerms));
+                termlists.add(subTerms);
             }
-            Iterables.addAll(terms, QueryTermList.selectBest(termlists));
+            Iterables.addAll(terms, this.weightor.selectBest(termlists));
         }
     }
 
