@@ -1,10 +1,7 @@
 package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 import org.junit.Test;
 
 import java.util.Set;
@@ -85,6 +82,26 @@ public class TestBooleanTermExtractor {
         Set<QueryTerm> terms = qte.extract(bq);
 
         assertThat(terms).containsOnly(new QueryTerm("field1", "term2", QueryTerm.Type.EXACT));
+    }
+
+    @Test
+    public void disjunctionsWithPureNegativeClausesReturnANYTOKEN() {
+
+        BooleanQuery q = BQBuilder.newBQ()
+                .addMustClause(new TermQuery(new Term("field1", "term1")))
+                .addMustClause(BQBuilder.newBQ()
+                        .addShouldClause(new TermQuery(new Term("field2", "term22")))
+                        .addShouldClause(BQBuilder.newBQ()
+                                .addNotClause(new TermQuery(new Term("field2", "notterm")))
+                                .build())
+                        .build())
+                .build();
+
+        QueryTermExtractor qte = new QueryTermExtractor();
+        Set<QueryTerm> terms = qte.extract(q);
+
+        assertThat(terms).containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+
     }
 
     public static Set<QueryTerm> extract(Query query) {

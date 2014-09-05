@@ -50,7 +50,10 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
 
         Clauses clauses = analyze(query);
 
-        if (clauses.isDisjunctionQuery()) {
+        if (clauses.isPureNegativeQuery()) {
+            terms.add(new QueryTerm("", "PURE NEGATIVE BOOLEAN", QueryTerm.Type.ANY));
+        }
+        else if (clauses.isDisjunctionQuery()) {
             for (Object subquery : clauses.getDisjunctions()) {
                 extractTerms(subquery, terms, extractors);
             }
@@ -70,6 +73,7 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
 
         final List<Object> disjunctions = new ArrayList<>();
         final List<Object> conjunctions = new ArrayList<>();
+        final List<Object> negatives = new ArrayList<>();
 
         public boolean isConjunctionQuery() {
             return conjunctions.size() > 0;
@@ -77,6 +81,10 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
 
         public boolean isDisjunctionQuery() {
             return !isConjunctionQuery() && disjunctions.size() > 0;
+        }
+
+        public boolean isPureNegativeQuery() {
+            return conjunctions.size() == 0 && disjunctions.size() == 0 && negatives.size() > 0;
         }
 
         public List<Object> getDisjunctions() {
@@ -103,6 +111,9 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
                 }
                 if (clause.getOccur() == BooleanClause.Occur.SHOULD) {
                     clauses.disjunctions.add(clause.getQuery());
+                }
+                if (clause.getOccur() == BooleanClause.Occur.MUST_NOT) {
+                    clauses.negatives.add(clause.getQuery());
                 }
             }
             return clauses;

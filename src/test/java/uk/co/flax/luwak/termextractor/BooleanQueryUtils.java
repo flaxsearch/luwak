@@ -52,5 +52,10 @@ public class BooleanQueryUtils {
             bq.add(subQuery, BooleanClause.Occur.SHOULD);
             return this;
         }
+
+        public BQBuilder addNotClause(Query subQuery) {
+            bq.add(subQuery, BooleanClause.Occur.MUST_NOT);
+            return this;
+        }
     }
 }
