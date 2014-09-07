@@ -3,11 +3,13 @@ package uk.co.flax.luwak.demo;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -72,7 +74,7 @@ public class LuwakDemo {
                 if (Strings.isNullOrEmpty(queryString))
                     continue;
                 logger.info("Parsing [{}]", queryString);
-                queries.add(new MonitorQuery(String.format("%d-%s", count++, queryString), queryString));
+                queries.add(new MonitorQuery(String.format(Locale.ROOT, "%d-%s", count++, queryString), queryString));
             }
         }
         monitor.update(queries);
@@ -85,7 +87,7 @@ public class LuwakDemo {
         for (Path filePath : Files.newDirectoryStream(FileSystems.getDefault().getPath(inputDirectory))) {
             String content;
             try (FileInputStream fis = new FileInputStream(filePath.toFile());
-                 InputStreamReader reader = new InputStreamReader(fis)) {
+                InputStreamReader reader = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
                 content = CharStreams.toString(reader);
                 InputDocument doc = InputDocument.builder(filePath.toString())
                         .addField(FIELD, content, ANALYZER)
