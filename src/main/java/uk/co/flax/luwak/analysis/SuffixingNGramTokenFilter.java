@@ -95,6 +95,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
                 curPosLen = posLenAtt.getPositionLength();
                 tokStart = offsetAtt.startOffset();
                 tokEnd = offsetAtt.endOffset();
+                termAtt.setEmpty().append(suffix);
+                return true;
 
             }
 

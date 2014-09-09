@@ -45,6 +45,7 @@ public class TestSuffixingNGramTokenizer {
         TokenStream ts = analyzer.tokenStream("f", "term");
         assertThat(ts)
                 .nextEquals("term")
+                .nextEquals("XX")
                 .nextEquals("tXX")
                 .nextEquals("teXX")
                 .nextEquals("terXX")
