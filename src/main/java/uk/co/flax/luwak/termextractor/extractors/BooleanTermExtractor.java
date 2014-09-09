@@ -8,6 +8,7 @@ import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
@@ -106,6 +107,9 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
         protected Clauses analyze(BooleanQuery query) {
             Clauses clauses = new Clauses();
             for (BooleanClause clause : query.getClauses()) {
+                if (clause.getQuery() instanceof MatchAllDocsQuery) {
+                    continue;       // ignored for term extraction
+                }
                 if (clause.getOccur() == BooleanClause.Occur.MUST) {
                     clauses.conjunctions.add(clause.getQuery());
                 }

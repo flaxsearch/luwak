@@ -104,6 +104,27 @@ public class TestBooleanTermExtractor {
 
     }
 
+    @Test
+    public void disjunctionsWithMatchAllNegativeClausesReturnANYTOKEN() {
+
+        BooleanQuery q = BQBuilder.newBQ()
+                .addMustClause(new TermQuery(new Term("field1", "term1")))
+                .addMustClause(BQBuilder.newBQ()
+                        .addShouldClause(new TermQuery(new Term("field2", "term22")))
+                        .addShouldClause(BQBuilder.newBQ()
+                                .addShouldClause(new MatchAllDocsQuery())
+                                .addNotClause(new TermQuery(new Term("field2", "notterm")))
+                                .build())
+                        .build())
+                .build();
+
+        QueryTermExtractor qte = new QueryTermExtractor();
+        Set<QueryTerm> terms = qte.extract(q);
+
+        assertThat(terms).containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+
+    }
+
     public static Set<QueryTerm> extract(Query query) {
         return new QueryTermExtractor().extract(query);
     }
