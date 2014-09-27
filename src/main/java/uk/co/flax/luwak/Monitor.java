@@ -2,10 +2,7 @@ package uk.co.flax.luwak;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,10 +19,14 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.intervals.Interval;
+import org.apache.lucene.search.intervals.IntervalCollector;
+import org.apache.lucene.search.intervals.IntervalIterator;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
+import uk.co.flax.luwak.presearcher.PresearcherMatches;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
 
 /**
@@ -408,6 +409,13 @@ public class Monitor implements Closeable {
         return writer.numDocs();
     }
 
+    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc,
+                                                              MatcherFactory<? extends CandidateMatcher<T>> factory) throws IOException {
+        PresearcherMatchCollector collector = new PresearcherMatchCollector(factory.createMatcher(doc));
+        match(doc, collector);
+        return collector.getMatches();
+    }
+
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
         try {
@@ -508,6 +516,84 @@ public class Monitor implements Closeable {
 
         public int getQueryCount() {
             return queryCount;
+        }
+
+    }
+
+    public static class PresearcherMatchCollector<T extends QueryMatch>
+            extends MonitorQueryCollector implements IntervalCollector {
+
+        private IntervalIterator positions;
+        private StoredDocument document;
+        private String currentId;
+
+        public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
+
+        private final BytesRef scratch = new BytesRef();
+
+        final CandidateMatcher<T> matcher;
+
+        private PresearcherMatchCollector(CandidateMatcher<T> matcher) {
+            this.matcher = matcher;
+        }
+
+        public PresearcherMatches<T> getMatches() {
+            return new PresearcherMatches<>(matchingTerms, matcher);
+        }
+
+        @Override
+        public void collect(int doc) throws IOException {
+
+            idDV.get(doc, scratch);
+            this.currentId = scratch.utf8ToString();
+
+            document = reader.document(doc);
+            positions.scorerAdvanced(doc);
+            while(positions.next() != null) {
+                positions.collect(this);
+            }
+
+            hashDV.get(doc, hash);
+            queryCount++;
+            try {
+                CacheEntry entry = queries.get(hash);
+                matcher.matchQuery(currentId, entry.matchQuery, entry.highlightQuery);
+            }
+            catch (Exception e) {
+                matcher.reportError(new MatchError(currentId, e));
+            }
+        }
+
+        @Override
+        public void setScorer(Scorer scorer) throws IOException {
+            positions = scorer.intervals(true);
+        }
+
+        @Override
+        public Weight.PostingFeatures postingFeatures() {
+            return Weight.PostingFeatures.OFFSETS;
+        }
+
+        @Override
+        public boolean acceptsDocsOutOfOrder() {
+            return false;
+        }
+
+        @Override
+        public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
+            String terms = document.getField(interval.field).stringValue();
+            if (!matchingTerms.containsKey(currentId))
+                matchingTerms.put(currentId, new StringBuilder());
+            matchingTerms.get(currentId)
+                    .append(" ")
+                    .append(interval.field)
+                    .append(":")
+                    .append(terms.substring(interval.offsetBegin, interval.offsetEnd));
+        }
+
+        @Override
+        public void collectComposite(Scorer scorer, Interval interval, int docID) {
+
         }
 
     }
