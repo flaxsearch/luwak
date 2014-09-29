@@ -54,6 +54,8 @@ public class Monitor implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager manager;
 
+    private long slowLogLimit = 2000000;
+
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
 
@@ -62,7 +64,7 @@ public class Monitor implements Closeable {
 
     /* The current query cache */
     private Map<BytesRef, CacheEntry> queries = new ConcurrentHashMap<>();
-        // NB this is not final because it can be replaced by purgeCache()
+    // NB this is not final because it can be replaced by purgeCache()
 
     public static final class FIELDS {
         public static final String id = "_id";
@@ -249,6 +251,20 @@ public class Monitor implements Closeable {
         return 300;
     }
 
+    /**
+     * Set the slow log limit
+     *
+     * All queries that take longer than t nanoseconds to run will be recorded in
+     * the slow log.  The default is 2,000,000 (2 milliseconds)
+     *
+     * @param limit the limit in nanoseconds
+     *
+     * @see CandidateMatcher#getSlowLog()
+     */
+    protected void setSlowLogLimit(long limit) {
+        this.slowLogLimit = limit;
+    }
+
     @Override
     public void close() throws IOException {
         purgeExecutor.shutdown();
@@ -370,6 +386,7 @@ public class Monitor implements Closeable {
      */
     public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
         T matcher = factory.createMatcher(doc);
+        matcher.setSlowLogLimit(slowLogLimit);
         match(matcher);
         return matcher;
     }

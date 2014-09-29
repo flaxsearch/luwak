@@ -81,6 +81,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
                 for (MatchError error : matches.getErrors()) {
                     this.reportError(error);
                 }
+                this.slowlog.append(matches.getSlowLog());
             }
 
         } catch (InterruptedException | ExecutionException e) {
@@ -94,6 +95,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
         private MatcherWorker(MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
             this.matcher = matcherFactory.createMatcher(doc);
+            this.matcher.setSlowLogLimit(slowLogLimit);
         }
 
         @Override
@@ -178,4 +180,5 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
         int threads = Runtime.getRuntime().availableProcessors();
         return new ParallelMatcherFactory<>(executor, matcherFactory, threads);
     }
+
 }

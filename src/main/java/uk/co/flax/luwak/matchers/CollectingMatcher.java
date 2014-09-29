@@ -44,8 +44,15 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
 
     @Override
     public T matchQuery(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+
         MatchCollector coll = new MatchCollector(queryId);
+
+        long t = System.nanoTime();
         doc.getSearcher().search(matchQuery, coll);
+        t = System.nanoTime() - t;
+        if (t > slowLogLimit)
+            slowlog.append(queryId + ":" + t + " ");
+
         if (coll.match != null)
             matches.put(queryId, coll.match);
         return coll.match;
