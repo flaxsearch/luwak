@@ -2,8 +2,6 @@ package uk.co.flax.luwak.termextractor.weights;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
-import java.util.List;
-
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
 * <p/>
@@ -28,12 +26,9 @@ public class TermTypeNorm implements WeightRule {
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 1;
-        for (QueryTerm term : terms) {
-            if (term.type == QueryTerm.Type.ANY)
-                result *= weight;
-        }
-        return result;
+    public float weigh(QueryTerm term) {
+        if (term.type == QueryTerm.Type.ANY)
+            return weight;
+        return 1;
     }
 }

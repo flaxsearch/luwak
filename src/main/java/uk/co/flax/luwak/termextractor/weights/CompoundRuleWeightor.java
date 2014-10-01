@@ -36,20 +36,25 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 public class CompoundRuleWeightor extends TermWeightor {
     
     private final List<WeightRule> rules;
+    private final WeightCombiner combiner;
 
-    private CompoundRuleWeightor(List<WeightRule> rules) {
+    private CompoundRuleWeightor(List<WeightRule> rules, WeightCombiner combiner) {
         this.rules = rules;
+        this.combiner = combiner;
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        if (terms.size() == 0)
-            return 0;
+    public float weigh(QueryTerm term) {
         float product = 1;
         for (WeightRule rule : rules) {
-            product *= rule.weigh(terms);
+            product *= rule.weigh(term);
         }
         return product;
+    }
+
+    @Override
+    protected float combineSubWeights(float[] weights) {
+        return this.combiner.combineWeights(weights);
     }
 
     /**
@@ -67,20 +72,12 @@ public class CompoundRuleWeightor extends TermWeightor {
 
     public static class Builder {
 
-        float length_a = 3;
-        float length_k = 0.3f;
         float type_weight = 0.75f;
         float tok_length_a = 3;
         float tok_length_k = 0.3f;
 
         List<WeightRule> rules = new ArrayList<>();
-
-        /** Use these parameters for the length norm */
-        public Builder withListLengthNorm(float a, float k) {
-            length_a = a;
-            length_k = k;
-            return this;
-        }
+        WeightCombiner combiner = new MinWeightCombiner();
 
         /** Use this parameter for the TermTypeNorm */
         public Builder withAnyTypeWeight(float weight) {
@@ -101,19 +98,23 @@ public class CompoundRuleWeightor extends TermWeightor {
             return this;
         }
 
+        public Builder withCombiner(WeightCombiner combiner) {
+            this.combiner = combiner;
+            return this;
+        }
+
         /** Build a new CompoundRuleWeightor with the defined parameters and rules */
         public CompoundRuleWeightor build() {
             List<WeightRule> rules = Lists.newArrayList(
                     Iterables.concat(
                             Lists.newArrayList(
-                                    new LengthNorm(length_a, length_k),
                                     new TermTypeNorm(type_weight),
                                     new TokenLengthNorm(tok_length_a, tok_length_k)
                             ),
                             this.rules
                     )
             );
-            return new CompoundRuleWeightor(rules);
+            return new CompoundRuleWeightor(rules, combiner);
         }
 
     }

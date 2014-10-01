@@ -1,9 +1,8 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.List;
 import java.util.Map;
+
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -29,13 +28,10 @@ public class TermWeightRule implements WeightRule {
     private final Map<String, Float> terms;
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 1;
-        for (QueryTerm term : terms) {
-            if (this.terms.containsKey(term.term))
-                result *= this.terms.get(term.term);
-        }
-        return result;
+    public float weigh(QueryTerm term) {
+        if (this.terms.containsKey(term.term))
+            return this.terms.get(term.term);
+        return 1;
     }
 
 }

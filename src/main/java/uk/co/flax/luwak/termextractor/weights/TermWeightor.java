@@ -29,7 +29,9 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 public abstract class TermWeightor {
 
-    protected abstract float weigh(List<QueryTerm> terms);
+    protected abstract float weigh(QueryTerm term);
+
+    protected abstract float combineSubWeights(float[] weights);
 
     public class WeightedTermsList {
         private final float weight;
@@ -37,7 +39,17 @@ public abstract class TermWeightor {
 
         WeightedTermsList(List<QueryTerm> terms) {
             this.terms = terms;
-            this.weight = weigh(terms);
+
+            if (terms.size() > 0) {
+                float[] weights = new float[terms.size()];
+                for (int i = 0; i < terms.size(); i++) {
+                    weights[i] = weigh(terms.get(i));
+                }
+                this.weight = combineSubWeights(weights);
+            }
+            else {
+                this.weight = 0;
+            }
         }
 
         @Override

@@ -55,18 +55,6 @@ public class TestQueryTermComparators {
     }
 
     @Test
-    public void testTermListLengthNorms() {
-
-        List<QueryTerm> list1 = Lists.newArrayList(new QueryTerm("f", "t", QueryTerm.Type.EXACT),
-                                                   new QueryTerm("f", "t", QueryTerm.Type.EXACT));
-        List<QueryTerm> list2 = Lists.newArrayList(new QueryTerm("f", "t", QueryTerm.Type.EXACT));
-
-        WeightRule rule = new LengthNorm(3, 0.3f);
-        assertThat(rule.weigh(list2)).isGreaterThan(rule.weigh(list1));
-
-    }
-
-    @Test
     public void testShorterTermListsArePreferred() {
 
         List<QueryTerm> list1 = ImmutableList.of(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
@@ -127,7 +115,7 @@ public class TestQueryTermComparators {
 
         Map<String, Integer> termfreqs = ImmutableMap.of("wibble", 100);
         TermWeightor weight = new ReportingWeightor(CompoundRuleWeightor.newWeightor()
-                .withRule(new TermFrequencyNorm(termfreqs, 1, 0.02f)).build());
+                .withRule(new TermFrequencyWeightRule(termfreqs, 1, 0.02f)).build());
 
         List<QueryTerm> list1 = ImmutableList.of(new QueryTerm("f", "wibble", QueryTerm.Type.EXACT));
         List<QueryTerm> list2 = ImmutableList.of(new QueryTerm("f", "quack", QueryTerm.Type.EXACT));

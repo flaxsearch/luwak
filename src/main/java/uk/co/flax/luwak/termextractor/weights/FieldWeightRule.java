@@ -1,9 +1,8 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.List;
 import java.util.Set;
+
+import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -32,12 +31,9 @@ public class FieldWeightRule implements WeightRule {
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 1;
-        for (QueryTerm term : terms) {
-            if (this.fields.contains(term.field))
-                result *= k;
-        }
-        return result;
+    public float weigh(QueryTerm term) {
+        if (this.fields.contains(term.field))
+            return k;
+        return 1;
     }
 }

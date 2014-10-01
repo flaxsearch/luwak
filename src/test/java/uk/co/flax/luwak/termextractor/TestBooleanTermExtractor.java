@@ -1,10 +1,10 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.Set;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
 import org.junit.Test;
-
-import java.util.Set;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.BQBuilder;

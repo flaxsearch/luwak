@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -17,8 +15,19 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public interface WeightRule {
 
-    public float weigh(QueryTerm term);
+/**
+ * Returns the minimum weight of a list of weights as the final weight
+ */
+public class MinWeightCombiner implements WeightCombiner {
+
+    @Override
+    public float combineWeights(float[] weights) {
+        float min = weights[0];
+        for (int i = 1; i < weights.length; i++) {
+            min = Math.min(min, weights[i]);
+        }
+        return min;
+    }
 
 }

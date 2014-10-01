@@ -34,10 +34,15 @@ public class ReportingWeightor extends TermWeightor {
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float weight = delegate.weigh(terms);
-        reporter.reportTerm(weight, terms);
+    protected float weigh(QueryTerm term) {
+        float weight = delegate.weigh(term);
+        reporter.reportTerm(weight, term);
         return weight;
+    }
+
+    @Override
+    protected float combineSubWeights(float[] weights) {
+        return delegate.combineSubWeights(weights);
     }
 
     @Override
@@ -49,15 +54,17 @@ public class ReportingWeightor extends TermWeightor {
 
     public static interface Reporter {
 
-        void reportTerm(float weight, List<QueryTerm> terms);
+        void reportTerm(float weight, QueryTerm term);
 
         void reportSelection(List<WeightedTermsList> terms, List<QueryTerm> selected);
 
     }
 
     public static class SystemOutReporter implements Reporter {
+
         @Override
-        public void reportTerm(float weight, List<QueryTerm> terms) {
+        public void reportTerm(float weight, QueryTerm term) {
+            System.out.println("Term: " + term + " weight: " + weight);
         }
 
         @Override

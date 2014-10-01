@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import java.util.List;
-
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -30,14 +28,10 @@ public class TokenLengthNorm implements WeightRule {
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 0;
-        for (QueryTerm term : terms) {
-            if (term.type == QueryTerm.Type.ANY)
-                result += 1;
-            else
-                result += (4 - CompoundRuleWeightor.exp(a, k, term.term.length()));
-        }
-        return result / terms.size();
+    public float weigh(QueryTerm term) {
+        if (term.type == QueryTerm.Type.ANY)
+            return 1;
+        else
+            return (4 - CompoundRuleWeightor.exp(a, k, term.term.length()));
     }
 }

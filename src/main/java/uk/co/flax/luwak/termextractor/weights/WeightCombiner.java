@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
-
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -17,8 +15,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public interface WeightRule {
 
-    public float weigh(QueryTerm term);
-
+public interface WeightCombiner {
+    public float combineWeights(float[] weights);
 }

@@ -1,6 +1,5 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import java.util.List;
 import java.util.Map;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
@@ -24,7 +23,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 /**
  * Weights more infrequent terms more highly
  */
-public class TermFrequencyNorm implements WeightRule {
+public class TermFrequencyWeightRule implements WeightRule {
 
     final Map<String, Integer> frequencies;
     final int n;
@@ -36,19 +35,16 @@ public class TermFrequencyNorm implements WeightRule {
      * @param n scaling factor to use for frequencies
      * @param k minimum weight to scale to
      */
-    public TermFrequencyNorm(Map<String, Integer> frequencies, int n, float k) {
+    public TermFrequencyWeightRule(Map<String, Integer> frequencies, int n, float k) {
         this.frequencies = frequencies;
         this.n = n;
         this.k = k;
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 1;
-        for (QueryTerm term : terms) {
-            if (this.frequencies.containsKey(term.term))
-                result = (result / (this.frequencies.get(term.term)) * n) + k;
-        }
-        return result;
+    public float weigh(QueryTerm term) {
+        if (this.frequencies.containsKey(term.term))
+            return ((1 / this.frequencies.get(term.term)) * n) + k;
+        return 1;
     }
 }
