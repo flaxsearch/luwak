@@ -7,7 +7,6 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.termextractor.treebuilder.*;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -36,40 +35,9 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  */
 public class QueryAnalyzer {
 
-    /**
-     * The default list of Extractors to use
-     */
-    public static final ImmutableList<QueryTreeBuilder<?>> DEFAULT_QUERY_TREE_BUILDERs = ImmutableList.of(
-            new BooleanQueryTreeBuilder.QueryBuilder(),
-            new BooleanQueryTreeBuilder.FilterBuilder(),
-            new PhraseQueryTreeBuilder(),
-            new ConstantScoreQueryTreeBuilder(),
-            new IntervalFilterQueryTreeBuilder(),
-            new NonOverlappingQueryTreeBuilder(),
-            new FieldedConjunctionQueryTreeBuilder(),
-            new FieldedBooleanQueryQueryTreeBuilder(),
-            new NumericRangeQueryTreeBuilder(),
-            new RegexpAnyTermQueryTreeBuilder(),
-            new SimpleTermQueryTreeBuilder(),
-            new FilteredQueryTreeBuilder(),
-            new TermsFilterQueryTreeBuilder(),
-            new TermFilterQueryTreeBuilder(),
-            new GenericFilterQueryTreeBuilder(),
-            new GenericQueryTreeBuilder()
-    );
-
     private final ImmutableList<QueryTreeBuilder<?>> queryTreeBuilders;
 
     public final TreeWeightor weightor;
-
-    /**
-     * Create a QueryAnalyzer using the default {@link uk.co.flax.luwak.termextractor.QueryTreeBuilder}s
-     * @param weightor the {@link uk.co.flax.luwak.termextractor.querytree.TreeWeightor} to use
-     */
-    public QueryAnalyzer(TreeWeightor weightor) {
-        this.queryTreeBuilders = DEFAULT_QUERY_TREE_BUILDERs;
-        this.weightor = weightor;
-    }
 
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
@@ -79,7 +47,7 @@ public class QueryAnalyzer {
     public QueryAnalyzer(TreeWeightor weightor, List<QueryTreeBuilder<?>> queryTreeBuilders) {
         this.queryTreeBuilders = ImmutableList.<QueryTreeBuilder<?>>builder()
                 .addAll(queryTreeBuilders)
-                .addAll(DEFAULT_QUERY_TREE_BUILDERs).build();
+                .build();
         this.weightor = weightor;
     }
 

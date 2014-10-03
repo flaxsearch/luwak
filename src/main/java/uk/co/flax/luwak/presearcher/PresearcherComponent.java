@@ -75,12 +75,26 @@ public class PresearcherComponent {
      * @param components a list of PresearcherComponents
      * @return a QueryAnalyzer
      */
-    public static QueryAnalyzer buildExtractor(TreeWeightor weightor, PresearcherComponent... components) {
+    public static QueryAnalyzer buildQueryAnalyzer(TreeWeightor weightor, PresearcherComponent... components) {
         List<QueryTreeBuilder<?>> builders = new ArrayList<>();
         for (PresearcherComponent component : components) {
             builders.addAll(component.getQueryTreeBuilders());
         }
+        builders.addAll(DefaultPresearcherComponent.DEFAULT_BUILDERS);
         return new QueryAnalyzer(weightor, builders);
+    }
+
+    /**
+     * Build a new QueryAnalyzer using a list of PresearcherComponents
+     *
+     * A list of QueryTreeBuilders is extracted from each component, and combined to use
+     * on the QueryAnalyzer with a default TreeWeightor.
+     *
+     * @param components a list of PresearcherComponents
+     * @return a QueryAnalyzer
+     */
+    public static QueryAnalyzer buildQueryAnalyzer(PresearcherComponent... components) {
+        return buildQueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     /**

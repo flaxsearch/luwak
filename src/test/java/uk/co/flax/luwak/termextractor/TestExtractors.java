@@ -7,15 +7,14 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.intervals.FieldedBooleanQuery;
-import org.apache.lucene.search.intervals.OrderedNearQuery;
-import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.apache.lucene.util.Bits;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
+import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -36,9 +35,10 @@ import static org.fest.assertions.api.Assertions.assertThat;
  */
 public class TestExtractors {
 
-    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR);
+    private static final QueryAnalyzer treeBuilder
+            = PresearcherComponent.buildQueryAnalyzer(new FilterQueryPresearcherComponent());
 
-    private static QueryAnalyzer getBuilder(QueryTreeBuilder<?> queryTreeBuilder) {
+    private static QueryAnalyzer getBuilder(QueryTreeBuilder... queryTreeBuilder) {
         return new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilder);
     }
 
@@ -60,34 +60,6 @@ public class TestExtractors {
     }
 
     @Test
-    public void testOrderedNearExtractor() {
-        OrderedNearQuery q = new OrderedNearQuery(0,
-                new TermQuery(new Term("field1", "term1")),
-                new TermQuery(new Term("field1", "term")));
-
-        assertThat(treeBuilder.collectTerms(q))
-                .containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
-    }
-
-    @Test
-    public void testUnorderedNearExtractor() {
-        UnorderedNearQuery q = new UnorderedNearQuery(0,
-                new TermQuery(new Term("field1", "term1")),
-                new TermQuery(new Term("field1", "term")));
-
-        assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
-    }
-
-    @Test
-    public void testOrderedNearWithWildcardExtractor() {
-        OrderedNearQuery q = new OrderedNearQuery(0,
-                new RegexpQuery(new Term("field", "super.*cali.*")),
-                new TermQuery(new Term("field", "is")));
-
-        assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
-    }
-
-    @Test
     public void testRangeQueriesReturnAnyToken() {
 
         NumericRangeQuery<Long> nrq = NumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
@@ -101,18 +73,6 @@ public class TestExtractors {
 
         assertThat(treeBuilder.collectTerms(bq))
                 .containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
-    }
-
-    @Test
-    public void testFieldedBooleanQuery() {
-
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.MUST);
-        bq.add(new TermQuery(new Term("field1", "term")), BooleanClause.Occur.MUST);
-        FieldedBooleanQuery q = new FieldedBooleanQuery(bq);
-
-        assertThat(treeBuilder.collectTerms(q))
-                .containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
 
     @Test
@@ -149,10 +109,20 @@ public class TestExtractors {
         }
     }
 
+    private static class MyFilterPresearcherComponent extends PresearcherComponent {
+
+        protected MyFilterPresearcherComponent() {
+            super(new MyFilterTermQueryTreeBuilder());
+        }
+
+    }
+
     @Test
     public void testExtendedFilteredQueryExtractor() {
 
-        QueryAnalyzer treeBuilder = getBuilder(new MyFilterTermQueryTreeBuilder());
+        QueryAnalyzer treeBuilder
+                = PresearcherComponent.buildQueryAnalyzer(new MyFilterPresearcherComponent(),
+                                                          new FilterQueryPresearcherComponent());
 
         Query q = new RegexpQuery(new Term("FILTER", "*"));
         Filter f = new MyFilter();

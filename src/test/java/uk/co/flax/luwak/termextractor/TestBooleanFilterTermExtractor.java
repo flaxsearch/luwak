@@ -7,13 +7,16 @@ import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause;
 import org.junit.Test;
+import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 
-    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR);
+    private static final QueryAnalyzer treeBuilder
+            = PresearcherComponent.buildQueryAnalyzer(new FilterQueryPresearcherComponent());
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {

@@ -5,7 +5,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
@@ -27,7 +27,7 @@ import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
  */
 public class TestBooleanClauseWeightings {
 
-    private static QueryAnalyzer treeBuilder = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR);
+    private static QueryAnalyzer treeBuilder = PresearcherComponent.buildQueryAnalyzer();
 
     @Test
     public void exactClausesPreferred() {

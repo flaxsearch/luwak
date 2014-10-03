@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.treebuilder.*;
 
@@ -26,13 +27,19 @@ import uk.co.flax.luwak.termextractor.treebuilder.*;
 * limitations under the License.
 */
 
-class DefaultPresearcherComponent extends PresearcherComponent {
+public class DefaultPresearcherComponent extends PresearcherComponent {
+
+    public static final String DEFAULT_ANYTOKEN = "__ANYTOKEN__";
 
     public final String anytoken;
 
     public DefaultPresearcherComponent(String anytoken) {
         super(DEFAULT_BUILDERS);
         this.anytoken = anytoken;
+    }
+
+    public DefaultPresearcherComponent() {
+        this(DEFAULT_ANYTOKEN);
     }
 
     public static final List<QueryTreeBuilder<?>> DEFAULT_BUILDERS = ImmutableList.<QueryTreeBuilder<?>>of(
@@ -63,5 +70,12 @@ class DefaultPresearcherComponent extends PresearcherComponent {
                 return true;
             }
         };
+    }
+
+    @Override
+    public String extraToken(QueryTerm.Type type) {
+        if (type.type.equals(QueryTerm.Type.T.ANY))
+            return anytoken;
+        return null;
     }
 }

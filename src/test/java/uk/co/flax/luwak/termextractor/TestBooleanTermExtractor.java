@@ -8,8 +8,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
-import uk.co.flax.luwak.termextractor.weights.ReportingWeightor;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.BQBuilder;
@@ -33,8 +32,7 @@ import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
 
 public class TestBooleanTermExtractor {
 
-    private static final QueryAnalyzer treeBuilder
-            = new QueryAnalyzer(new ReportingWeightor(TreeWeightor.DEFAULT_WEIGHTOR));
+    private static final QueryAnalyzer treeBuilder = PresearcherComponent.buildQueryAnalyzer();
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {

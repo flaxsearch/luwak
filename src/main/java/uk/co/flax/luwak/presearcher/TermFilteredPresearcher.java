@@ -56,13 +56,11 @@ public class TermFilteredPresearcher implements Presearcher {
 
     protected final QueryAnalyzer extractor;
 
-    protected final static String ANYTOKEN = "__ANYTOKEN__";
-
     private final List<PresearcherComponent> components = Lists.newArrayList();
 
     public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
         this.extractor = new QueryAnalyzer(weightor, queryTreeBuilders);
-        this.components.add(new DefaultPresearcherComponent(ANYTOKEN));
+        this.components.add(new DefaultPresearcherComponent());
         this.components.add(new PresearcherComponent(queryTreeBuilders));
     }
 
@@ -71,7 +69,8 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
-        this.extractor = PresearcherComponent.buildExtractor(weightor, components);
+        this.extractor = PresearcherComponent.buildQueryAnalyzer(weightor, components);
+        this.components.add(new DefaultPresearcherComponent());
         this.components.addAll(Arrays.asList(components));
     }
 
@@ -80,7 +79,7 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     public TermFilteredPresearcher() {
-        this(new DefaultPresearcherComponent(ANYTOKEN));
+        this(new DefaultPresearcherComponent());
     }
 
     @Override
@@ -130,10 +129,7 @@ public class TermFilteredPresearcher implements Presearcher {
 
             //noinspection MismatchedQueryAndUpdateOfStringBuilder
             StringBuilder termslist = fieldTerms.get(queryTerm.field);
-            if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
-                termslist.append(" ").append(ANYTOKEN);
-            }
-            else if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
+            if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
                 termslist.append(" ").append(queryTerm.term);
             }
             else {
