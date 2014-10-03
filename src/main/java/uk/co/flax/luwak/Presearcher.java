@@ -30,7 +30,7 @@ import uk.co.flax.luwak.presearcher.PerFieldTokenFilter;
  *
  * See {@link uk.co.flax.luwak.presearcher.MatchAllPresearcher}
  * See {@link uk.co.flax.luwak.presearcher.TermFilteredPresearcher}
- * See {@link uk.co.flax.luwak.presearcher.WildcardNGramPresearcher}
+ * See {@link uk.co.flax.luwak.presearcher.WildcardNGramPresearcherComponent}
  */
 public interface Presearcher {
 

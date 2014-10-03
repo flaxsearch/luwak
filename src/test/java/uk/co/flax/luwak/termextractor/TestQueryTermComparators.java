@@ -41,7 +41,7 @@ public class TestQueryTermComparators {
     public void testAnyTokensAreNotPreferred() {
 
         QueryTree node1 = new TermNode(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
+        QueryTree node2 = new TermNode(WEIGHT, new QueryTerm("f", "foo", QueryTerm.Type.ANY));
 
         assertThat(WEIGHT.select(Sets.newSet(node1, node2)))
                 .isSameAs(node1);
@@ -78,7 +78,7 @@ public class TestQueryTermComparators {
 
         TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(Sets.newSet("g"), 0.7f));
 
-        QueryTree node1 = new TermNode(weight, new QueryTerm("f", "foo", QueryTerm.Type.WILDCARD));
+        QueryTree node1 = new TermNode(weight, new QueryTerm("f", "foo", QueryTerm.Type.ANY));
         QueryTree node2 = new TermNode(weight, new QueryTerm("g", "bar", QueryTerm.Type.EXACT));
 
         assertThat(weight.select(Sets.newSet(node1, node2)))

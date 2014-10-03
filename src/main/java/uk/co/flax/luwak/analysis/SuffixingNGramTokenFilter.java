@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.analysis;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.CodepointCountFilter;
 import org.apache.lucene.analysis.tokenattributes.*;
 import org.apache.lucene.analysis.util.CharacterUtils;
 import uk.co.flax.luwak.Constants;
-
-import java.io.IOException;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -53,14 +53,14 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
      * @param input {@link org.apache.lucene.analysis.TokenStream} holding the input to be tokenized
      * @param suffix a string to suffix to all ngrams
      */
-    public SuffixingNGramTokenFilter(TokenStream input, String suffix, String anyToken, int maxTokenLength) {
+    public SuffixingNGramTokenFilter(TokenStream input, String suffix, String wildcardToken, int maxTokenLength) {
         super(new CodepointCountFilter(Constants.VERSION, input, 1, Integer.MAX_VALUE));
         this.charUtils = CharacterUtils.getInstance(Constants.VERSION);
 
         this.minGram = 1;
         this.maxGram = Integer.MAX_VALUE;
         this.suffix = suffix;
-        this.anyToken = anyToken;
+        this.anyToken = wildcardToken;
         this.maxTokenLength = maxTokenLength;
 
         posIncAtt = addAttribute(PositionIncrementAttribute.class);

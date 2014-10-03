@@ -15,10 +15,9 @@ package uk.co.flax.luwak.presearcher;/*
  */
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import org.apache.lucene.analysis.TokenFilter;
+import com.google.common.collect.Lists;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
@@ -36,9 +35,9 @@ import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -57,12 +56,31 @@ public class TermFilteredPresearcher implements Presearcher {
 
     protected final QueryAnalyzer extractor;
 
+    protected final static String ANYTOKEN = "__ANYTOKEN__";
+
+    private final List<PresearcherComponent> components = Lists.newArrayList();
+
     public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
         this.extractor = new QueryAnalyzer(weightor, queryTreeBuilders);
+        this.components.add(new DefaultPresearcherComponent(ANYTOKEN));
+        this.components.add(new PresearcherComponent(queryTreeBuilders));
     }
 
     public TermFilteredPresearcher(QueryTreeBuilder... queryTreeBuilders) {
         this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
+    }
+
+    public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
+        this.extractor = PresearcherComponent.buildExtractor(weightor, components);
+        this.components.addAll(Arrays.asList(components));
+    }
+
+    public TermFilteredPresearcher(PresearcherComponent... components) {
+        this(TreeWeightor.DEFAULT_WEIGHTOR, components);
+    }
+
+    public TermFilteredPresearcher() {
+        this(new DefaultPresearcherComponent(ANYTOKEN));
     }
 
     @Override
@@ -73,8 +91,11 @@ public class TermFilteredPresearcher implements Presearcher {
             for (String field : reader.fields()) {
 
                 TermsEnum te = reader.terms(field).iterator(null);
-                TokenStream ts =
-                        filter.filter(field, filterInputDocumentTokens(field, new TermsEnumTokenStream(te)));
+                TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator(null));
+                for (PresearcherComponent component : components) {
+                    ts = component.filterDocumentTokens(ts);
+                }
+                ts = filter.filter(field, ts);
 
                 CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
                 while (ts.incrementToken()) {
@@ -88,27 +109,6 @@ public class TermFilteredPresearcher implements Presearcher {
             // We're a MemoryIndex, so this shouldn't happen...
             throw new RuntimeException(e);
         }
-    }
-
-    protected TokenStream filterInputDocumentTokens(String field, TokenStream ts) throws IOException {
-
-        return new TokenFilter(ts) {
-
-            boolean finished = false;
-            CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
-
-            @Override
-            public final boolean incrementToken() throws IOException {
-                if (input.incrementToken())
-                    return true;
-                if (finished)
-                    return false;
-                finished = true;
-                termAtt.setEmpty().append(extractor.getAnyToken());
-                return true;
-            }
-        };
-
     }
 
     public static final FieldType QUERYFIELDTYPE;
@@ -130,16 +130,21 @@ public class TermFilteredPresearcher implements Presearcher {
 
             //noinspection MismatchedQueryAndUpdateOfStringBuilder
             StringBuilder termslist = fieldTerms.get(queryTerm.field);
-            switch (queryTerm.type) {
-                case WILDCARD:
-                    termslist.append(" ").append(queryTerm.term);
-                    // fall through
-                case ANY:
-                    termslist.append(" ").append(extractor.getAnyToken());
-                    break;
-                case EXACT:
-                    termslist.append(" ").append(queryTerm.term);
+            if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
+                termslist.append(" ").append(ANYTOKEN);
             }
+            else if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
+                termslist.append(" ").append(queryTerm.term);
+            }
+            else {
+                termslist.append(" ").append(queryTerm.term);
+                for (PresearcherComponent component : components) {
+                    String extratoken = component.extraToken(queryTerm.type);
+                    if (extratoken != null)
+                        termslist.append(" ").append(extratoken);
+                }
+            }
+
         }
 
         Document doc = new Document();

@@ -45,17 +45,17 @@ public class TestExtractors {
     @Test
     public void testRegexpExtractor() {
 
-        RegexpNGramTermQueryTreeBuilder extractor = new RegexpNGramTermQueryTreeBuilder("XX");
+        RegexpNGramTermQueryTreeBuilder extractor = new RegexpNGramTermQueryTreeBuilder("XX", "WILDCARD");
         QueryAnalyzer builder = getBuilder(extractor);
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "super.*califragilistic"))))
-                .containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.WILDCARD));
+                .containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.CUSTOM("WILDCARD")));
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hell."))))
-                .containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.WILDCARD));
+                .containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.CUSTOM("WILDCARD")));
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hel?o"))))
-                .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.WILDCARD));
+                .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.CUSTOM("WILDCARD")));
 
     }
 

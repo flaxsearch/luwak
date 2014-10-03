@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+
 import com.google.common.base.Strings;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-
-import java.io.IOException;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -63,7 +63,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         monitor.update(new MonitorQuery("1", "/a.*/"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
+                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcherComponent.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
                 .build();
 
         assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
@@ -88,6 +88,6 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return WildcardNGramPresearcher.DEFAULT;
+        return new TermFilteredPresearcher(new WildcardNGramPresearcherComponent());
     }
 }

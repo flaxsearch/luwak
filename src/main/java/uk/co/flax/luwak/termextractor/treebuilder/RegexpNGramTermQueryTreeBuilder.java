@@ -39,9 +39,12 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
 
     private final String ngramSuffix;
 
-    public RegexpNGramTermQueryTreeBuilder(String ngramSuffix) {
+    private final String wildcardToken;
+
+    public RegexpNGramTermQueryTreeBuilder(String ngramSuffix, String wildcardToken) {
         super(RegexpQuery.class);
         this.ngramSuffix = ngramSuffix;
+        this.wildcardToken = wildcardToken;
     }
 
     public static Pattern regexpChars = Pattern.compile("\\.|\\*|.\\?");
@@ -60,7 +63,7 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
         String regexp = parseOutRegexp(query.toString(""));
         String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
         return new TermNode(builder.weightor,
-                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.WILDCARD));
+                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM(wildcardToken)));
     }
 
     /**

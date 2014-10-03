@@ -46,15 +46,54 @@ public class QueryTerm {
     /**
      * Type of a term
      */
-    public enum Type {
-        /** Queries will match against the exact term */
-        EXACT,
+    public static final class Type {
 
-        /** The term contains wildcards */
-        WILDCARD,
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
 
-        /** The term will match any document */
-        ANY
+            Type type1 = (Type) o;
+
+            if (payload != null ? !payload.equals(type1.payload) : type1.payload != null) return false;
+            if (type != type1.type) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = payload != null ? payload.hashCode() : 0;
+            result = 31 * result + type.hashCode();
+            return result;
+        }
+
+        public enum T {
+            /** Queries will match against the exact term */
+            EXACT,
+
+            /** The term will match any document */
+            ANY,
+
+            /** Custom type */
+            CUSTOM
+        }
+
+        public final String payload;
+        public final T type;
+
+        private Type(T type, String payload) {
+            this.type = type;
+            this.payload = payload;
+        }
+
+        public static Type CUSTOM(String payload) {
+            return new Type(T.CUSTOM, payload);
+        }
+
+        public static final Type EXACT = new Type(T.EXACT, null);
+
+        public static final Type ANY = new Type(T.ANY, null);
     }
 
     @Override
@@ -66,7 +105,7 @@ public class QueryTerm {
 
         if (field != null ? !field.equals(queryTerm.field) : queryTerm.field != null) return false;
         if (term != null ? !term.equals(queryTerm.term) : queryTerm.term != null) return false;
-        if (type != queryTerm.type) return false;
+        if (type != null ? !type.equals(queryTerm.type) : queryTerm.type != null) return false;
 
         return true;
     }
