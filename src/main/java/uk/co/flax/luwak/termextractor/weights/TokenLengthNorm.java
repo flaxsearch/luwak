@@ -17,7 +17,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-public class TokenLengthNorm implements WeightRule {
+public class TokenLengthNorm extends WeightNorm {
 
     private final float a;
     private final float k;
@@ -28,10 +28,10 @@ public class TokenLengthNorm implements WeightRule {
     }
 
     @Override
-    public float weigh(QueryTerm term) {
+    public float norm(QueryTerm term) {
         if (term.type == QueryTerm.Type.ANY)
             return 1;
         else
-            return (4 - CompoundRuleWeightor.exp(a, k, term.term.length()));
+            return (4 - WeightNorm.exp(a, k, term.term.length()));
     }
 }

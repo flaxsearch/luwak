@@ -20,18 +20,18 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 * limitations under the License.
 */
 
-public class FieldWeightRule implements WeightRule {
+public class FieldWeightNorm extends WeightNorm {
 
     private final Set<String> fields;
     private final float k;
 
-    public FieldWeightRule(Set<String> fields, float k) {
+    public FieldWeightNorm(Set<String> fields, float k) {
         this.fields = fields;
         this.k = k;
     }
 
     @Override
-    public float weigh(QueryTerm term) {
+    public float norm(QueryTerm term) {
         if (this.fields.contains(term.field))
             return k;
         return 1;

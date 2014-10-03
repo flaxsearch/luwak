@@ -9,10 +9,9 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.extractors.RegexpNGramTermExtractor;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -55,9 +54,9 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
     /**
      * Create a new WildcardNGramPresearcher using the default QueryTermExtractor
      */
-    protected WildcardNGramPresearcher(TermWeightor weightor, String ngramSuffix, int maxTokenSize,
-                                       Extractor<?>... extractors) {
-        super(weightor, ObjectArrays.concat(extractors, new RegexpNGramTermExtractor(ngramSuffix)));
+    protected WildcardNGramPresearcher(TreeWeightor weightor, String ngramSuffix, int maxTokenSize,
+                                       QueryTreeBuilder<?>... queryTreeBuilders) {
+        super(weightor, ObjectArrays.concat(queryTreeBuilders, new RegexpNGramTermQueryTreeBuilder(ngramSuffix)));
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
     }
@@ -81,8 +80,8 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
 
     public static class Builder {
 
-        private TermWeightor weightor = CompoundRuleWeightor.DEFAULT_WEIGHTOR;
-        private List<Extractor<?>> extractors = Lists.newArrayList();
+        private TreeWeightor weightor = TreeWeightor.DEFAULT_WEIGHTOR;
+        private List<QueryTreeBuilder<?>> queryTreeBuilders = Lists.newArrayList();
         private String ngramSuffix = DEFAULT_NGRAM_SUFFIX;
         private int maxTokenSize = DEFAULT_MAX_TOKEN_SIZE;
 
@@ -91,18 +90,18 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
          * @param weightor the {@link uk.co.flax.luwak.termextractor.weights.TermWeightor}
          * @return the Builder object
          */
-        public Builder withWeightor(TermWeightor weightor) {
+        public Builder withWeightor(TreeWeightor weightor) {
             this.weightor = weightor;
             return this;
         }
 
         /**
          * Use this Extractor
-         * @param extractor the Extractor
+         * @param queryTreeBuilder the Extractor
          * @return the Builder object
          */
-        public Builder withExtractor(Extractor<?> extractor) {
-            this.extractors.add(extractor);
+        public Builder withExtractor(QueryTreeBuilder<?> queryTreeBuilder) {
+            this.queryTreeBuilders.add(queryTreeBuilder);
             return this;
         }
 
@@ -132,7 +131,7 @@ public class WildcardNGramPresearcher extends TermFilteredPresearcher {
          */
         public WildcardNGramPresearcher build() {
             return new WildcardNGramPresearcher(weightor, ngramSuffix, maxTokenSize,
-                    extractors.toArray(new Extractor[extractors.size()]));
+                    queryTreeBuilders.toArray(new QueryTreeBuilder[queryTreeBuilders.size()]));
         }
 
     }

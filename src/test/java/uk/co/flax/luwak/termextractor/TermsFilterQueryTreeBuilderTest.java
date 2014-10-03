@@ -1,32 +1,27 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.extractors.TermsFilterTermExtractor;
+import uk.co.flax.luwak.termextractor.treebuilder.TermsFilterQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
-public class TermsFilterTermExtractorTest {
+public class TermsFilterQueryTreeBuilderTest {
 
-    private TermsFilterTermExtractor extractor;
-
-    @Before
-    public void setUp() {
-        extractor = new TermsFilterTermExtractor();
-    }
+    private QueryAnalyzer treeBuilder
+            = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, new TermsFilterQueryTreeBuilder());
 
     @Test
     public void testExtractSingleTerm() {
-        List<QueryTerm> terms = new LinkedList<>();
         TermsFilter filter = new TermsFilter(new Term("someField", "123"));
-        extractor.extract(filter, terms, Collections.EMPTY_LIST);
+
+        List<QueryTerm> terms = treeBuilder.collectTerms(treeBuilder.buildTree(filter));
+
         Assert.assertEquals(1, terms.size());
         Assert.assertEquals("someField", terms.get(0).field);
         Assert.assertEquals("123", terms.get(0).term);
@@ -37,8 +32,7 @@ public class TermsFilterTermExtractorTest {
 
         TermsFilter filter = new TermsFilter(new Term("field1", "foo"), new Term("field2", "bar"), new Term("field1", "baz"));
 
-        List<QueryTerm> terms = new LinkedList<>();
-        extractor.extract(filter, terms, Collections.EMPTY_LIST);
+        List<QueryTerm> terms = treeBuilder.collectTerms(treeBuilder.buildTree(filter));
 
         assertThat(terms).hasSize(3);
         assertThat(terms).contains(new QueryTerm("field1", "foo", QueryTerm.Type.EXACT));

@@ -19,16 +19,17 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-public class TermWeightRule implements WeightRule {
+public class TermWeightPolicy extends WeightPolicy {
 
-    public TermWeightRule(Map<String, Float> terms) {
+    public TermWeightPolicy(Map<String, Float> terms, WeightNorm... norms) {
+        super(norms);
         this.terms = terms;
     }
 
     private final Map<String, Float> terms;
 
     @Override
-    public float weigh(QueryTerm term) {
+    public float weighTerm(QueryTerm term) {
         if (this.terms.containsKey(term.term))
             return this.terms.get(term.term);
         return 1;

@@ -16,6 +16,8 @@ package uk.co.flax.luwak.termextractor;
  * limitations under the License.
  */
 
+import org.apache.lucene.index.Term;
+
 /**
  * Represents information about an extracted term
  */
@@ -35,6 +37,10 @@ public class QueryTerm {
         this.field = field;
         this.term = term;
         this.type = type;
+    }
+
+    public QueryTerm(Term term) {
+        this(term.field(), term.text(), Type.EXACT);
     }
 
     /**

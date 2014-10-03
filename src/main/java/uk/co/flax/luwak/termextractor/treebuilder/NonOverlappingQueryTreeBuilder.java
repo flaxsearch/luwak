@@ -1,12 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
-
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.intervals.NonOverlappingQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.QueryTerm;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import java.lang.reflect.Field;
-import java.util.List;
+
+import org.apache.lucene.search.intervals.NonOverlappingQuery;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -27,19 +26,18 @@ import java.util.List;
 /**
  * Extracts terms from a NonOverlappingQuery
  */
-public class NonOverlappingQueryExtractor extends Extractor<NonOverlappingQuery> {
+public class NonOverlappingQueryTreeBuilder extends QueryTreeBuilder<NonOverlappingQuery> {
 
-    public NonOverlappingQueryExtractor() {
+    public NonOverlappingQueryTreeBuilder() {
         super(NonOverlappingQuery.class);
     }
 
     @Override
-    public void extract(NonOverlappingQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, NonOverlappingQuery query) {
         try {
             Field field = NonOverlappingQuery.class.getDeclaredField("minuend");
             field.setAccessible(true);
-            Query innerQuery = (Query) field.get(query);
-            extractTerms(innerQuery, terms, extractors);
+            return builder.buildTree(field.get(query));
         }
         catch (Exception e) {
             throw new RuntimeException(e);

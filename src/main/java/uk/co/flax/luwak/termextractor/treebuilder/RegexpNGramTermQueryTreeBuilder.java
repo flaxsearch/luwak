@@ -1,15 +1,17 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
+
+import java.util.regex.Pattern;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import org.apache.lucene.search.RegexpQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.List;
-import java.util.regex.Pattern;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -33,11 +35,11 @@ import java.util.regex.Pattern;
  *
  * N.B. the only regex chars dealt with currently are '.*' and '?'
  */
-public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
+public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuery> {
 
     private final String ngramSuffix;
 
-    public RegexpNGramTermExtractor(String ngramSuffix) {
+    public RegexpNGramTermQueryTreeBuilder(String ngramSuffix) {
         super(RegexpQuery.class);
         this.ngramSuffix = ngramSuffix;
     }
@@ -54,11 +56,11 @@ public class RegexpNGramTermExtractor extends Extractor<RegexpQuery> {
     };
 
     @Override
-    public void extract(RegexpQuery query, List<QueryTerm> terms,
-                            List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
         String regexp = parseOutRegexp(query.toString(""));
         String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
-        terms.add(new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.WILDCARD));
+        return new TermNode(builder.weightor,
+                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.WILDCARD));
     }
 
     /**

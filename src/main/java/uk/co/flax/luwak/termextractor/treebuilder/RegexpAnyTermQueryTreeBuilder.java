@@ -1,10 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import org.apache.lucene.search.RegexpQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.List;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -25,15 +26,14 @@ import java.util.List;
 /**
  * An extractor that will replace wildcard terms with an ANY token
  */
-public class RegexpAnyTermExtractor extends Extractor<RegexpQuery> {
+public class RegexpAnyTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuery> {
 
-    public RegexpAnyTermExtractor() {
+    public RegexpAnyTermQueryTreeBuilder() {
         super(RegexpQuery.class);
     }
 
     @Override
-    public void extract(RegexpQuery query, List<QueryTerm> terms,
-                        List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
+    public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
+        return new TermNode(builder.weightor, new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
     }
 }

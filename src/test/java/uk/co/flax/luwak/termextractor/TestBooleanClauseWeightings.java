@@ -5,8 +5,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
-import uk.co.flax.luwak.termextractor.weights.ReportingWeightor;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
@@ -28,6 +27,8 @@ import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
  */
 public class TestBooleanClauseWeightings {
 
+    private static QueryAnalyzer treeBuilder = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR);
+
     @Test
     public void exactClausesPreferred() {
         BooleanQuery bq = BooleanQueryUtils.BQBuilder.newBQ()
@@ -39,11 +40,7 @@ public class TestBooleanClauseWeightings {
                 )
                 .build();
 
-        QueryTermExtractor extractor
-                = new QueryTermExtractor(new ReportingWeightor(new ReportingWeightor.SystemOutReporter(),
-                                                            CompoundRuleWeightor.DEFAULT_WEIGHTOR));
-
-        assertThat(extractor.extract(bq))
+        assertThat(treeBuilder.collectTerms(bq))
                 .hasSize(2);
     }
 
@@ -55,9 +52,7 @@ public class TestBooleanClauseWeightings {
                 .addMustClause(new TermQuery(new Term("field1", "b")))
                 .build();
 
-        QueryTermExtractor extractor = new QueryTermExtractor();
-
-        assertThat(extractor.extract(bq))
+        assertThat(treeBuilder.collectTerms(bq))
                 .containsExactly(new QueryTerm("field1", "supercalifragilisticexpialidocious", QueryTerm.Type.EXACT));
     }
 

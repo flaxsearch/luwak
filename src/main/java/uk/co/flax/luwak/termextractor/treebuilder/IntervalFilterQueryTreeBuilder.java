@@ -1,12 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
-
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.intervals.IntervalFilterQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.QueryTerm;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import java.lang.reflect.Field;
-import java.util.List;
+
+import org.apache.lucene.search.intervals.IntervalFilterQuery;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -27,20 +26,18 @@ import java.util.List;
 /**
  * Extract terms from an IntervalFilterQuery
  */
-public class IntervalFilterQueryExtractor extends Extractor<IntervalFilterQuery> {
+public class IntervalFilterQueryTreeBuilder extends QueryTreeBuilder<IntervalFilterQuery> {
 
-    public IntervalFilterQueryExtractor() {
+    public IntervalFilterQueryTreeBuilder() {
         super(IntervalFilterQuery.class);
     }
 
     @Override
-    public void extract(IntervalFilterQuery query, List<QueryTerm> terms,
-                        List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, IntervalFilterQuery query) {
         try {
             Field field = IntervalFilterQuery.class.getDeclaredField("inner");
             field.setAccessible(true);
-            Query innerQuery = (Query) field.get(query);
-            extractTerms(innerQuery, terms, extractors);
+            return builder.buildTree(field.get(query));
         }
         catch (Exception e) {
             throw new RuntimeException(e);

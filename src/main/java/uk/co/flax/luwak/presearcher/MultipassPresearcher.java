@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.termextractor.weights;
+package uk.co.flax.luwak.presearcher;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -16,6 +16,6 @@ package uk.co.flax.luwak.termextractor.weights;
  * limitations under the License.
  */
 
-public interface WeightCombiner {
-    public float combineWeights(float[] weights);
+public class MultipassPresearcher extends TermFilteredPresearcher {
+
 }

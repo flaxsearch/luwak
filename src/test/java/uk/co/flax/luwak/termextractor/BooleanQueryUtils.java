@@ -31,7 +31,7 @@ public class BooleanQueryUtils {
 
         private final BooleanQuery bq;
 
-        static BQBuilder newBQ() {
+        public static BQBuilder newBQ() {
             return new BQBuilder();
         }
 

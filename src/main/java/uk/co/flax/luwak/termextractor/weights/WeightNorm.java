@@ -1,9 +1,5 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.weights;
 
-import java.util.List;
-
-import org.apache.lucene.queries.TermFilter;
-import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -22,14 +18,15 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * limitations under the License.
  */
 
-public class TermFilterTermExtractor extends Extractor<TermFilter> {
+public abstract class WeightNorm {
 
-    public TermFilterTermExtractor() {
-        super(TermFilter.class);
+    public abstract float norm(QueryTerm term);
+
+    /**
+     * Returns the value of a * e^(-k * x)
+     */
+    public static float exp(float a, float k, float x) {
+        return (float) (a * Math.exp(-k * x));
     }
 
-    @Override
-    public void extract(TermFilter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(filter.getTerm().field(), filter.getTerm().text(), QueryTerm.Type.EXACT));
-    }
 }

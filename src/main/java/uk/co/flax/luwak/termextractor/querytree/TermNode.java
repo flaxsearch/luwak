@@ -1,4 +1,6 @@
-package uk.co.flax.luwak.termextractor.weights;
+package uk.co.flax.luwak.termextractor.querytree;
+
+import java.util.List;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
@@ -17,8 +19,28 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public interface WeightRule {
 
-    public float weigh(QueryTerm term);
+public class TermNode extends QueryTree {
 
+    private final QueryTerm term;
+
+    public TermNode(TreeWeightor weightor, QueryTerm term) {
+        super(weightor.weigh(term));
+        this.term = term;
+    }
+
+    @Override
+    public void addChild(QueryTree child) {
+        throw new UnsupportedOperationException("Cannot add child to a TermNode");
+    }
+
+    @Override
+    public void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor) {
+        termsList.add(term);
+    }
+
+    @Override
+    public boolean advancePhase(TreeWeightor weightor) {
+        return false;
+    }
 }

@@ -1,10 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import org.apache.lucene.search.TermQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-
-import java.util.List;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -25,15 +26,14 @@ import java.util.List;
 /**
  * An Extractor for TermQueries
  */
-public class SimpleTermExtractor extends Extractor<TermQuery> {
+public class SimpleTermQueryTreeBuilder extends QueryTreeBuilder<TermQuery> {
 
-    public SimpleTermExtractor() {
+    public SimpleTermQueryTreeBuilder() {
         super(TermQuery.class);
     }
 
     @Override
-    public void extract(TermQuery query, List<QueryTerm> terms,
-                        List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm(query.getTerm().field(), query.getTerm().text(), QueryTerm.Type.EXACT));
+    public QueryTree buildTree(QueryAnalyzer builder, TermQuery query) {
+        return new TermNode(builder.weightor, new QueryTerm(query.getTerm()));
     }
 }

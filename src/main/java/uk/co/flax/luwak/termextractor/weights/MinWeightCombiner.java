@@ -16,18 +16,27 @@ package uk.co.flax.luwak.termextractor.weights;
  * limitations under the License.
  */
 
+import java.util.List;
+
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+
 /**
- * Returns the minimum weight of a list of weights as the final weight
+ * Returns the minimum weight of a list of {@link QueryTree}s as the final weight
  */
-public class MinWeightCombiner implements WeightCombiner {
+public class MinWeightCombiner implements CombinePolicy {
 
     @Override
-    public float combineWeights(float[] weights) {
-        float min = weights[0];
-        for (int i = 1; i < weights.length; i++) {
-            min = Math.min(min, weights[i]);
+    public float combine(List<QueryTree> children) {
+
+        if (children.size() == 0)
+            return 0;
+        if (children.size() == 1)
+            return children.get(0).weight;
+
+        float min = children.get(0).weight;
+        for (int i = 1; i < children.size(); i++) {
+            min = Math.min(min, children.get(i).weight);
         }
         return min;
     }
-
 }

@@ -1,16 +1,21 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.util.BytesRef;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
-public class TermsFilterTermExtractor extends Extractor<TermsFilter> {
+public class TermsFilterQueryTreeBuilder extends QueryTreeBuilder<TermsFilter> {
 
     private static Field termsField;
     private static Field termsBytesField;
@@ -50,19 +55,21 @@ public class TermsFilterTermExtractor extends Extractor<TermsFilter> {
         }
     }
 
-    public TermsFilterTermExtractor() {
+    public TermsFilterQueryTreeBuilder() {
         super(TermsFilter.class);
     }
 
     @Override
-    public void extract(TermsFilter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermsFilter query) {
         try {
-            List<Term> filterTerms = getTermsFromTermsFilter(filter);
-            for (Term term : filterTerms) {
-                terms.add(new QueryTerm(term.field(), term.text(), QueryTerm.Type.EXACT));
+            List<QueryTree> children = new ArrayList<>();
+            for (Term term : getTermsFromTermsFilter(query)) {
+                children.add(new TermNode(builder.weightor, new QueryTerm(term)));
             }
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException("Couldn't extract terms from filter", ex);
+            return DisjunctionNode.build(builder.weightor, children);
+        }
+        catch (IllegalAccessException e) {
+            throw new RuntimeException("Couldn't extract terms from TermsFilter", e);
         }
     }
 

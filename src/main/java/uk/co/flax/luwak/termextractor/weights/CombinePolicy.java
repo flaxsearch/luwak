@@ -1,10 +1,8 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.weights;
 
 import java.util.List;
 
-import org.apache.lucene.search.Filter;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -22,14 +20,6 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * limitations under the License.
  */
 
-public class GenericFilterTermExtractor extends Extractor<Filter> {
-
-    public GenericFilterTermExtractor() {
-        super(Filter.class);
-    }
-
-    @Override
-    public void extract(Filter filter, List<QueryTerm> terms, List<Extractor<?>> extractors) {
-        terms.add(new QueryTerm("", filter.getClass().getCanonicalName(), QueryTerm.Type.ANY));
-    }
+public interface CombinePolicy {
+    float combine(List<QueryTree> children);
 }

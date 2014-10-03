@@ -1,10 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
-import java.util.List;
-
-import org.apache.lucene.search.ConstantScoreQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
+import org.apache.lucene.search.Filter;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -21,18 +22,15 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class ConstantScoreQueryExtractor extends Extractor<ConstantScoreQuery> {
 
-    public ConstantScoreQueryExtractor() {
-        super(ConstantScoreQuery.class);
+public class GenericFilterQueryTreeBuilder extends QueryTreeBuilder<Filter> {
+
+    public GenericFilterQueryTreeBuilder() {
+        super(Filter.class);
     }
 
     @Override
-    public void extract(ConstantScoreQuery query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
-        if (query.getQuery() != null) {
-            Extractor.extractTerms(query.getQuery(), terms, extractors);
-            return;
-        }
-        Extractor.extractTerms(query.getFilter(), terms, extractors);
+    public QueryTree buildTree(QueryAnalyzer builder, Filter filter) {
+        return new TermNode(builder.weightor, new QueryTerm("", filter.getClass().getCanonicalName(), QueryTerm.Type.ANY));
     }
 }

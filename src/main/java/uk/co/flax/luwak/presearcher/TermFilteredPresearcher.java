@@ -36,11 +36,11 @@ import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -55,14 +55,14 @@ public class TermFilteredPresearcher implements Presearcher {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
     }
 
-    protected final QueryTermExtractor extractor;
+    protected final QueryAnalyzer extractor;
 
-    public TermFilteredPresearcher(TermWeightor weightor, Extractor... extractors) {
-        this.extractor = new QueryTermExtractor(weightor, extractors);
+    public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
+        this.extractor = new QueryAnalyzer(weightor, queryTreeBuilders);
     }
 
-    public TermFilteredPresearcher(Extractor... extractors) {
-        this(CompoundRuleWeightor.DEFAULT_WEIGHTOR, extractors);
+    public TermFilteredPresearcher(QueryTreeBuilder... queryTreeBuilders) {
+        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
     }
 
     @Override
@@ -122,7 +122,8 @@ public class TermFilteredPresearcher implements Presearcher {
     public final Document indexQuery(Query query) {
 
         Map<String, StringBuilder> fieldTerms = new HashMap<>();
-        for (QueryTerm queryTerm : extractor.extract(query)) {
+        QueryTree querytree = extractor.buildTree(query);
+        for (QueryTerm queryTerm : extractor.collectTerms(querytree)) {
 
             if (!fieldTerms.containsKey(queryTerm.field))
                 fieldTerms.put(queryTerm.field, new StringBuilder());

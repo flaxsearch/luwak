@@ -1,17 +1,17 @@
-package uk.co.flax.luwak.termextractor.extractors;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Iterables;
 import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.querytree.*;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -35,39 +35,35 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
  * If the query is a pure conjunction, then this extractor will select the best
  * matching term from all the clauses and only extract that.
  */
-public abstract class BooleanTermExtractor<T> extends Extractor<T> {
+public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
 
-    private final TermWeightor weightor;
-
-    public BooleanTermExtractor(Class<T> cls, TermWeightor weightor) {
+    public BooleanQueryTreeBuilder(Class<T> cls) {
         super(cls);
-        this.weightor = weightor;
     }
 
     protected abstract Clauses analyze(T query);
 
     @Override
-    public void extract(T query, List<QueryTerm> terms, List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, T query) {
 
         Clauses clauses = analyze(query);
 
-        if (clauses.isPureNegativeQuery()) {
-            terms.add(new QueryTerm("", "PURE NEGATIVE BOOLEAN", QueryTerm.Type.ANY));
+        if (clauses.isPureNegativeQuery())
+            return new TermNode(builder.weightor, new QueryTerm("", "PURE NEGATIVE BOOLEAN", QueryTerm.Type.ANY));
+
+        if (clauses.isDisjunctionQuery()) {
+            return DisjunctionNode.build(builder.weightor, buildChildTrees(builder, clauses.getDisjunctions()));
         }
-        else if (clauses.isDisjunctionQuery()) {
-            for (Object subquery : clauses.getDisjunctions()) {
-                extractTerms(subquery, terms, extractors);
-            }
+
+        return ConjunctionNode.build(builder.weightor, buildChildTrees(builder, clauses.getConjunctions()));
+    }
+
+    private List<QueryTree> buildChildTrees(QueryAnalyzer builder, List<Object> children) {
+        List<QueryTree> trees = new ArrayList<>();
+        for (Object child : children) {
+            trees.add(builder.buildTree(child));
         }
-        else if (clauses.isConjunctionQuery()) {
-            List<List<QueryTerm>> termlists = new ArrayList<>();
-            for (Object subquery : clauses.getConjunctions()) {
-                List<QueryTerm> subTerms = new ArrayList<>();
-                extractTerms(subquery, subTerms, extractors);
-                termlists.add(subTerms);
-            }
-            Iterables.addAll(terms, this.weightor.selectBest(termlists));
-        }
+        return trees;
     }
 
     public static class Clauses {
@@ -97,10 +93,10 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
         }
     }
 
-    public static class QueryExtractor extends BooleanTermExtractor<BooleanQuery> {
+    public static class QueryBuilder extends BooleanQueryTreeBuilder<BooleanQuery> {
 
-        public QueryExtractor(TermWeightor weightor) {
-            super(BooleanQuery.class, weightor);
+        public QueryBuilder() {
+            super(BooleanQuery.class);
         }
 
         @Override
@@ -124,10 +120,10 @@ public abstract class BooleanTermExtractor<T> extends Extractor<T> {
         }
     }
 
-    public static class FilterExtractor extends BooleanTermExtractor<BooleanFilter> {
+    public static class FilterBuilder extends BooleanQueryTreeBuilder<BooleanFilter> {
 
-        public FilterExtractor(TermWeightor weightor) {
-            super(BooleanFilter.class, weightor);
+        public FilterBuilder() {
+            super(BooleanFilter.class);
         }
 
         @Override

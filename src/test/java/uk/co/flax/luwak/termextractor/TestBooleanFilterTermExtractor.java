@@ -1,18 +1,19 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.Set;
+import java.util.List;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.BooleanFilter;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 
-    private static final QueryTermExtractor termExtractor = new QueryTermExtractor();
+    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR);
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {
@@ -20,7 +21,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(new TermFilter(new Term("field1", "term2")), BooleanClause.Occur.SHOULD);
 
-        Set<QueryTerm> terms = termExtractor.extract(booleanFilter);
+        List<QueryTerm> terms = treeBuilder.collectTerms(booleanFilter);
 
         assertThat(terms).containsOnly(
                 new QueryTerm("field1", "term1", QueryTerm.Type.EXACT),
@@ -36,7 +37,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field3", "term3")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(nestedBooleanFilter, BooleanClause.Occur.SHOULD);
 
-        assertThat(termExtractor.extract(booleanFilter)).hasSize(3);
+        assertThat(treeBuilder.collectTerms(booleanFilter)).hasSize(3);
     }
 
     @Test
@@ -48,7 +49,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field3", "term3")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(nestedBooleanFilter, BooleanClause.Occur.MUST);
 
-        assertThat(termExtractor.extract(booleanFilter)).hasSize(2);
+        assertThat(treeBuilder.collectTerms(booleanFilter)).hasSize(2);
     }
 
     @Test
@@ -57,7 +58,7 @@ public class TestBooleanFilterTermExtractor {
         booleanFilter.add(new TermFilter(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         booleanFilter.add(new TermFilter(new Term("field2", "term2")), BooleanClause.Occur.MUST);
 
-        Set<QueryTerm> terms = termExtractor.extract(booleanFilter);
+        List<QueryTerm> terms = treeBuilder.collectTerms(booleanFilter);
         assertThat(terms).hasSize(1);
         assertThat(terms).containsOnly(new QueryTerm("field2", "term2", QueryTerm.Type.EXACT));
     }

@@ -1,10 +1,15 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.Set;
+import java.util.List;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.ReportingWeightor;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.BQBuilder;
@@ -28,6 +33,9 @@ import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
 
 public class TestBooleanTermExtractor {
 
+    private static final QueryAnalyzer treeBuilder
+            = new QueryAnalyzer(new ReportingWeightor(TreeWeightor.DEFAULT_WEIGHTOR));
+
     @Test
     public void allDisjunctionQueriesAreIncluded() {
 
@@ -35,8 +43,7 @@ public class TestBooleanTermExtractor {
         bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         bq.add(new TermQuery(new Term("field1", "term2")), BooleanClause.Occur.SHOULD);
 
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(bq);
+        List<QueryTerm> terms = treeBuilder.collectTerms(bq);
 
         assertThat(terms).containsOnly(
                 new QueryTerm("field1", "term1", QueryTerm.Type.EXACT),
@@ -54,7 +61,7 @@ public class TestBooleanTermExtractor {
                         .build())
                 .build();
 
-        assertThat(extract(superbq)).hasSize(3);
+        assertThat(treeBuilder.collectTerms(superbq)).hasSize(3);
     }
 
     @Test
@@ -68,7 +75,7 @@ public class TestBooleanTermExtractor {
                 .addShouldClause(newTermQuery("field1", "term3"))
                 .build();
 
-        assertThat(extract(superbq)).hasSize(2);
+        assertThat(treeBuilder.collectTerms(superbq)).hasSize(2);
 
     }
 
@@ -78,10 +85,8 @@ public class TestBooleanTermExtractor {
         bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
         bq.add(new TermQuery(new Term("field1", "term2")), BooleanClause.Occur.MUST);
 
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(bq);
-
-        assertThat(terms).containsOnly(new QueryTerm("field1", "term2", QueryTerm.Type.EXACT));
+        assertThat(treeBuilder.collectTerms(bq))
+                .containsOnly(new QueryTerm("field1", "term2", QueryTerm.Type.EXACT));
     }
 
     @Test
@@ -97,10 +102,8 @@ public class TestBooleanTermExtractor {
                         .build())
                 .build();
 
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(q);
-
-        assertThat(terms).containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+        assertThat(treeBuilder.collectTerms(q))
+                .containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
 
     }
 
@@ -118,15 +121,9 @@ public class TestBooleanTermExtractor {
                         .build())
                 .build();
 
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(q);
+        assertThat(treeBuilder.collectTerms(q))
+                .containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
 
-        assertThat(terms).containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
-
-    }
-
-    public static Set<QueryTerm> extract(Query query) {
-        return new QueryTermExtractor().extract(query);
     }
 
 }

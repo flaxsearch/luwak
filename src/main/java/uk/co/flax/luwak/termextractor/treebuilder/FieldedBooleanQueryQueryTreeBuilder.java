@@ -1,12 +1,11 @@
-package uk.co.flax.luwak.termextractor.extractors;
-
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.intervals.FieldedConjunctionQuery;
-import uk.co.flax.luwak.termextractor.Extractor;
-import uk.co.flax.luwak.termextractor.QueryTerm;
+package uk.co.flax.luwak.termextractor.treebuilder;
 
 import java.lang.reflect.Field;
-import java.util.List;
+
+import org.apache.lucene.search.intervals.FieldedBooleanQuery;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -25,24 +24,22 @@ import java.util.List;
  */
 
 /**
- * Extract terms from a FieldedConjunctionQuery
+ * Extract terms from a FieldedBooleanQuery
  *
- * See {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor}
+ * See {@link BooleanQueryTreeBuilder}
  */
-public class FieldedConjunctionQueryExtractor extends Extractor<FieldedConjunctionQuery> {
+public class FieldedBooleanQueryQueryTreeBuilder extends QueryTreeBuilder<FieldedBooleanQuery> {
 
-    public FieldedConjunctionQueryExtractor() {
-        super(FieldedConjunctionQuery.class);
+    public FieldedBooleanQueryQueryTreeBuilder() {
+        super(FieldedBooleanQuery.class);
     }
 
     @Override
-    public void extract(FieldedConjunctionQuery query, List<QueryTerm> terms,
-                        List<Extractor<?>> extractors) {
+    public QueryTree buildTree(QueryAnalyzer builder, FieldedBooleanQuery query) {
         try {
             Field field = query.getClass().getDeclaredField("bq");
             field.setAccessible(true);
-            BooleanQuery bq = (BooleanQuery) field.get(query);
-            extractTerms(bq, terms, extractors);
+            return builder.buildTree(field.get(query));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

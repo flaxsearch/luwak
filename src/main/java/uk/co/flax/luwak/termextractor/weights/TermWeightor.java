@@ -24,7 +24,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 
 /**
- * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.extractors.BooleanTermExtractor} to
+ * Scores a list of queryterms.  Used by a {@link uk.co.flax.luwak.termextractor.treebuilder.BooleanQueryTreeBuilder} to
  * determine which clauses should be indexed.
  */
 public abstract class TermWeightor {
