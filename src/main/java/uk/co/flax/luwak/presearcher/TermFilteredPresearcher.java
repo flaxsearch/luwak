@@ -15,7 +15,10 @@ package uk.co.flax.luwak.presearcher;/*
  */
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Lists;
 import org.apache.lucene.analysis.TokenStream;
@@ -27,7 +30,6 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -86,10 +88,10 @@ public class TermFilteredPresearcher implements Presearcher {
     public final Query buildQuery(InputDocument doc, PerFieldTokenFilter filter) {
         try {
             AtomicReader reader = doc.asAtomicReader();
-            BooleanQuery bq = new BooleanQuery();
+            DocumentQueryBuilder queryBuilder = getQueryBuilder();
+
             for (String field : reader.fields()) {
 
-                TermsEnum te = reader.terms(field).iterator(null);
                 TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator(null));
                 for (PresearcherComponent component : components) {
                     ts = component.filterDocumentTokens(ts);
@@ -98,16 +100,33 @@ public class TermFilteredPresearcher implements Presearcher {
 
                 CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
                 while (ts.incrementToken()) {
-                    bq.add(new TermQuery(new Term(field, termAtt.toString())), BooleanClause.Occur.SHOULD);
+                    queryBuilder.addTerm(field, termAtt.toString());
                 }
 
             }
-            return bq;
+            return queryBuilder.build();
         }
         catch (IOException e) {
             // We're a MemoryIndex, so this shouldn't happen...
             throw new RuntimeException(e);
         }
+    }
+
+    protected DocumentQueryBuilder getQueryBuilder() {
+        return new DocumentQueryBuilder() {
+
+            BooleanQuery bq = new BooleanQuery();
+
+            @Override
+            public void addTerm(String field, String term) {
+                bq.add(new TermQuery(new Term(field, term)), BooleanClause.Occur.SHOULD);
+            }
+
+            @Override
+            public Query build() {
+                return bq;
+            }
+        };
     }
 
     public static final FieldType QUERYFIELDTYPE;
@@ -118,12 +137,24 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     @Override
-    public final Document indexQuery(Query query) {
+    public Document indexQuery(Query query) {
+
+        QueryTree querytree = extractor.buildTree(query);
+        Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
+
+        Document doc = new Document();
+        for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
+            doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
+        }
+
+        return doc;
+    }
+
+    protected Map<String, StringBuilder> collectTerms(QueryTree tree) {
 
         Map<String, StringBuilder> fieldTerms = new HashMap<>();
-        QueryTree querytree = extractor.buildTree(query);
-        for (QueryTerm queryTerm : extractor.collectTerms(querytree)) {
 
+        for (QueryTerm queryTerm : extractor.collectTerms(tree)) {
             if (!fieldTerms.containsKey(queryTerm.field))
                 fieldTerms.put(queryTerm.field, new StringBuilder());
 
@@ -140,15 +171,9 @@ public class TermFilteredPresearcher implements Presearcher {
                         termslist.append(" ").append(extratoken);
                 }
             }
-
         }
-
-        Document doc = new Document();
-        for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
-            doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
-        }
-
-        return doc;
+        return fieldTerms;
     }
+
 
 }
