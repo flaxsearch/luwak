@@ -5,10 +5,12 @@ import java.io.IOException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Before;
-import uk.co.flax.luwak.Constants;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.Presearcher;
+import org.junit.Test;
+import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+
+import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -43,5 +45,17 @@ public abstract class PresearcherTestBase {
     public static final String TEXTFIELD = "text";
 
     public static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
+
+    @Test
+    public void testNullFieldHandling() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "field_1:test"));
+
+        InputDocument doc = InputDocument.builder("doc1").addField("field_2", "test", WHITESPACE).build();
+
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasMatchCount(0);
+
+    }
 
 }
