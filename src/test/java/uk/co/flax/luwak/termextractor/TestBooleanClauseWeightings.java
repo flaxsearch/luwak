@@ -1,14 +1,11 @@
 package uk.co.flax.luwak.termextractor;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.Query;
 import org.junit.Test;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
+import uk.co.flax.luwak.util.ParserUtils;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -30,29 +27,20 @@ public class TestBooleanClauseWeightings {
     private static QueryAnalyzer treeBuilder = PresearcherComponent.buildQueryAnalyzer();
 
     @Test
-    public void exactClausesPreferred() {
-        BooleanQuery bq = BooleanQueryUtils.BQBuilder.newBQ()
-                .addMustClause(NumericRangeQuery.newIntRange("field2", 1, 2, false, false))
-                .addMustClause(BooleanQueryUtils.BQBuilder.newBQ()
-                                .addShouldClause(newTermQuery("field1", "term1"))
-                                .addShouldClause(newTermQuery("field1", "term2"))
-                                .build()
-                )
-                .build();
+    public void exactClausesPreferred() throws Exception {
+
+        Query bq = ParserUtils.parse("+field2:[1 TO 2] +(field1:term1 field1:term2)");
 
         assertThat(treeBuilder.collectTerms(bq))
                 .hasSize(2);
     }
 
     @Test
-    public void longerTermsPreferred() {
-        BooleanQuery bq = BooleanQueryUtils.BQBuilder.newBQ()
-                .addMustClause(new TermQuery(new Term("field1", "a")))
-                .addMustClause(new TermQuery(new Term("field1", "supercalifragilisticexpialidocious")))
-                .addMustClause(new TermQuery(new Term("field1", "b")))
-                .build();
+    public void longerTermsPreferred() throws Exception {
 
-        assertThat(treeBuilder.collectTerms(bq))
+        Query q = ParserUtils.parse("field1:(+a +supercalifragilisticexpialidocious +b)");
+
+        assertThat(treeBuilder.collectTerms(q))
                 .containsExactly(new QueryTerm("field1", "supercalifragilisticexpialidocious", QueryTerm.Type.EXACT));
     }
 

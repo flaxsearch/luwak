@@ -43,7 +43,12 @@ public class GenericQueryTreeBuilder extends QueryTreeBuilder<Query> {
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, Query query) {
         Set<Term> termSet = new HashSet<>();
-        query.extractTerms(termSet);
+        try {
+            query.extractTerms(termSet);
+        }
+        catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Couldn't extract terms from query of type " + query.getClass());
+        }
 
         List<QueryTree> children = new ArrayList<>();
         for (Term term : termSet) {

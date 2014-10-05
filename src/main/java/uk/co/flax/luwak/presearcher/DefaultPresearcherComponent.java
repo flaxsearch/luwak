@@ -47,6 +47,7 @@ public class DefaultPresearcherComponent extends PresearcherComponent {
             new PhraseQueryTreeBuilder(),
             new ConstantScoreQueryTreeBuilder(),
             new NumericRangeQueryTreeBuilder(),
+            new TermRangeQueryTreeBuilder(),
             new RegexpAnyTermQueryTreeBuilder(),
             new SimpleTermQueryTreeBuilder(),
             new GenericQueryTreeBuilder()
