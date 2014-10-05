@@ -17,11 +17,23 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+/**
+ * Weight a token by its length
+ */
 public class TokenLengthNorm extends WeightNorm {
 
     private final float a;
     private final float k;
 
+    /**
+     * Create a new TokenLengthNorm
+     *
+     * Tokens will be scaled according to the equation a * e^(-k * tokenlength)
+     *
+     * @param a a
+     * @param k k
+     */
     public TokenLengthNorm(float a, float k) {
         this.a = a;
         this.k = k;

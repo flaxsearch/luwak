@@ -2,6 +2,7 @@ package uk.co.flax.luwak.termextractor.weights;
 
 import java.util.Set;
 
+import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -20,14 +21,31 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 * limitations under the License.
 */
 
+/**
+ * Weight a set of fields by a scale factor
+ */
 public class FieldWeightNorm extends WeightNorm {
 
     private final Set<String> fields;
     private final float k;
 
-    public FieldWeightNorm(Set<String> fields, float k) {
+    /**
+     * Create a new FieldWeightNorm
+     * @param k the scale factor
+     * @param fields the fields to scale
+     */
+    public FieldWeightNorm(float k, Set<String> fields) {
         this.fields = fields;
         this.k = k;
+    }
+
+    /**
+     * Create a new FieldWeightNorm
+     * @param k the scale factor
+     * @param fields the fields to scale
+     */
+    public FieldWeightNorm(float k, String... fields) {
+        this(k, Sets.newHashSet(fields));
     }
 
     @Override
