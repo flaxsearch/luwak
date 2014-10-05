@@ -46,6 +46,10 @@ public abstract class PresearcherTestBase {
 
     public static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
 
+    public static InputDocument buildDoc(String id, String field, String text) {
+        return InputDocument.builder(id).addField(field, text, WHITESPACE).build();
+    }
+
     @Test
     public void testNullFieldHandling() throws IOException {
 

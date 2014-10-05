@@ -51,4 +51,25 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                 .matchesQuery("1");
 
     }
+
+    @Test
+    public void testComplexBoolean() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "field:(+foo +bar +(badger cormorant))"));
+
+        InputDocument doc1 = buildDoc("doc1", "field", "a badger walked into a bar");
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
+                .hasMatchCount(0)
+                .hasQueriesRunCount(0);
+
+        InputDocument doc2 = buildDoc("doc2", "field", "foo badger cormorant");
+        assertThat(monitor.match(doc2, SimpleMatcher.FACTORY))
+                .hasMatchCount(0)
+                .hasQueriesRunCount(0);
+
+        InputDocument doc3 = buildDoc("doc3", "field", "bar badger foo");
+        assertThat(monitor.match(doc3, SimpleMatcher.FACTORY))
+                .hasMatchCount(1);
+
+    }
 }
