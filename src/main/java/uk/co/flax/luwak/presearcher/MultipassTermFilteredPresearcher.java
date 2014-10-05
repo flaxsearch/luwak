@@ -113,6 +113,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
         for (int i = 0; i < passes; i++) {
             Map<String, StringBuilder> fieldTerms = collectTerms(tree);
+            debug(tree, fieldTerms);
             for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
                 // we add the index terms once under a suffixed field for the multipass query, and
                 // once under the plan field name for the TermsEnumTokenFilter
@@ -124,4 +125,11 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
         return doc;
     }
+
+    /**
+     * Override to debug queryindexing
+     * @param tree the current QueryTree
+     * @param terms the terms collected from it
+     */
+    protected void debug(QueryTree tree, Map<String, StringBuilder> terms) {}
 }
