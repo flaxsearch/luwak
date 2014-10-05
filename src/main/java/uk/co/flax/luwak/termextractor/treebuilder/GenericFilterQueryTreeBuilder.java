@@ -1,11 +1,10 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
 import org.apache.lucene.search.Filter;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -31,6 +30,6 @@ public class GenericFilterQueryTreeBuilder extends QueryTreeBuilder<Filter> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, Filter filter) {
-        return new TermNode(builder.weightor, new QueryTerm("", filter.getClass().getCanonicalName(), QueryTerm.Type.ANY));
+        return new AnyNode(builder.weightor, filter.getClass().getCanonicalName());
     }
 }

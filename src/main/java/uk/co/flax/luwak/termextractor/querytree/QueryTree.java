@@ -51,4 +51,6 @@ public abstract class QueryTree {
 
     public abstract boolean isTerminal();
 
+    public abstract boolean isAny();
+
 }

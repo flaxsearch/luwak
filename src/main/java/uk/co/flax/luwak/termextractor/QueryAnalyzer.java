@@ -9,6 +9,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.treebuilder.*;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -37,27 +38,51 @@ public class QueryAnalyzer {
 
     private final ImmutableList<QueryTreeBuilder<?>> queryTreeBuilders;
 
+    public static final List<QueryTreeBuilder<?>> DEFAULT_BUILDERS = ImmutableList.<QueryTreeBuilder<?>>of(
+            new BooleanQueryTreeBuilder.QueryBuilder(),
+            new PhraseQueryTreeBuilder(),
+            new ConstantScoreQueryTreeBuilder(),
+            new NumericRangeQueryTreeBuilder(),
+            new TermRangeQueryTreeBuilder(),
+            new RegexpAnyTermQueryTreeBuilder(),
+            new SimpleTermQueryTreeBuilder(),
+            new GenericQueryTreeBuilder()
+    );
+
     public final TreeWeightor weightor;
 
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
+     *
      * @param weightor a TreeWeightor to use for conjunctions
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
     public QueryAnalyzer(TreeWeightor weightor, List<QueryTreeBuilder<?>> queryTreeBuilders) {
         this.queryTreeBuilders = ImmutableList.<QueryTreeBuilder<?>>builder()
                 .addAll(queryTreeBuilders)
+                .addAll(DEFAULT_BUILDERS)
                 .build();
         this.weightor = weightor;
     }
 
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
+     *
      * @param weightor a TreeWeightor to use for conjunctions
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
     public QueryAnalyzer(TreeWeightor weightor, QueryTreeBuilder<?>... queryTreeBuilders) {
         this(weightor, Arrays.asList(queryTreeBuilders));
+    }
+
+    /**
+     * Create a QueryAnalyzer using the default TreeWeightor, and the provided QueryTreeBuilders,
+     * in addition to the default set
+     *
+     * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
+     */
+    public QueryAnalyzer(QueryTreeBuilder<?>... queryTreeBuilders) {
+        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
     }
 
     /**

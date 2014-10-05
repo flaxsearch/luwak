@@ -2,10 +2,9 @@ package uk.co.flax.luwak.termextractor.treebuilder;
 
 import org.apache.lucene.search.TermRangeQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -30,6 +29,6 @@ public class TermRangeQueryTreeBuilder extends QueryTreeBuilder<TermRangeQuery> 
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermRangeQuery query) {
-        return new TermNode(builder.weightor, new QueryTerm(query.getField(), query.toString(), QueryTerm.Type.ANY));
+        return new AnyNode(builder.weightor, query.getField(), query.toString());
     }
 }

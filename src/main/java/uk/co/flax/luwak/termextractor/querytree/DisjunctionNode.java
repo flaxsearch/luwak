@@ -38,6 +38,10 @@ public class DisjunctionNode extends QueryTree {
 
     @Override
     public void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor) {
+        if (isAny()) {
+            termsList.add(new QueryTerm("", "DISJUNCTION WITH ANYTOKEN", QueryTerm.Type.ANY));
+            return;
+        }
         for (QueryTree child : children) {
             child.collectTerms(termsList, weightor);
         }
@@ -50,6 +54,15 @@ public class DisjunctionNode extends QueryTree {
             result |= child.isTerminal();
         }
         return result;
+    }
+
+    @Override
+    public boolean isAny() {
+        for (QueryTree child : children) {
+            if (child.isAny())
+                return true;
+        }
+        return false;
     }
 
     @Override

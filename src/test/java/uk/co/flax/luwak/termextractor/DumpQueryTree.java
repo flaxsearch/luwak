@@ -1,12 +1,11 @@
 package uk.co.flax.luwak.termextractor;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.presearcher.DefaultPresearcherComponent;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
+import uk.co.flax.luwak.util.ParserUtils;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -26,20 +25,9 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 
 public class DumpQueryTree {
 
-    public static void main(String... args) {
+    public static void main(String... args) throws Exception {
 
-        BooleanQuery bq = BooleanQueryUtils.BQBuilder.newBQ()
-                .addMustClause(new TermQuery(new Term("field", "foo")))
-                .addMustClause(new TermQuery(new Term("field", "bar")))
-                .addMustClause(BooleanQueryUtils.BQBuilder.newBQ()
-                        .addShouldClause(new TermQuery(new Term("field", "aardvark")))
-                        .addShouldClause(BooleanQueryUtils.BQBuilder.newBQ()
-                                .addMustClause(new TermQuery(new Term("field", "badger")))
-                                .addMustClause(new TermQuery(new Term("field", "cormorant")))
-                                .build())
-                        .build()
-                )
-                .build();
+        Query bq = ParserUtils.parse("+foo +bar +(aardvark (+badger +cormorant))");
 
         QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(new DefaultPresearcherComponent());
         QueryTree tree = analyzer.buildTree(bq);

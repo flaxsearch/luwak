@@ -81,7 +81,21 @@ public class ConjunctionNode extends QueryTree {
             if (child.isTerminal())
                 return false;
         }
-        return children.size() > 1;
+        int c = children.size();
+        for (QueryTree child : children) {
+            if (child.isAny())
+                c--;
+        }
+        return c > 1;
+    }
+
+    @Override
+    public boolean isAny() {
+        for (QueryTree child : children) {
+            if (!child.isAny())
+                return false;
+        }
+        return true;
     }
 
 }

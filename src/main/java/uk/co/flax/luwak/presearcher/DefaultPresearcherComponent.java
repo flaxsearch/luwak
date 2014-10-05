@@ -1,15 +1,12 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
-import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.treebuilder.*;
 
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -34,7 +31,7 @@ public class DefaultPresearcherComponent extends PresearcherComponent {
     public final String anytoken;
 
     public DefaultPresearcherComponent(String anytoken) {
-        super(DEFAULT_BUILDERS);
+        super(QueryAnalyzer.DEFAULT_BUILDERS);
         this.anytoken = anytoken;
     }
 
@@ -42,16 +39,7 @@ public class DefaultPresearcherComponent extends PresearcherComponent {
         this(DEFAULT_ANYTOKEN);
     }
 
-    public static final List<QueryTreeBuilder<?>> DEFAULT_BUILDERS = ImmutableList.<QueryTreeBuilder<?>>of(
-            new BooleanQueryTreeBuilder.QueryBuilder(),
-            new PhraseQueryTreeBuilder(),
-            new ConstantScoreQueryTreeBuilder(),
-            new NumericRangeQueryTreeBuilder(),
-            new TermRangeQueryTreeBuilder(),
-            new RegexpAnyTermQueryTreeBuilder(),
-            new SimpleTermQueryTreeBuilder(),
-            new GenericQueryTreeBuilder()
-    );
+
 
     @Override
     public TokenStream filterDocumentTokens(TokenStream ts) {

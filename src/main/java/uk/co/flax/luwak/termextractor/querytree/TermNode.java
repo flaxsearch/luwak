@@ -22,7 +22,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class TermNode extends QueryTree {
 
-    private final QueryTerm term;
+    protected final QueryTerm term;
 
     public TermNode(TreeWeightor weightor, QueryTerm term) {
         super(weightor.weigh(term));
@@ -52,6 +52,11 @@ public class TermNode extends QueryTree {
     @Override
     public boolean isTerminal() {
         return false;
+    }
+
+    @Override
+    public boolean isAny() {
+        return term.type == QueryTerm.Type.ANY;
     }
 
     @Override

@@ -8,10 +8,12 @@ import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
-import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.querytree.*;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
+import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
+import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -49,7 +51,7 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
         Clauses clauses = analyze(query);
 
         if (clauses.isPureNegativeQuery())
-            return new TermNode(builder.weightor, new QueryTerm("", "PURE NEGATIVE BOOLEAN", QueryTerm.Type.ANY));
+            return new AnyNode(builder.weightor, "PURE NEGATIVE BOOLEAN");
 
         if (clauses.isDisjunctionQuery()) {
             return DisjunctionNode.build(builder.weightor, buildChildTrees(builder, clauses.getDisjunctions()));

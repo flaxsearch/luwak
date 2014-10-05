@@ -80,7 +80,6 @@ public class PresearcherComponent {
         for (PresearcherComponent component : components) {
             builders.addAll(component.getQueryTreeBuilders());
         }
-        builders.addAll(DefaultPresearcherComponent.DEFAULT_BUILDERS);
         return new QueryAnalyzer(weightor, builders);
     }
 
