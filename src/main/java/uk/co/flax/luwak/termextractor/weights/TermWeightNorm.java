@@ -50,7 +50,7 @@ public class TermWeightNorm extends WeightNorm {
 
     @Override
     public float norm(QueryTerm term) {
-        if (this.terms.contains(term))
+        if (this.terms.contains(term.term))
             return k;
         return 1;
     }

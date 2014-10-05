@@ -10,10 +10,7 @@ import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
-import uk.co.flax.luwak.termextractor.weights.FieldWeightNorm;
-import uk.co.flax.luwak.termextractor.weights.ReportingWeightor;
-import uk.co.flax.luwak.termextractor.weights.TermFrequencyWeightPolicy;
-import uk.co.flax.luwak.termextractor.weights.TermWeightPolicy;
+import uk.co.flax.luwak.termextractor.weights.*;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -122,6 +119,31 @@ public class TestQueryTermComparators {
         assertThat(weight.select(Sets.newSet(node1, node2)))
                 .isSameAs(node2);
 
+    }
+
+    @Test
+    public void testTermWeightNorms() {
+
+        TreeWeightor weight = new TreeWeightor(new TermWeightNorm(0.1f, "f"));
+
+        QueryTree node1 = new TermNode(weight, new QueryTerm("f", "f", QueryTerm.Type.EXACT));
+        QueryTree node2 = new TermNode(weight, new QueryTerm("f", "g", QueryTerm.Type.EXACT));
+        assertThat(weight.select(Sets.newSet(node1, node2)))
+                .isSameAs(node2);
+
+    }
+
+    @Test
+    public void testFieldSpecificTermWeightNorms() {
+
+        TreeWeightor weight = new TreeWeightor(new FieldSpecificTermWeightNorm(0.1f, "field1", "f", "g"));
+
+        QueryTree node1 = new TermNode(weight, new QueryTerm("field2", "f", QueryTerm.Type.EXACT));
+        QueryTree node2 = new TermNode(weight, new QueryTerm("field1", "f", QueryTerm.Type.EXACT));
+        QueryTree node3 = new TermNode(weight, new QueryTerm("field1", "g", QueryTerm.Type.EXACT));
+
+        assertThat(weight.select(Sets.newSet(node1, node2, node3)))
+                .isSameAs(node1);
     }
 
 }
