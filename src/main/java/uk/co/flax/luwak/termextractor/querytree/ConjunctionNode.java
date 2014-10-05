@@ -49,9 +49,39 @@ public class ConjunctionNode extends QueryTree {
 
     @Override
     public boolean advancePhase(TreeWeightor weightor) {
-        if (!terminal || children.size() <= 1)
+        if (!isTerminal()) {
+            boolean changed = false;
+            for (QueryTree child : children) {
+                changed |= child.advancePhase(weightor);
+            }
+            return changed;
+        }
+        if (children.size() <= 1)
             return false;
         children.remove(weightor.select(children));
         return true;
     }
+
+    @Override
+    public String toString() {
+        return (isTerminal() ? "Terminal" : "") + "Conjunction[" + children.size() + "]: " + weight;
+    }
+
+    @Override
+    public void visit(QueryTreeVisitor visitor, int depth) {
+        visitor.visit(this, depth);
+        for (QueryTree child : children) {
+            child.visit(visitor, depth + 1);
+        }
+    }
+
+    @Override
+    public boolean isTerminal() {
+        for (QueryTree child : children) {
+            if (child.isTerminal())
+                return false;
+        }
+        return children.size() > 1;
+    }
+
 }

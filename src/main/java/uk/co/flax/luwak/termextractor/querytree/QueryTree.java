@@ -26,9 +26,7 @@ public abstract class QueryTree {
 
     protected Set<QueryTree> children = new HashSet<>();
 
-    private QueryTree parent = null;
-
-    protected boolean terminal = true;
+    public QueryTree parent = null;
 
     public final float weight;
 
@@ -37,17 +35,20 @@ public abstract class QueryTree {
     }
 
     protected void addChild(QueryTree child) {
-        children.add(child);
         child.parent = this;
-        if (child instanceof ConjunctionNode) {
-            for (QueryTree tree = this; tree != null; tree = tree.parent) {
-                tree.terminal = false;
-            }
-        }
+        children.add(child);
     }
 
     public abstract void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor);
 
     public abstract boolean advancePhase(TreeWeightor weightor);
+
+    public abstract void visit(QueryTreeVisitor visitor, int depth);
+
+    public void visit(QueryTreeVisitor visitor) {
+        visit(visitor, 0);
+    }
+
+    public abstract boolean isTerminal();
 
 }

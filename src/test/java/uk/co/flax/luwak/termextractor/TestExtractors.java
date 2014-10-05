@@ -49,13 +49,13 @@ public class TestExtractors {
         QueryAnalyzer builder = getBuilder(extractor);
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "super.*califragilistic"))))
-                .containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.CUSTOM("WILDCARD")));
+                .containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hell."))))
-                .containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.CUSTOM("WILDCARD")));
+                .containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hel?o"))))
-                .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.CUSTOM("WILDCARD")));
+                .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
     }
 

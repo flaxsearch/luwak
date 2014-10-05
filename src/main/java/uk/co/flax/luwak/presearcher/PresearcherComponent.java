@@ -104,11 +104,11 @@ public class PresearcherComponent {
      * into the query tree, and the relevant term is collected, you may want to add
      * a specific token here
      *
-     * @param type the type of a collected QueryTerm
+     * @param term the collected QueryTerm
      *
      * @return a token to index, or null if no extra token is required
      */
-    public String extraToken(QueryTerm.Type type) {
+    public String extraToken(QueryTerm term) {
         return null;
     }
 }

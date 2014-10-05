@@ -43,4 +43,19 @@ public class TermNode extends QueryTree {
     public boolean advancePhase(TreeWeightor weightor) {
         return false;
     }
+
+    @Override
+    public void visit(QueryTreeVisitor visitor, int depth) {
+        visitor.visit(this, depth);
+    }
+
+    @Override
+    public boolean isTerminal() {
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "Node [" + term.toString() + "] " + weight;
+    }
 }

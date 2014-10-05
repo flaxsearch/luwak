@@ -111,4 +111,5 @@ public class QueryAnalyzer {
     public String getAnyToken() {
         return "__ANYTOKEN__";
     }
+
 }

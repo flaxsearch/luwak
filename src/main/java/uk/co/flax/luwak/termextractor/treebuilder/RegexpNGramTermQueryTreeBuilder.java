@@ -7,9 +7,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import org.apache.lucene.search.RegexpQuery;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
@@ -63,7 +63,7 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
         String regexp = parseOutRegexp(query.toString(""));
         String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
         return new TermNode(builder.weightor,
-                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM(wildcardToken)));
+                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
     }
 
     /**

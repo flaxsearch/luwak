@@ -44,7 +44,33 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
+    public boolean isTerminal() {
+        boolean result = false;
+        for (QueryTree child : children) {
+            result |= child.isTerminal();
+        }
+        return result;
+    }
+
+    @Override
     public boolean advancePhase(TreeWeightor weightor) {
-        return false;
+        boolean changed = false;
+        for (QueryTree child : children) {
+            changed |= child.advancePhase(weightor);
+        }
+        return changed;
+    }
+
+    @Override
+    public void visit(QueryTreeVisitor visitor, int depth) {
+        visitor.visit(this, depth);
+        for (QueryTree child : children) {
+            child.visit(visitor, depth + 1);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Disjunction[" + children.size() + "]: " + weight;
     }
 }

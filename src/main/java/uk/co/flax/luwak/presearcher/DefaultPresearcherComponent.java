@@ -73,8 +73,8 @@ public class DefaultPresearcherComponent extends PresearcherComponent {
     }
 
     @Override
-    public String extraToken(QueryTerm.Type type) {
-        if (type.type.equals(QueryTerm.Type.T.ANY))
+    public String extraToken(QueryTerm term) {
+        if (term.type == QueryTerm.Type.ANY)
             return anytoken;
         return null;
     }

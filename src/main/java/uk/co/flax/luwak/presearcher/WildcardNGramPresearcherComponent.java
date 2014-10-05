@@ -79,8 +79,8 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
     }
 
     @Override
-    public String extraToken(QueryTerm.Type type) {
-        if (wildcardToken.equals(type.payload))
+    public String extraToken(QueryTerm term) {
+        if (term.type == QueryTerm.Type.CUSTOM && wildcardToken.equals(term.payload))
             return wildcardToken;
         return null;
     }

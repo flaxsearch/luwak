@@ -32,69 +32,26 @@ public class QueryTerm {
     /** The term type */
     public final Type type;
 
+    /** The payload */
+    public final String payload;
+
     /** Construct a new QueryTerm */
-    public QueryTerm(String field, String term, Type type) {
+    public QueryTerm(String field, String term, Type type, String payload) {
         this.field = field;
         this.term = term;
         this.type = type;
+        this.payload = payload;
+    }
+
+    public QueryTerm(String field, String term, Type type) {
+        this(field, term, type, null);
     }
 
     public QueryTerm(Term term) {
         this(term.field(), term.text(), Type.EXACT);
     }
 
-    /**
-     * Type of a term
-     */
-    public static final class Type {
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Type type1 = (Type) o;
-
-            if (payload != null ? !payload.equals(type1.payload) : type1.payload != null) return false;
-            if (type != type1.type) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = payload != null ? payload.hashCode() : 0;
-            result = 31 * result + type.hashCode();
-            return result;
-        }
-
-        public enum T {
-            /** Queries will match against the exact term */
-            EXACT,
-
-            /** The term will match any document */
-            ANY,
-
-            /** Custom type */
-            CUSTOM
-        }
-
-        public final String payload;
-        public final T type;
-
-        private Type(T type, String payload) {
-            this.type = type;
-            this.payload = payload;
-        }
-
-        public static Type CUSTOM(String payload) {
-            return new Type(T.CUSTOM, payload);
-        }
-
-        public static final Type EXACT = new Type(T.EXACT, null);
-
-        public static final Type ANY = new Type(T.ANY, null);
-    }
+    public enum Type { EXACT, ANY, CUSTOM }
 
     @Override
     public boolean equals(Object o) {
@@ -106,6 +63,7 @@ public class QueryTerm {
         if (field != null ? !field.equals(queryTerm.field) : queryTerm.field != null) return false;
         if (term != null ? !term.equals(queryTerm.term) : queryTerm.term != null) return false;
         if (type != null ? !type.equals(queryTerm.type) : queryTerm.type != null) return false;
+        if (payload != null ? !payload.equals(queryTerm.payload) : queryTerm.payload != null) return false;
 
         return true;
     }
@@ -115,11 +73,12 @@ public class QueryTerm {
         int result = field != null ? field.hashCode() : 0;
         result = 31 * result + (term != null ? term.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "field: " + field + ", term: " + term + " [" + type + "]";
+        return type + " " + field + ":[" + term + (payload == null ? "]" : "]{" + payload + "}");
     }
 }

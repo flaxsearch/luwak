@@ -166,7 +166,7 @@ public class TermFilteredPresearcher implements Presearcher {
             else {
                 termslist.append(" ").append(queryTerm.term);
                 for (PresearcherComponent component : components) {
-                    String extratoken = component.extraToken(queryTerm.type);
+                    String extratoken = component.extraToken(queryTerm);
                     if (extratoken != null)
                         termslist.append(" ").append(extratoken);
                 }
