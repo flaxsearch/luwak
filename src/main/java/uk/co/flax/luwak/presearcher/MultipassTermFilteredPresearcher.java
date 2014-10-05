@@ -10,6 +10,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -27,13 +28,45 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  * limitations under the License.
  */
 
+/**
+ * A TermFilteredPresearcher that indexes queries multiple times, with terms collected
+ * from different routes through a querytree.  Each route will produce a set of terms
+ * that are *sufficient* to select the query, and are indexed into a separate, suffixed field.
+ *
+ * Incoming InputDocuments are then converted to a set of Disjunction queries over each
+ * suffixed field, and these queries are combined into a conjunction query, such that the
+ * document's set of terms must match a term from each route.
+ *
+ * This allows filtering out of documents that contain one half of a two-term phrase query, for
+ * example.  The query {@code "hello world"} will be indexed twice, once under 'hello' and once
+ * under 'world'.  A document containing the terms "hello there" would match the first field,
+ * but not the second, and so would not be selected for matching.
+ *
+ * The number of passes the presearcher makes is configurable.  More passes will improve the
+ * selected/matched ratio, but will take longer to index and will use more RAM.
+ */
 public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private final int passes;
 
-    public MultipassTermFilteredPresearcher(int passes, PresearcherComponent... components) {
-        super(components);
+    /**
+     * Construct a new MultipassTermFilteredPresearcher
+     * @param passes the number of times a query should be indexed
+     * @param weightor the TreeWeightor to use
+     * @param components the PresearcherComponents to use
+     */
+    public MultipassTermFilteredPresearcher(int passes, TreeWeightor weightor, PresearcherComponent... components) {
+        super(weightor, components);
         this.passes = passes;
+    }
+
+    /**
+     * Construct a new MultipassTermFilteredPresearcher, using the default TreeWeightor
+     * @param passes the number of times a query should be indexed
+     * @param components the PresearcherComponents to use
+     */
+    public MultipassTermFilteredPresearcher(int passes, PresearcherComponent... components) {
+        this(passes, TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     @Override
