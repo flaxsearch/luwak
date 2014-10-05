@@ -76,7 +76,7 @@ public class TestQueryTermComparators {
     @Test
     public void testUndesireableFieldsAreNotPreferred() {
 
-        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(Sets.newSet("g"), 0.7f));
+        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(0.7f,  "g"));
 
         QueryTree node1 = new TermNode(weight, new QueryTerm("f", "foo", QueryTerm.Type.ANY));
         QueryTree node2 = new TermNode(weight, new QueryTerm("g", "bar", QueryTerm.Type.EXACT));
@@ -89,7 +89,7 @@ public class TestQueryTermComparators {
     @Test
     public void testUndesireableFieldsAreStillSelectedIfNecessary() {
 
-        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(Sets.newSet("f"), 0.7f));
+        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(0.7f, "f"));
 
         QueryTree node1 = new TermNode(weight, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
         assertThat(weight.select(Sets.newSet(node1)))
