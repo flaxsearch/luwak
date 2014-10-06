@@ -40,7 +40,7 @@ public class TermNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor) {
+    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
         return false;
     }
 
@@ -50,7 +50,7 @@ public class TermNode extends QueryTree {
     }
 
     @Override
-    public boolean isTerminal() {
+    public boolean isAdvanceable(Advancer advancer) {
         return false;
     }
 

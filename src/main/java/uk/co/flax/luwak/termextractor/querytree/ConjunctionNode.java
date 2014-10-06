@@ -48,11 +48,11 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor) {
-        if (!isTerminal()) {
+    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
+        if (!isAdvanceable(advancer)) {
             boolean changed = false;
             for (QueryTree child : children) {
-                changed |= child.advancePhase(weightor);
+                changed |= child.advancePhase(weightor, advancer);
             }
             return changed;
         }
@@ -64,7 +64,7 @@ public class ConjunctionNode extends QueryTree {
 
     @Override
     public String toString() {
-        return (isTerminal() ? "Terminal" : "") + "Conjunction[" + children.size() + "]: " + weight;
+        return "Conjunction[" + children.size() + "]: " + weight;
     }
 
     @Override
@@ -76,14 +76,14 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean isTerminal() {
+    public boolean isAdvanceable(Advancer advancer) {
         for (QueryTree child : children) {
-            if (child.isTerminal())
+            if (child.isAdvanceable(advancer))
                 return false;
         }
         int c = children.size();
         for (QueryTree child : children) {
-            if (child.isAny() || child.weight == 0)
+            if (!advancer.canAdvanceOver(child))
                 c--;
         }
         return c > 1;

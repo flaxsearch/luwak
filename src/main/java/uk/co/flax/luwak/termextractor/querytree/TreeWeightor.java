@@ -45,7 +45,7 @@ public class TreeWeightor {
     }
 
     public static final TreeWeightor DEFAULT_WEIGHTOR
-            = new TreeWeightor(new WeightPolicy.Default(new TermTypeNorm(0.1f), new TokenLengthNorm(3, 0.3f)),
+            = new TreeWeightor(new WeightPolicy.Default(new TermTypeNorm(0), new TokenLengthNorm(3, 0.3f)),
                                                         new MinWeightCombiner());
 
     protected TreeWeightor(TreeWeightor delegate) {

@@ -46,5 +46,6 @@ public abstract class WeightPolicy {
         protected float weighTerm(QueryTerm term) {
             return 1;
         }
+
     }
 }

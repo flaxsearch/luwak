@@ -3,8 +3,10 @@ package uk.co.flax.luwak.termextractor;
 import org.apache.lucene.search.Query;
 import org.junit.Test;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
+import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 import uk.co.flax.luwak.util.ParserUtils;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -72,6 +74,7 @@ public class TestQueryAnalyzer {
         assertThat(analyzer.advancePhase(tree)).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
+        QueryTreeViewer.view(tree, analyzer.weightor, System.out);
         assertThat(analyzer.advancePhase(tree)).isFalse();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
@@ -81,12 +84,18 @@ public class TestQueryAnalyzer {
     @Test
     public void testConjunctionsCannotAdvanceOverZeroWeightedTokens() throws Exception {
 
-        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0, "startterm"));
+        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0, "startterm"), new TokenLengthNorm(1, 1));
         QueryAnalyzer analyzer = new QueryAnalyzer(weightor);
 
-        Query q = ParserUtils.parse("+startterm +hello");
+        Query q = ParserUtils.parse("+startterm +hello +goodbye");
         QueryTree tree = analyzer.buildTree(q);
 
+        QueryTreeViewer.view(tree, analyzer.weightor, System.out);
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree))
+                .isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
         assertThat(analyzer.advancePhase(tree))

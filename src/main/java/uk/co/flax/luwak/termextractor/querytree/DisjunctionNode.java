@@ -48,10 +48,10 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean isTerminal() {
+    public boolean isAdvanceable(Advancer advancer) {
         boolean result = false;
         for (QueryTree child : children) {
-            result |= child.isTerminal();
+            result |= child.isAdvanceable(advancer);
         }
         return result;
     }
@@ -75,10 +75,10 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor) {
+    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
         boolean changed = false;
         for (QueryTree child : children) {
-            changed |= child.advancePhase(weightor);
+            changed |= child.advancePhase(weightor, advancer);
         }
         return changed;
     }

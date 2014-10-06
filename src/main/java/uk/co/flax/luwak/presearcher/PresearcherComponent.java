@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.TokenStream;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.Advancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
@@ -75,12 +76,12 @@ public class PresearcherComponent {
      * @param components a list of PresearcherComponents
      * @return a QueryAnalyzer
      */
-    public static QueryAnalyzer buildQueryAnalyzer(TreeWeightor weightor, PresearcherComponent... components) {
+    public static QueryAnalyzer buildQueryAnalyzer(TreeWeightor weightor, Advancer advancer, PresearcherComponent... components) {
         List<QueryTreeBuilder<?>> builders = new ArrayList<>();
         for (PresearcherComponent component : components) {
             builders.addAll(component.getQueryTreeBuilders());
         }
-        return new QueryAnalyzer(weightor, builders);
+        return new QueryAnalyzer(weightor, advancer, builders);
     }
 
     /**
@@ -92,8 +93,12 @@ public class PresearcherComponent {
      * @param components a list of PresearcherComponents
      * @return a QueryAnalyzer
      */
+    public static QueryAnalyzer buildQueryAnalyzer(Advancer advancer, PresearcherComponent... components) {
+        return buildQueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, advancer, components);
+    }
+
     public static QueryAnalyzer buildQueryAnalyzer(PresearcherComponent... components) {
-        return buildQueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, components);
+        return buildQueryAnalyzer(Advancer.DEFAULT, components);
     }
 
     /**

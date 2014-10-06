@@ -110,15 +110,14 @@ public class TestQueryTermComparators {
     @Test
     public void testTermFrequencyNorms() {
 
-        Map<String, Integer> termfreqs = ImmutableMap.of("wibble", 100, "quack", 1000, "foo", 99);
+        Map<String, Integer> termfreqs = ImmutableMap.of("france", 31635, "s", 47088);
         TreeWeightor weight = new TreeWeightor(new TermFrequencyWeightPolicy(termfreqs, 100, 0.8f));
 
-        QueryTree node1 = new TermNode(weight, new QueryTerm("f", "wibble", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(weight, new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTree node3 = new TermNode(weight, new QueryTerm("f", "quack", QueryTerm.Type.EXACT));
+        QueryTree node1 = new TermNode(weight, new QueryTerm("f", "france", QueryTerm.Type.EXACT));
+        QueryTree node2 = new TermNode(weight, new QueryTerm("f", "s", QueryTerm.Type.EXACT));
 
-        assertThat(weight.select(Sets.newSet(node1, node2, node3)))
-                .isSameAs(node2);
+        assertThat(weight.select(Sets.newSet(node1, node2)))
+                .isSameAs(node1);
 
     }
 

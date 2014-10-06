@@ -41,7 +41,7 @@ public abstract class QueryTree {
 
     public abstract void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor);
 
-    public abstract boolean advancePhase(TreeWeightor weightor);
+    public abstract boolean advancePhase(TreeWeightor weightor, Advancer advancer);
 
     public abstract void visit(QueryTreeVisitor visitor, int depth);
 
@@ -49,7 +49,7 @@ public abstract class QueryTree {
         visit(visitor, 0);
     }
 
-    public abstract boolean isTerminal();
+    public abstract boolean isAdvanceable(Advancer advancer);
 
     public abstract boolean isAny();
 

@@ -24,13 +24,20 @@ public class QueryTreeViewer implements QueryTreeVisitor {
 
     private final TreeWeightor weightor;
 
-    public QueryTreeViewer(TreeWeightor weightor, PrintStream out) {
+    private final Advancer advancer;
+
+    public QueryTreeViewer(TreeWeightor weightor, Advancer advancer, PrintStream out) {
         this.out = out;
         this.weightor = weightor;
+        this.advancer = advancer;
+    }
+
+    public static void view(QueryTree tree, TreeWeightor weightor, Advancer advancer, final PrintStream out) {
+        tree.visit(new QueryTreeViewer(weightor, advancer, out));
     }
 
     public static void view(QueryTree tree, TreeWeightor weightor, final PrintStream out) {
-        tree.visit(new QueryTreeViewer(weightor, out));
+        view(tree, weightor, Advancer.DEFAULT, out);
     }
 
     @Override
@@ -38,6 +45,7 @@ public class QueryTreeViewer implements QueryTreeVisitor {
         for (int i = 0; i < depth; i++) {
             out.print("\t");
         }
-        out.println(tree.toString() + "<-- [" + tree.toString(weightor) + "]");
+        out.println(tree.toString() + " <-- [" + tree.toString(weightor) + "]"
+                + (tree.isAdvanceable(advancer) ? " ADVANCEABLE" : ""));
     }
 }

@@ -49,4 +49,5 @@ public class TermFrequencyWeightPolicy extends WeightPolicy {
             return (n / this.frequencies.get(term.term)) + k;
         return 1;
     }
+
 }
