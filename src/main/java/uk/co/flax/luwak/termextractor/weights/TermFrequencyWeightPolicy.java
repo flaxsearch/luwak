@@ -26,7 +26,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 public class TermFrequencyWeightPolicy extends WeightPolicy {
 
     final Map<String, Integer> frequencies;
-    final int n;
+    final float n;
     final float k;
 
     /**
@@ -36,7 +36,7 @@ public class TermFrequencyWeightPolicy extends WeightPolicy {
      * @param k minimum weight to scale to
      * @param norms WeightNorms to use for further normalization
      */
-    public TermFrequencyWeightPolicy(Map<String, Integer> frequencies, int n, float k, WeightNorm... norms) {
+    public TermFrequencyWeightPolicy(Map<String, Integer> frequencies, float n, float k, WeightNorm... norms) {
         super(norms);
         this.frequencies = frequencies;
         this.n = n;
