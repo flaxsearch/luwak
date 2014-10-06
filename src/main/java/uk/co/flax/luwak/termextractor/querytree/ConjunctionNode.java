@@ -83,7 +83,7 @@ public class ConjunctionNode extends QueryTree {
         }
         int c = children.size();
         for (QueryTree child : children) {
-            if (child.isAny())
+            if (child.isAny() || child.weight == 0)
                 c--;
         }
         return c > 1;

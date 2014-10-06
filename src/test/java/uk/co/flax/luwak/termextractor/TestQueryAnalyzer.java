@@ -3,6 +3,8 @@ package uk.co.flax.luwak.termextractor;
 import org.apache.lucene.search.Query;
 import org.junit.Test;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
 import uk.co.flax.luwak.util.ParserUtils;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -73,6 +75,22 @@ public class TestQueryAnalyzer {
         assertThat(analyzer.advancePhase(tree)).isFalse();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
+
+    }
+
+    @Test
+    public void testConjunctionsCannotAdvanceOverZeroWeightedTokens() throws Exception {
+
+        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0, "startterm"));
+        QueryAnalyzer analyzer = new QueryAnalyzer(weightor);
+
+        Query q = ParserUtils.parse("+startterm +hello");
+        QueryTree tree = analyzer.buildTree(q);
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree))
+                .isFalse();
 
     }
 
