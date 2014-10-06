@@ -22,12 +22,15 @@ public class QueryTreeViewer implements QueryTreeVisitor {
 
     private final PrintStream out;
 
-    public QueryTreeViewer(PrintStream out) {
+    private final TreeWeightor weightor;
+
+    public QueryTreeViewer(TreeWeightor weightor, PrintStream out) {
         this.out = out;
+        this.weightor = weightor;
     }
 
-    public static void view(QueryTree tree, final PrintStream out) {
-        tree.visit(new QueryTreeViewer(out));
+    public static void view(QueryTree tree, TreeWeightor weightor, final PrintStream out) {
+        tree.visit(new QueryTreeViewer(weightor, out));
     }
 
     @Override
@@ -35,6 +38,6 @@ public class QueryTreeViewer implements QueryTreeVisitor {
         for (int i = 0; i < depth; i++) {
             out.print("\t");
         }
-        out.println(tree.toString());
+        out.println(tree.toString() + "<-- [" + tree.toString(weightor) + "]");
     }
 }

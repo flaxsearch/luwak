@@ -33,7 +33,7 @@ public class DumpQueryTree {
         QueryTree tree = analyzer.buildTree(bq);
 
         do {
-            QueryTreeViewer.view(tree, System.out);
+            QueryTreeViewer.view(tree, analyzer.weightor, System.out);
             System.out.println(analyzer.collectTerms(tree));
         }
         while (analyzer.advancePhase(tree));

@@ -60,6 +60,11 @@ public class TermNode extends QueryTree {
     }
 
     @Override
+    public String toString(TreeWeightor weightor) {
+        return term.term;
+    }
+
+    @Override
     public String toString() {
         return "Node [" + term.toString() + "] " + weight;
     }

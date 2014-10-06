@@ -98,4 +98,9 @@ public class ConjunctionNode extends QueryTree {
         return true;
     }
 
+    @Override
+    public String toString(TreeWeightor weightor) {
+        return weightor.select(children).toString(weightor);
+    }
+
 }

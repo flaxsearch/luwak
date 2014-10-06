@@ -66,6 +66,15 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
+    public String toString(TreeWeightor weightor) {
+        StringBuilder sb = new StringBuilder(" ");
+        for (QueryTree child : children) {
+            sb.append(child.toString(weightor)).append(" ");
+        }
+        return sb.toString();
+    }
+
+    @Override
     public boolean advancePhase(TreeWeightor weightor) {
         boolean changed = false;
         for (QueryTree child : children) {

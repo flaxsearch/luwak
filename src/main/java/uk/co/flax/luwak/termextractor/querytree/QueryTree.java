@@ -53,4 +53,5 @@ public abstract class QueryTree {
 
     public abstract boolean isAny();
 
+    public abstract String toString(TreeWeightor weightor);
 }
