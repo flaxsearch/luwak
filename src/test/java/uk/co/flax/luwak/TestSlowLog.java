@@ -67,6 +67,7 @@ public class TestSlowLog {
         InputDocument doc1 = InputDocument.builder("doc1").build();
 
         SimpleMatcher matches = monitor.match(doc1, SimpleMatcher.FACTORY);
+        System.out.println(matches.getSlowLog());
         assertThat(matches.getSlowLog())
                 .contains("1:")
                 .contains("3:")

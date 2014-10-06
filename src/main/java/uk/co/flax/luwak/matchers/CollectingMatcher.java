@@ -51,7 +51,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
         doc.getSearcher().search(matchQuery, coll);
         t = System.nanoTime() - t;
         if (t > slowLogLimit)
-            slowlog.append(queryId + ":" + t + " ");
+            slowlog.append(queryId + ":" + (t / 1000000) + " ");
 
         if (coll.match != null)
             matches.put(queryId, coll.match);
