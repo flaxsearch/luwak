@@ -110,4 +110,59 @@ public class TestQueryAnalyzer {
 
     }
 
+    @Test
+    public void testNestedConjunctions() throws Exception {
+
+        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
+
+        Query q = ParserUtils.parse("+(+(+(+aaaa +cc) +(+d +bbb)))");
+        QueryTree tree = analyzer.buildTree(q);
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree, advancer))
+                .isTrue();
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree, advancer))
+                .isTrue();
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree, advancer))
+                .isTrue();
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "d", QueryTerm.Type.EXACT));
+        assertThat(analyzer.advancePhase(tree, advancer))
+                .isFalse();
+
+    }
+
+    @Test
+    public void testNestedDisjunctions() throws Exception {
+
+        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
+
+        Query q = ParserUtils.parse("+(+((+aaaa +cc) (+dd +bbb +f)))");
+        QueryTree tree = analyzer.buildTree(q);
+
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT),
+                              new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
+
+        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
+                              new QueryTerm("field", "dd", QueryTerm.Type.EXACT));
+
+        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
+        assertThat(analyzer.collectTerms(tree))
+                .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
+                        new QueryTerm("field", "f", QueryTerm.Type.EXACT));
+
+        assertThat(analyzer.advancePhase(tree, advancer)).isFalse();
+    }
+
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.util.PriorityQueue;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -53,18 +54,33 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
+    public boolean advancePhase(final TreeWeightor weightor, TreeAdvancer advancer) {
         if (!isAdvanceable(advancer)) {
-            boolean changed = false;
-            for (QueryTree child : children) {
-                changed |= child.advancePhase(weightor, advancer);
+            PriorityQueue<QueryTree> pq = buildPriorityQueue(weightor);
+            while (pq.size() > 0) {
+                QueryTree child = pq.pop();
+                if (child.advancePhase(weightor, advancer))
+                    return true;
             }
-            return changed;
+            return false;
         }
         if (children.size() <= 1)
             return false;
         children.remove(weightor.select(children));
         return true;
+    }
+
+    private PriorityQueue<QueryTree> buildPriorityQueue(final TreeWeightor weightor) {
+        PriorityQueue<QueryTree> pq = new PriorityQueue<QueryTree>(children.size()) {
+            @Override
+            protected boolean lessThan(QueryTree a, QueryTree b) {
+                return a.weight(weightor) > b.weight(weightor);
+            }
+        };
+        for (QueryTree child : children) {
+            pq.add(child);
+        }
+        return pq;
     }
 
     @Override
@@ -77,16 +93,23 @@ public class ConjunctionNode extends QueryTree {
 
     @Override
     public boolean isAdvanceable(TreeAdvancer advancer) {
-        for (QueryTree child : children) {
-            if (child.isAdvanceable(advancer))
-                return false;
-        }
+        if (hasAdvanceableDescendents(advancer))
+            return false;
         int c = children.size();
         for (QueryTree child : children) {
             if (!advancer.canAdvanceOver(child))
                 c--;
         }
         return c > 1;
+    }
+
+    @Override
+    public boolean hasAdvanceableDescendents(TreeAdvancer advancer) {
+        for (QueryTree child : children) {
+            if (child.isAdvanceable(advancer) || child.hasAdvanceableDescendents(advancer))
+                return true;
+        }
+        return false;
     }
 
     @Override

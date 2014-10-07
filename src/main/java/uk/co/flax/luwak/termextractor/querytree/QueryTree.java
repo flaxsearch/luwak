@@ -47,6 +47,8 @@ public abstract class QueryTree {
 
     public abstract boolean isAdvanceable(TreeAdvancer advancer);
 
+    public abstract boolean hasAdvanceableDescendents(TreeAdvancer advancer);
+
     public abstract boolean isAny();
 
     public abstract String toString(TreeWeightor weightor, TreeAdvancer advancer);

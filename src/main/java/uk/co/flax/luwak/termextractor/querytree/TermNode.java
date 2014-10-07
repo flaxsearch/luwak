@@ -61,6 +61,11 @@ public class TermNode extends QueryTree {
     }
 
     @Override
+    public boolean hasAdvanceableDescendents(TreeAdvancer advancer) {
+        return false;
+    }
+
+    @Override
     public boolean isAny() {
         return term.type == QueryTerm.Type.ANY;
     }

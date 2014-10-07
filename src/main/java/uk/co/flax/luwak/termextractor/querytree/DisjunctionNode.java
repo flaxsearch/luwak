@@ -100,6 +100,15 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
+    public boolean hasAdvanceableDescendents(TreeAdvancer advancer) {
+        for (QueryTree child : children) {
+            if (child.hasAdvanceableDescendents(advancer))
+                return true;
+        }
+        return false;
+    }
+
+    @Override
     public void visit(QueryTreeVisitor visitor, int depth) {
         visitor.visit(this, depth);
         for (QueryTree child : children) {

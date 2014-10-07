@@ -6,6 +6,10 @@ import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.FieldWeightNorm;
+import uk.co.flax.luwak.termextractor.weights.TermTypeNorm;
+import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
 import uk.co.flax.luwak.util.ParserUtils;
 
 /**
@@ -28,16 +32,23 @@ public class DumpQueryTree {
 
     public static void main(String... args) throws Exception {
 
-        Query bq = ParserUtils.parse("+foo +bar +(aardvark (+badger +cormorant))");
+        Query bq = ParserUtils.parse("+(+(+story:start term +(+story:data +story:user +story:google)) +(+hello +world +howdyedo))");
 
-        QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(new DefaultPresearcherComponent());
+        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0.0f, "start"),
+                                                 new TermWeightNorm(1, "google"),
+                                                 new TermWeightNorm(4, "user", "data"),
+                                                 new FieldWeightNorm(0.1f, "wire"),
+                                                 new TermTypeNorm(1));
+        QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(weightor, new DefaultPresearcherComponent());
+        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
+
         QueryTree tree = analyzer.buildTree(bq);
 
         do {
-            QueryTreeViewer.view(tree, analyzer.weightor, System.out);
+            QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
             System.out.println(analyzer.collectTerms(tree));
         }
-        while (analyzer.advancePhase(tree, new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0.2f)));
+        while (analyzer.advancePhase(tree, advancer));
 
         System.out.flush();
         System.out.println("done");
