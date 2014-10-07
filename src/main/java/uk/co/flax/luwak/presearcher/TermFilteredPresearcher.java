@@ -40,7 +40,6 @@ import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.querytree.Advancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -61,28 +60,20 @@ public class TermFilteredPresearcher implements Presearcher {
 
     private final List<PresearcherComponent> components = Lists.newArrayList();
 
-    public TermFilteredPresearcher(TreeWeightor weightor, Advancer advancer, QueryTreeBuilder... queryTreeBuilders) {
-        this.extractor = new QueryAnalyzer(weightor, advancer, queryTreeBuilders);
+    public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
+        this.extractor = new QueryAnalyzer(weightor, queryTreeBuilders);
         this.components.add(new DefaultPresearcherComponent());
         this.components.add(new PresearcherComponent(queryTreeBuilders));
-    }
-
-    public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
-        this(weightor, Advancer.DEFAULT, queryTreeBuilders);
     }
 
     public TermFilteredPresearcher(QueryTreeBuilder... queryTreeBuilders) {
         this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
     }
 
-    public TermFilteredPresearcher(TreeWeightor weightor, Advancer advancer, PresearcherComponent... components) {
-        this.extractor = PresearcherComponent.buildQueryAnalyzer(weightor, advancer, components);
+    public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
+        this.extractor = PresearcherComponent.buildQueryAnalyzer(weightor, components);
         this.components.add(new DefaultPresearcherComponent());
         this.components.addAll(Arrays.asList(components));
-    }
-
-    public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
-        this(weightor, Advancer.DEFAULT, components);
     }
 
     public TermFilteredPresearcher(PresearcherComponent... components) {

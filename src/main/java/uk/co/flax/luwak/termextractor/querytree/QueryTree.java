@@ -28,20 +28,16 @@ public abstract class QueryTree {
 
     public QueryTree parent = null;
 
-    public final float weight;
-
-    protected QueryTree(float weight) {
-        this.weight = weight;
-    }
-
     protected void addChild(QueryTree child) {
         child.parent = this;
         children.add(child);
     }
 
+    public abstract float weight(TreeWeightor weightor);
+
     public abstract void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor);
 
-    public abstract boolean advancePhase(TreeWeightor weightor, Advancer advancer);
+    public abstract boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer);
 
     public abstract void visit(QueryTreeVisitor visitor, int depth);
 
@@ -49,9 +45,15 @@ public abstract class QueryTree {
         visit(visitor, 0);
     }
 
-    public abstract boolean isAdvanceable(Advancer advancer);
+    public abstract boolean isAdvanceable(TreeAdvancer advancer);
 
     public abstract boolean isAny();
 
-    public abstract String toString(TreeWeightor weightor);
+    public abstract String toString(TreeWeightor weightor, TreeAdvancer advancer);
+
+    public final String toString(TreeWeightor weightor) {
+        return this.toString(weightor, TreeAdvancer.NOOP);
+    }
+
+    public abstract Set<QueryTerm> terms(TreeWeightor weightor);
 }

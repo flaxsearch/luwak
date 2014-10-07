@@ -105,7 +105,7 @@ public class TestExtractors {
 
         @Override
         public QueryTree buildTree(QueryAnalyzer builder, MyFilter query) {
-            return new TermNode(builder.weightor, new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
+            return new TermNode(new QueryTerm("FILTER", "MYFILTER", QueryTerm.Type.EXACT));
         }
     }
 

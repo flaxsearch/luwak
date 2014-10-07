@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
@@ -43,7 +43,7 @@ public class ReportingWeightor extends TreeWeightor {
     }
 
     @Override
-    public float combine(List<QueryTree> children) {
+    public float combine(Collection<QueryTree> children) {
         float weight = super.combine(children);
         reporter.reportCombination(weight, children);
         return weight;
@@ -62,7 +62,7 @@ public class ReportingWeightor extends TreeWeightor {
 
         void reportSelected(QueryTree selected, Set<QueryTree> children);
 
-        void reportCombination(float weight, List<QueryTree> children);
+        void reportCombination(float weight, Collection<QueryTree> children);
 
     }
 
@@ -79,7 +79,7 @@ public class ReportingWeightor extends TreeWeightor {
         }
 
         @Override
-        public void reportCombination(float weight, List<QueryTree> children) {
+        public void reportCombination(float weight, Collection<QueryTree> children) {
             System.out.println("Derived weight " + weight + " from combination of " + children);
         }
 

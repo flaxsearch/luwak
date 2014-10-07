@@ -31,6 +31,6 @@ public class TermFilterQueryTreeBuilder extends QueryTreeBuilder<TermFilter> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermFilter query) {
-        return new TermNode(builder.weightor, new QueryTerm(query.getTerm()));
+        return new TermNode(new QueryTerm(query.getTerm()));
     }
 }

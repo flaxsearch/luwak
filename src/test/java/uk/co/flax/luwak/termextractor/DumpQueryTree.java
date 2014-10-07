@@ -3,6 +3,7 @@ package uk.co.flax.luwak.termextractor;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.presearcher.DefaultPresearcherComponent;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.util.ParserUtils;
@@ -36,7 +37,7 @@ public class DumpQueryTree {
             QueryTreeViewer.view(tree, analyzer.weightor, System.out);
             System.out.println(analyzer.collectTerms(tree));
         }
-        while (analyzer.advancePhase(tree));
+        while (analyzer.advancePhase(tree, new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0.2f)));
 
         System.out.flush();
         System.out.println("done");

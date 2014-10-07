@@ -30,6 +30,6 @@ public class GenericFilterQueryTreeBuilder extends QueryTreeBuilder<Filter> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, Filter filter) {
-        return new AnyNode(builder.weightor, filter.getClass().getCanonicalName());
+        return new AnyNode(filter.getClass().getCanonicalName());
     }
 }

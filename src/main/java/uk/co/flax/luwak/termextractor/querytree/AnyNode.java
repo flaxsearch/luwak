@@ -19,21 +19,21 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 public class AnyNode extends TermNode {
 
-    public AnyNode(TreeWeightor weightor, QueryTerm term) {
-        super(weightor, term);
+    public AnyNode(QueryTerm term) {
+        super(term);
     }
 
-    public AnyNode(TreeWeightor weightor, String reason) {
-        this(weightor, new QueryTerm("", reason, QueryTerm.Type.ANY));
+    public AnyNode(String reason) {
+        this(new QueryTerm("", reason, QueryTerm.Type.ANY));
     }
 
-    public AnyNode(TreeWeightor weightor, String field, String reason) {
-        this(weightor, new QueryTerm(field, reason, QueryTerm.Type.ANY));
+    public AnyNode(String field, String reason) {
+        this(new QueryTerm(field, reason, QueryTerm.Type.ANY));
     }
 
     @Override
-    public String toString() {
-        return "AnyNode [" + term.toString() + "] " + weight;
+    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
+        return "AnyNode [" + term.toString() + "] " + this.weight(weightor);
     }
 
     @Override

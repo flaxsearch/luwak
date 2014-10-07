@@ -2,6 +2,7 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
@@ -29,7 +30,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestQueryAnalyzer {
 
-    public static QueryAnalyzer analyzer = new QueryAnalyzer();
+    public static final QueryAnalyzer analyzer = new QueryAnalyzer();
+
+    public static final TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
 
     @Test
     public void testAdvancesCollectDifferentTerms() throws Exception {
@@ -40,12 +43,12 @@ public class TestQueryAnalyzer {
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(querytree)).isTrue();
+        assertThat(analyzer.advancePhase(querytree, advancer)).isTrue();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(querytree)).isFalse();
+        assertThat(analyzer.advancePhase(querytree, advancer)).isFalse();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
@@ -71,11 +74,11 @@ public class TestQueryAnalyzer {
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "howdyedo", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree)).isTrue();
+        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
-        QueryTreeViewer.view(tree, analyzer.weightor, System.out);
-        assertThat(analyzer.advancePhase(tree)).isFalse();
+        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
+        assertThat(analyzer.advancePhase(tree, advancer)).isFalse();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
@@ -85,21 +88,25 @@ public class TestQueryAnalyzer {
     public void testConjunctionsCannotAdvanceOverZeroWeightedTokens() throws Exception {
 
         TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0, "startterm"), new TokenLengthNorm(1, 1));
+
         QueryAnalyzer analyzer = new QueryAnalyzer(weightor);
+        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(weightor, 0);
 
         Query q = ParserUtils.parse("+startterm +hello +goodbye");
         QueryTree tree = analyzer.buildTree(q);
 
-        QueryTreeViewer.view(tree, analyzer.weightor, System.out);
+        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree))
+        assertThat(analyzer.advancePhase(tree, advancer))
                 .isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree))
+        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
+        assertThat(analyzer.advancePhase(tree, advancer))
                 .isFalse();
+        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
 
     }
 

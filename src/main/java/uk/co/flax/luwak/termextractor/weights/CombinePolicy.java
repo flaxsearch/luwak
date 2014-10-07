@@ -1,8 +1,9 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import java.util.List;
+import java.util.Collection;
 
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -21,5 +22,5 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  */
 
 public interface CombinePolicy {
-    float combine(List<QueryTree> children);
+    float combine(TreeWeightor weightor, Collection<QueryTree> children);
 }

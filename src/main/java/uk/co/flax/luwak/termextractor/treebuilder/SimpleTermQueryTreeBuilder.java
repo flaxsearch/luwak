@@ -34,6 +34,6 @@ public class SimpleTermQueryTreeBuilder extends QueryTreeBuilder<TermQuery> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermQuery query) {
-        return new TermNode(builder.weightor, new QueryTerm(query.getTerm()));
+        return new TermNode(new QueryTerm(query.getTerm()));
     }
 }

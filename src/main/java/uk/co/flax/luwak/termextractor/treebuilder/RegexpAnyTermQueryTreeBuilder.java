@@ -33,6 +33,6 @@ public class RegexpAnyTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuery>
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
-        return new AnyNode(builder.weightor, query.getField(), query.toString());
+        return new AnyNode(query.getField(), query.toString());
     }
 }

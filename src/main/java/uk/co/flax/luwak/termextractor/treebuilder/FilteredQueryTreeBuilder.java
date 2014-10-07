@@ -21,7 +21,7 @@ public class FilteredQueryTreeBuilder extends QueryTreeBuilder<FilteredQuery> {
         List<QueryTree> children = new ArrayList<>();
         children.add(builder.buildTree(query.getQuery()));
         children.add(builder.buildTree(query.getFilter()));
-        return ConjunctionNode.build(builder.weightor, children);
+        return ConjunctionNode.build(children);
     }
 
 }

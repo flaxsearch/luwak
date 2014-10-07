@@ -64,9 +64,9 @@ public class TermsFilterQueryTreeBuilder extends QueryTreeBuilder<TermsFilter> {
         try {
             List<QueryTree> children = new ArrayList<>();
             for (Term term : getTermsFromTermsFilter(query)) {
-                children.add(new TermNode(builder.weightor, new QueryTerm(term)));
+                children.add(new TermNode(new QueryTerm(term)));
             }
-            return DisjunctionNode.build(builder.weightor, children);
+            return DisjunctionNode.build(children);
         }
         catch (IllegalAccessException e) {
             throw new RuntimeException("Couldn't extract terms from TermsFilter", e);

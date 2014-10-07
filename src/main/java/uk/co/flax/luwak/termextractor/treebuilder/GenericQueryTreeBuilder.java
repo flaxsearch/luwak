@@ -52,9 +52,9 @@ public class GenericQueryTreeBuilder extends QueryTreeBuilder<Query> {
 
         List<QueryTree> children = new ArrayList<>();
         for (Term term : termSet) {
-            children.add(new TermNode(builder.weightor, new QueryTerm(term)));
+            children.add(new TermNode(new QueryTerm(term)));
         }
-        return ConjunctionNode.build(builder.weightor, children);
+        return ConjunctionNode.build(children);
 
     }
 }

@@ -1,7 +1,10 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -21,19 +24,23 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 public class DisjunctionNode extends QueryTree {
 
-    private DisjunctionNode(TreeWeightor weightor, List<QueryTree> children) {
-        super(weightor.combine(children));
+    private DisjunctionNode(List<QueryTree> children) {
         for (QueryTree child : children) {
             this.addChild(child);
         }
     }
 
-    public static QueryTree build(TreeWeightor weightor, List<QueryTree> children) {
+    public static QueryTree build(List<QueryTree> children) {
         if (children.size() == 0)
             throw new IllegalArgumentException("Cannot build ConjunctionNode with no children");
         if (children.size() == 1)
             return children.get(0);
-        return new DisjunctionNode(weightor, children);
+        return new DisjunctionNode(children);
+    }
+
+    @Override
+    public float weight(TreeWeightor weightor) {
+        return weightor.combine(children);
     }
 
     @Override
@@ -48,7 +55,7 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean isAdvanceable(Advancer advancer) {
+    public boolean isAdvanceable(TreeAdvancer advancer) {
         boolean result = false;
         for (QueryTree child : children) {
             result |= child.isAdvanceable(advancer);
@@ -66,16 +73,25 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public String toString(TreeWeightor weightor) {
-        StringBuilder sb = new StringBuilder(" ");
+    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
+        StringBuilder sb = new StringBuilder("Disjunction[");
+        sb.append(children.size()).append("] ");
+        sb.append(weight(weightor)).append(" { ");
         for (QueryTree child : children) {
-            sb.append(child.toString(weightor)).append(" ");
+            sb.append(child.terms(weightor)).append(" ");
         }
-        return sb.toString();
+        return sb.append("}").toString();
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
+    public Set<QueryTerm> terms(TreeWeightor weightor) {
+        List<QueryTerm> qterms = new ArrayList<>();
+        this.collectTerms(qterms, weightor);
+        return Sets.newHashSet(qterms);
+    }
+
+    @Override
+    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
         boolean changed = false;
         for (QueryTree child : children) {
             changed |= child.advancePhase(weightor, advancer);
@@ -91,8 +107,4 @@ public class DisjunctionNode extends QueryTree {
         }
     }
 
-    @Override
-    public String toString() {
-        return "Disjunction[" + children.size() + "]: " + weight;
-    }
 }

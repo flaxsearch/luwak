@@ -35,6 +35,6 @@ public class NumericRangeQueryTreeBuilder extends QueryTreeBuilder<NumericRangeQ
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, NumericRangeQuery query) {
-        return new AnyNode(builder.weightor, query.getField(), query.toString());
+        return new AnyNode(query.getField(), query.toString());
     }
 }

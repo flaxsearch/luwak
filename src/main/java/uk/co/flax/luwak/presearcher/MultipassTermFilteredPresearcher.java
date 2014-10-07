@@ -9,6 +9,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -33,6 +34,8 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  * from different routes through a querytree.  Each route will produce a set of terms
  * that are *sufficient* to select the query, and are indexed into a separate, suffixed field.
  *
+ * Routes are selected using an {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer}.
+ *
  * Incoming InputDocuments are then converted to a set of Disjunction queries over each
  * suffixed field, and these queries are combined into a conjunction query, such that the
  * document's set of terms must match a term from each route.
@@ -49,15 +52,30 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private final int passes;
 
+    private final TreeAdvancer advancer;
+
     /**
      * Construct a new MultipassTermFilteredPresearcher
      * @param passes the number of times a query should be indexed
+     * @param advancer the Advancer to use
      * @param weightor the TreeWeightor to use
      * @param components the PresearcherComponents to use
      */
-    public MultipassTermFilteredPresearcher(int passes, TreeWeightor weightor, PresearcherComponent... components) {
+    public MultipassTermFilteredPresearcher(int passes, TreeAdvancer advancer, TreeWeightor weightor, PresearcherComponent... components) {
         super(weightor, components);
+        this.advancer = advancer;
         this.passes = passes;
+    }
+
+    /**
+     * Construct a new MultipassTermFilteredPresearcher, using a MinWeightAdvancer
+     * @param passes the number of times a query should be indexed
+     * @param minWeight the minimum weight a query term can have to be advanced over
+     * @param weightor the TreeWeightor to use
+     * @param components the PresearcherComponents to use
+     */
+    public MultipassTermFilteredPresearcher(int passes, float minWeight, TreeWeightor weightor, PresearcherComponent... components) {
+        this(passes, new TreeAdvancer.MinWeightTreeAdvancer(weightor, minWeight), weightor, components);
     }
 
     /**
@@ -65,8 +83,18 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
      * @param passes the number of times a query should be indexed
      * @param components the PresearcherComponents to use
      */
-    public MultipassTermFilteredPresearcher(int passes, PresearcherComponent... components) {
-        this(passes, TreeWeightor.DEFAULT_WEIGHTOR, components);
+    public MultipassTermFilteredPresearcher(int passes, TreeAdvancer advancer, PresearcherComponent... components) {
+        this(passes, advancer, TreeWeightor.DEFAULT_WEIGHTOR, components);
+    }
+
+    /**
+     * Construct a new MultipassTermFilteredPresearcher, using the default TreeWeightor and a MinWeightAdvancer
+     * @param passes the number of times a query should be indexed
+     * @param minWeight the minimum weight a query term can have to be advanced over
+     * @param components the PresearcherComponents to use
+     */
+    public MultipassTermFilteredPresearcher(int passes, float minWeight, PresearcherComponent... components) {
+        this(passes, minWeight, TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     @Override
@@ -120,7 +148,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
                 doc.add(new Field(field(entry.getKey(), i), entry.getValue().toString(), QUERYFIELDTYPE));
                 doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
             }
-            extractor.advancePhase(tree);
+            extractor.advancePhase(tree, advancer);
         }
 
         return doc;

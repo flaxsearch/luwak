@@ -62,8 +62,7 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
     public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
         String regexp = parseOutRegexp(query.toString(""));
         String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
-        return new TermNode(builder.weightor,
-                            new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
+        return new TermNode(new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
     }
 
     /**

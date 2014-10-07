@@ -2,6 +2,7 @@ package uk.co.flax.luwak.termextractor.querytree;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
@@ -23,23 +24,27 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class ConjunctionNode extends QueryTree {
 
-    private ConjunctionNode(TreeWeightor weightor, List<QueryTree> children) {
-        super(weightor.combine(children));
+    private ConjunctionNode(List<QueryTree> children) {
         for (QueryTree child : children) {
             this.addChild(child);
         }
     }
 
-    public static QueryTree build(TreeWeightor weightor, List<QueryTree> children) {
+    public static QueryTree build(List<QueryTree> children) {
         if (children.size() == 0)
             throw new IllegalArgumentException("Cannot build ConjunctionNode with no children");
         if (children.size() == 1)
             return children.get(0);
-        return new ConjunctionNode(weightor, children);
+        return new ConjunctionNode(children);
     }
 
-    public static QueryTree build(TreeWeightor weightor, QueryTree... children) {
-        return build(weightor, Arrays.asList(children));
+    public static QueryTree build(QueryTree... children) {
+        return build(Arrays.asList(children));
+    }
+
+    @Override
+    public float weight(TreeWeightor weightor) {
+        return weightor.select(children).weight(weightor);
     }
 
     @Override
@@ -48,7 +53,7 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
+    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
         if (!isAdvanceable(advancer)) {
             boolean changed = false;
             for (QueryTree child : children) {
@@ -63,11 +68,6 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public String toString() {
-        return "Conjunction[" + children.size() + "]: " + weight;
-    }
-
-    @Override
     public void visit(QueryTreeVisitor visitor, int depth) {
         visitor.visit(this, depth);
         for (QueryTree child : children) {
@@ -76,7 +76,7 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean isAdvanceable(Advancer advancer) {
+    public boolean isAdvanceable(TreeAdvancer advancer) {
         for (QueryTree child : children) {
             if (child.isAdvanceable(advancer))
                 return false;
@@ -99,8 +99,15 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public String toString(TreeWeightor weightor) {
-        return weightor.select(children).toString(weightor);
+    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
+        return "Conjunction[" + children.size() + "] " + weight(weightor)
+                + " " + weightor.select(children).terms(weightor)
+                + (isAdvanceable(advancer) ? " ADVANCEABLE" : "");
+    }
+
+    @Override
+    public Set<QueryTerm> terms(TreeWeightor weightor) {
+        return weightor.select(children).terms(weightor);
     }
 
 }

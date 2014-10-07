@@ -29,6 +29,6 @@ public class TermRangeQueryTreeBuilder extends QueryTreeBuilder<TermRangeQuery> 
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermRangeQuery query) {
-        return new AnyNode(builder.weightor, query.getField(), query.toString());
+        return new AnyNode(query.getField(), query.toString());
     }
 }

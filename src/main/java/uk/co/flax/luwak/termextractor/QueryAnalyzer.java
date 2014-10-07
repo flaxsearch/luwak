@@ -7,7 +7,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.termextractor.querytree.Advancer;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.treebuilder.*;
@@ -52,21 +52,18 @@ public class QueryAnalyzer {
 
     public final TreeWeightor weightor;
 
-    public final Advancer advancer;
-
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
      *
      * @param weightor a TreeWeightor to use for conjunctions
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
-    public QueryAnalyzer(TreeWeightor weightor, Advancer advancer, List<QueryTreeBuilder<?>> queryTreeBuilders) {
+    public QueryAnalyzer(TreeWeightor weightor, List<QueryTreeBuilder<?>> queryTreeBuilders) {
         this.queryTreeBuilders = ImmutableList.<QueryTreeBuilder<?>>builder()
                 .addAll(queryTreeBuilders)
                 .addAll(DEFAULT_BUILDERS)
                 .build();
         this.weightor = weightor;
-        this.advancer = advancer;
     }
 
     /**
@@ -75,8 +72,8 @@ public class QueryAnalyzer {
      * @param weightor a TreeWeightor to use for conjunctions
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
-    public QueryAnalyzer(TreeWeightor weightor, Advancer advancer, QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(weightor, advancer, Arrays.asList(queryTreeBuilders));
+    public QueryAnalyzer(TreeWeightor weightor, QueryTreeBuilder<?>... queryTreeBuilders) {
+        this(weightor, Arrays.asList(queryTreeBuilders));
     }
 
     /**
@@ -85,16 +82,8 @@ public class QueryAnalyzer {
      *
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
-    public QueryAnalyzer(Advancer advancer, QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, advancer, queryTreeBuilders);
-    }
-
-    public QueryAnalyzer(TreeWeightor weightor, QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(weightor, Advancer.DEFAULT, queryTreeBuilders);
-    }
-
     public QueryAnalyzer(QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(Advancer.DEFAULT, queryTreeBuilders);
+        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
     }
 
     /**
@@ -141,7 +130,7 @@ public class QueryAnalyzer {
         return collectTerms(buildTree(luceneFilter));
     }
 
-    public boolean advancePhase(QueryTree queryTree) {
+    public boolean advancePhase(QueryTree queryTree, TreeAdvancer advancer) {
         return queryTree.advancePhase(weightor, advancer);
     }
 

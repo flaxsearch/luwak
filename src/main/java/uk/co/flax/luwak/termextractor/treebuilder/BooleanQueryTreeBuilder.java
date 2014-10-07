@@ -51,13 +51,13 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
         Clauses clauses = analyze(query);
 
         if (clauses.isPureNegativeQuery())
-            return new AnyNode(builder.weightor, "PURE NEGATIVE BOOLEAN");
+            return new AnyNode("PURE NEGATIVE BOOLEAN");
 
         if (clauses.isDisjunctionQuery()) {
-            return DisjunctionNode.build(builder.weightor, buildChildTrees(builder, clauses.getDisjunctions()));
+            return DisjunctionNode.build(buildChildTrees(builder, clauses.getDisjunctions()));
         }
 
-        return ConjunctionNode.build(builder.weightor, buildChildTrees(builder, clauses.getConjunctions()));
+        return ConjunctionNode.build(buildChildTrees(builder, clauses.getConjunctions()));
     }
 
     private List<QueryTree> buildChildTrees(QueryAnalyzer builder, List<Object> children) {

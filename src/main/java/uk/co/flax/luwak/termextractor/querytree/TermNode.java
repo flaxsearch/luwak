@@ -1,7 +1,9 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
 import java.util.List;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -24,8 +26,7 @@ public class TermNode extends QueryTree {
 
     protected final QueryTerm term;
 
-    public TermNode(TreeWeightor weightor, QueryTerm term) {
-        super(weightor.weigh(term));
+    public TermNode(QueryTerm term) {
         this.term = term;
     }
 
@@ -35,12 +36,17 @@ public class TermNode extends QueryTree {
     }
 
     @Override
+    public float weight(TreeWeightor weightor) {
+        return weightor.weigh(term);
+    }
+
+    @Override
     public void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor) {
         termsList.add(term);
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor, Advancer advancer) {
+    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
         return false;
     }
 
@@ -50,7 +56,7 @@ public class TermNode extends QueryTree {
     }
 
     @Override
-    public boolean isAdvanceable(Advancer advancer) {
+    public boolean isAdvanceable(TreeAdvancer advancer) {
         return false;
     }
 
@@ -60,12 +66,17 @@ public class TermNode extends QueryTree {
     }
 
     @Override
-    public String toString(TreeWeightor weightor) {
-        return term.term;
+    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
+        return this.toString() + " " + this.weight(weightor);
+    }
+
+    @Override
+    public Set<QueryTerm> terms(TreeWeightor weightor) {
+        return Sets.newHashSet(term);
     }
 
     @Override
     public String toString() {
-        return "Node [" + term.toString() + "] " + weight;
+        return "Node [" + term.toString() + "]";
     }
 }

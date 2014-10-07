@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
@@ -52,8 +52,8 @@ public class TreeWeightor {
         this(delegate.weightPolicy, delegate.combinePolicy);
     }
 
-    public float combine(List<QueryTree> children) {
-        return combinePolicy.combine(children);
+    public float combine(Collection<QueryTree> children) {
+        return combinePolicy.combine(this, children);
     }
 
     public QueryTree select(Set<QueryTree> children) {
@@ -65,7 +65,7 @@ public class TreeWeightor {
             if (selected == null)
                 selected = child;
             else {
-                if (child.weight > selected.weight)
+                if (child.weight(this) > selected.weight(this))
                     selected = child;
             }
         }
