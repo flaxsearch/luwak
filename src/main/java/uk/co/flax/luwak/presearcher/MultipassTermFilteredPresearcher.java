@@ -52,7 +52,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private final int passes;
 
-    private final TreeAdvancer advancer;
+    protected final TreeAdvancer advancer;
 
     /**
      * Construct a new MultipassTermFilteredPresearcher
