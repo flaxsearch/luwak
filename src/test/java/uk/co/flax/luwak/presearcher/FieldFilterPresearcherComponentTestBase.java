@@ -26,11 +26,22 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class TestFieldFilterPresearcherComponent extends PresearcherTestBase {
+public abstract class FieldFilterPresearcherComponentTestBase extends PresearcherTestBase {
 
-    @Override
-    protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(new FieldFilterPresearcherComponent("language"));
+    public static class TestTermFiltered extends FieldFilterPresearcherComponentTestBase {
+
+        @Override
+        protected Presearcher createPresearcher() {
+            return new TermFilteredPresearcher(new FieldFilterPresearcherComponent("language"));
+        }
+    }
+
+    public static class TestMultipass extends FieldFilterPresearcherComponentTestBase {
+
+        @Override
+        protected Presearcher createPresearcher() {
+            return new MultipassTermFilteredPresearcher(2, 0.0f, new FieldFilterPresearcherComponent("language"));
+        }
     }
 
     @Test
