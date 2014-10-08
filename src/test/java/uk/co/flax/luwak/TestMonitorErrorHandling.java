@@ -11,6 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
+import org.mockito.Matchers;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
@@ -85,7 +86,7 @@ public class TestMonitorErrorHandling {
     public void testPresearcherErrors() throws Exception {
 
         Presearcher presearcher = mock(Presearcher.class);
-        when(presearcher.indexQuery(any(Query.class)))
+        when(presearcher.indexQuery(any(Query.class), Matchers.<Map<String,String>>any()))
                 .thenReturn(new Document())
                 .thenThrow(new UnsupportedOperationException("Oops"))
                 .thenReturn(new Document());

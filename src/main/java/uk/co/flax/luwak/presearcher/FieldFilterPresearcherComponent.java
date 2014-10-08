@@ -1,20 +1,21 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.InputDocument;
 
 /**
@@ -33,34 +34,58 @@ import uk.co.flax.luwak.InputDocument;
  * limitations under the License.
  */
 
+/**
+ * PresearcherComponent that allows you to filter queries out by a field on
+ * each document.
+ *
+ * Queries are assigned field values by passing them as part of the metadata
+ * on a MonitorQuery.
+ */
 public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
     private final String field;
 
-    @Override
-    public Query adjustPresearcherQuery(InputDocument doc, Query presearcherQuery) {
+    /**
+     * Create a new FieldFilterPresearcherComponent that filters queries on a
+     * given field.
+     *
+     * @param field the field to filter on
+     */
+    public FieldFilterPresearcherComponent(String field) {
+        this.field = field;
+    }
 
-        String fieldValue = doc.getFieldValue(field);
-        if (fieldValue == null)
+
+    @Override
+    public Query adjustPresearcherQuery(InputDocument doc, Query presearcherQuery) throws IOException {
+
+        Query filterClause = buildFilterClause(doc);
+        if (filterClause == null)
             return presearcherQuery;
 
         BooleanQuery bq = new BooleanQuery();
         bq.add(presearcherQuery, BooleanClause.Occur.MUST);
-        bq.add(buildFilterClause(fieldValue), BooleanClause.Occur.MUST);
+        bq.add(filterClause, BooleanClause.Occur.MUST);
         return bq;
     }
 
-    private static final Splitter SPLITTER = Splitter.on(" ").omitEmptyStrings();
+    private Query buildFilterClause(InputDocument doc) throws IOException {
 
-    protected Query buildFilterClause(String fieldValue) {
-        List<String> values = Lists.newArrayList(SPLITTER.split(fieldValue));
-        if (values.size() == 1)
-            return new TermQuery(new Term(field, values.get(0)));
+        Terms terms = doc.asAtomicReader().fields().terms(field);
+        if (terms == null)
+            return null;
 
         BooleanQuery bq = new BooleanQuery();
-        for (String value : values) {
-            bq.add(new TermQuery(new Term(field, value)), BooleanClause.Occur.SHOULD);
+
+        BytesRef term;
+        TermsEnum te = terms.iterator(null);
+        while ((term = te.next()) != null) {
+            bq.add(new TermQuery(new Term(field, term.utf8ToString())), BooleanClause.Occur.SHOULD);
         }
+
+        if (bq.clauses().size() == 0)
+            return null;
+
         return bq;
     }
 
@@ -69,10 +94,6 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         if (!metadata.containsKey(field))
             return;
         doc.add(new StringField(field, metadata.get(field), Field.Store.YES));
-    }
-
-    public FieldFilterPresearcherComponent(String field) {
-        this.field = field;
     }
 
     @Override
