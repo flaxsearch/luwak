@@ -37,8 +37,7 @@ public class DumpQueryTree {
         TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0.0f, "start"),
                                                  new TermWeightNorm(1, "google"),
                                                  new TermWeightNorm(4, "user", "data"),
-                                                 new FieldWeightNorm(0.1f, "wire"),
-                                                 new TermTypeNorm(1));
+                                                 new FieldWeightNorm(0.1f, "wire"));
         QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(weightor, new DefaultPresearcherComponent());
         TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
 

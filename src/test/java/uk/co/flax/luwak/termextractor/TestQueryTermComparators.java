@@ -145,4 +145,31 @@ public class TestQueryTermComparators {
                 .isSameAs(node1);
     }
 
+    @Test
+    public void testTermTypeWeightNorms() {
+
+        Map<String, Integer> termFreqs = ImmutableMap.of(
+                "foo", 400, "bar", 4000
+        );
+        TreeWeightor weight = new TreeWeightor(new TermFrequencyWeightPolicy(termFreqs, 100, 0,
+                                                new TermTypeNorm(QueryTerm.Type.CUSTOM, 0.2f),
+                                                new TermTypeNorm(QueryTerm.Type.CUSTOM, "wildcard", 0.1f)));
+
+        //weight = new ReportingWeightor(weight);
+
+        QueryTree node1 = new TermNode(new QueryTerm("field", "foo", QueryTerm.Type.EXACT));
+        QueryTree node2 = new TermNode(new QueryTerm("field", "fooXX", QueryTerm.Type.CUSTOM, "wildcard"));
+        QueryTree node3 = new TermNode(new QueryTerm("field", "wibble", QueryTerm.Type.CUSTOM));
+        QueryTree node4 = new TermNode(new QueryTerm("field", "bar", QueryTerm.Type.EXACT));
+
+        assertThat(weight.select(Sets.newSet(node1, node2, node3, node4)))
+                .isSameAs(node1);
+
+        assertThat(weight.select(Sets.newSet(node2, node3)))
+                .isSameAs(node3);
+
+        assertThat(weight.select(Sets.newSet(node2, node4)))
+                .isSameAs(node2);
+    }
+
 }

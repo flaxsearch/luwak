@@ -20,14 +20,23 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 public class TermTypeNorm extends WeightNorm {
 
     private final float weight;
+    private final String payload;
+    private final QueryTerm.Type type;
 
-    public TermTypeNorm(float weight) {
+    public TermTypeNorm(QueryTerm.Type type, float weight) {
+        this(type, null, weight);
+    }
+
+    public TermTypeNorm(QueryTerm.Type type, String payload, float weight) {
         this.weight = weight;
+        this.type = type;
+        this.payload = payload;
     }
 
     @Override
     public float norm(QueryTerm term) {
-        if (term.type == QueryTerm.Type.ANY)
+        if (term.type == this.type &&
+                (term.payload == null ? this.payload == null : term.payload.equals(this.payload)))
             return weight;
         return 1;
     }
