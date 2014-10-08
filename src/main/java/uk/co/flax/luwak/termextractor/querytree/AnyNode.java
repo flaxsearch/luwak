@@ -40,4 +40,9 @@ public class AnyNode extends TermNode {
     public boolean isAny() {
         return true;
     }
+
+    @Override
+    public float weight(TreeWeightor weightor) {
+        return 0;
+    }
 }
