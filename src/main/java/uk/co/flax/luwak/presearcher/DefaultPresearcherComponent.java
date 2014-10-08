@@ -42,7 +42,7 @@ public class DefaultPresearcherComponent extends PresearcherComponent {
 
 
     @Override
-    public TokenStream filterDocumentTokens(TokenStream ts) {
+    public TokenStream filterDocumentTokens(String field, TokenStream ts) {
         return new TokenFilter(ts) {
 
             boolean finished = false;

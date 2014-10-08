@@ -134,21 +134,20 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     }
 
     @Override
-    public Document indexQuery(Query query) {
+    public Document buildQueryDocument(QueryTree querytree) {
 
-        QueryTree tree = extractor.buildTree(query);
         Document doc = new Document();
 
         for (int i = 0; i < passes; i++) {
-            Map<String, StringBuilder> fieldTerms = collectTerms(tree);
-            debug(tree, fieldTerms);
+            Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
+            debug(querytree, fieldTerms);
             for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
                 // we add the index terms once under a suffixed field for the multipass query, and
                 // once under the plan field name for the TermsEnumTokenFilter
                 doc.add(new Field(field(entry.getKey(), i), entry.getValue().toString(), QUERYFIELDTYPE));
                 doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
             }
-            extractor.advancePhase(tree, advancer);
+            extractor.advancePhase(querytree, advancer);
         }
 
         return doc;

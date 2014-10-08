@@ -71,7 +71,7 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
     }
 
     @Override
-    public TokenStream filterDocumentTokens(TokenStream ts) {
+    public TokenStream filterDocumentTokens(String field, TokenStream ts) {
         TokenStream duped = new KeywordRepeatFilter(ts);
         TokenStream ngrammed
                 = new SuffixingNGramTokenFilter(duped, ngramSuffix, wildcardToken, maxTokenSize);

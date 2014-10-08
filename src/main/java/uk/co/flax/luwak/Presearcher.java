@@ -1,5 +1,7 @@
 package uk.co.flax.luwak;
 
+import java.util.Map;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.presearcher.PerFieldTokenFilter;
@@ -32,7 +34,7 @@ import uk.co.flax.luwak.presearcher.PerFieldTokenFilter;
  * See {@link uk.co.flax.luwak.presearcher.TermFilteredPresearcher}
  * See {@link uk.co.flax.luwak.presearcher.WildcardNGramPresearcherComponent}
  */
-public interface Presearcher {
+public abstract class Presearcher {
 
     /**
      * Build a query for a Monitor's queryindex from an InputDocument.
@@ -41,13 +43,23 @@ public interface Presearcher {
      *               in removing unnecessary clauses
      * @return a Query to run over a Monitor's queryindex
      */
-    public Query buildQuery(InputDocument inputDocument, PerFieldTokenFilter filter);
+    public abstract Query buildQuery(InputDocument inputDocument, PerFieldTokenFilter filter);
+
+    /**
+     * Build a lucene Document to index the query in a Monitor's queryindex
+     * @param query the Query to index
+     * @param metadata a Map of arbitrary query metadata
+     * @return a lucene Document to add to the queryindex
+     */
+    public abstract Document indexQuery(Query query, Map<String, String> metadata);
 
     /**
      * Build a lucene Document to index the query in a Monitor's queryindex
      * @param query the Query to index
      * @return a lucene Document to add to the queryindex
      */
-    public Document indexQuery(Query query);
+    public final Document indexQuery(Query query) {
+        return this.indexQuery(query, null);
+    }
 
 }

@@ -50,7 +50,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  *
  * This Presearcher uses a QueryTermExtractor to extract terms from queries.
  */
-public class TermFilteredPresearcher implements Presearcher {
+public class TermFilteredPresearcher extends Presearcher {
 
     static {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
@@ -94,7 +94,7 @@ public class TermFilteredPresearcher implements Presearcher {
 
                 TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator(null));
                 for (PresearcherComponent component : components) {
-                    ts = component.filterDocumentTokens(ts);
+                    ts = component.filterDocumentTokens(field, ts);
                 }
                 ts = filter.filter(field, ts);
 
@@ -104,7 +104,11 @@ public class TermFilteredPresearcher implements Presearcher {
                 }
 
             }
-            return queryBuilder.build();
+            Query presearcherQuery = queryBuilder.build();
+            for (PresearcherComponent component : components) {
+                presearcherQuery = component.adjustPresearcherQuery(doc, presearcherQuery);
+            }
+            return presearcherQuery;
         }
         catch (IOException e) {
             // We're a MemoryIndex, so this shouldn't happen...
@@ -137,16 +141,24 @@ public class TermFilteredPresearcher implements Presearcher {
     }
 
     @Override
-    public Document indexQuery(Query query) {
+    public final Document indexQuery(Query query, Map<String, String> metadata) {
 
         QueryTree querytree = extractor.buildTree(query);
-        Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
+        Document doc = buildQueryDocument(querytree);
 
+        for (PresearcherComponent component : components) {
+            component.adjustQueryDocument(doc, metadata);
+        }
+
+        return doc;
+    }
+
+    protected Document buildQueryDocument(QueryTree querytree) {
+        Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
         Document doc = new Document();
         for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
             doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
         }
-
         return doc;
     }
 

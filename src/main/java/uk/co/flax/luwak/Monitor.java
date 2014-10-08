@@ -446,7 +446,7 @@ public class Monitor implements Closeable {
     }
 
     protected Document buildIndexableQuery(String id, CacheEntry query) {
-        Document doc = presearcher.indexQuery(query.matchQuery);
+        Document doc = presearcher.indexQuery(query.matchQuery, query.mq.getMetadata());
         doc.add(new StringField(Monitor.FIELDS.id, id, Field.Store.NO));
         doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(id)));
         doc.add(new BinaryDocValuesField(Monitor.FIELDS.hash, query.hash));

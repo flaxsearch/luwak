@@ -31,7 +31,9 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, CandidateMatche
     }
 
     public MatchesAssert matchesQuery(String queryId) {
-        Assertions.assertThat(actual.matches(queryId));
+        Assertions.assertThat(actual.matches(queryId))
+                .overridingErrorMessage("Did not match query %s", queryId)
+                .isNotNull();
         return this;
     }
 

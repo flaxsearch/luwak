@@ -1,5 +1,8 @@
 package uk.co.flax.luwak;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.AtomicReader;
@@ -39,6 +42,8 @@ public class InputDocument {
 
     private final String id;
 
+    private final Map<String, StringBuilder> fields = new HashMap<>();
+
     private final MemoryIndex index = new MemoryIndex(true);
     private IndexSearcher searcher;
 
@@ -72,6 +77,20 @@ public class InputDocument {
     }
 
     /**
+     * Get the values indexed into this field
+     *
+     * If the field has been added multiple times, then the values are joined by a space
+     *
+     * @param field the field
+     * @return the field value
+     */
+    public String getFieldValue(String field) {
+        if (fields.containsKey(field))
+            return fields.get(field).toString();
+        return null;
+    }
+
+    /**
      * Fluent interface to construct a new InputDocument
      */
     public static class Builder {
@@ -95,11 +114,19 @@ public class InputDocument {
          */
         public Builder addField(String field, String text, Analyzer analyzer) {
             doc.index.addField(field, text, analyzer);
+            if (!doc.fields.containsKey(field))
+                doc.fields.put(field, new StringBuilder(text));
+            else
+                doc.fields.get(field).append(" ").append(text);
             return this;
         }
 
         /**
          * Add a field to the InputDocument
+         *
+         * Note: fields added using this method will not be available via
+         * {@link InputDocument#getFieldValue(String)}
+         *
          * @param field the field name
          * @param tokenStream a tokenstream containing the field contents
          * @return the Builder object
