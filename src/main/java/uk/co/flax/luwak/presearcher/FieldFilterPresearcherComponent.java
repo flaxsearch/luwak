@@ -91,7 +91,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
     @Override
     public void adjustQueryDocument(Document doc, Map<String, String> metadata) {
-        if (!metadata.containsKey(field))
+        if (metadata == null || !metadata.containsKey(field))
             return;
         doc.add(new StringField(field, metadata.get(field), Field.Store.YES));
     }
