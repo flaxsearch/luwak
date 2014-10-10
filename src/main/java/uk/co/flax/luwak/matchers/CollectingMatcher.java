@@ -54,7 +54,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
             slowlog.append(queryId + ":" + (t / 1000000) + " ");
 
         if (coll.match != null)
-            matches.put(queryId, coll.match);
+            addMatch(queryId, coll.match);
         return coll.match;
     }
 

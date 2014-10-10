@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.intervals;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -46,6 +46,10 @@ public class IntervalsQueryMatch extends QueryMatch {
         hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
     }
 
+    public void addHits(String field, Iterable<Hit> newHits) {
+        hits.putAll(field, newHits);
+    }
+
     /**
      * @return the fields in which matches have been found
      */
@@ -67,6 +71,16 @@ public class IntervalsQueryMatch extends QueryMatch {
      */
     public int getHitCount() {
         return hits.keys().size();
+    }
+
+    public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
+        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId);
+        for (IntervalsQueryMatch match : matches) {
+            for (String field : match.getFields()) {
+                newMatch.addHits(field, match.getHits(field));
+            }
+        }
+        return newMatch;
     }
 
 

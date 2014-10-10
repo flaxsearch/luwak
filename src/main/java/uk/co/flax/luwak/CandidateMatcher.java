@@ -29,7 +29,7 @@ import org.apache.lucene.search.Query;
 public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
 
     private final List<MatchError> errors = new ArrayList<>();
-    protected final Map<String, T> matches = new HashMap<>();
+    private final Map<String, T> matches = new HashMap<>();
 
     protected final InputDocument doc;
 
@@ -67,6 +67,10 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      */
     public T matches(String queryId) {
         return matches.get(queryId);
+    }
+
+    protected void addMatch(String queryId, T match) {
+        matches.put(queryId, match);
     }
 
     /**

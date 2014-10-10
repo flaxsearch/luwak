@@ -39,6 +39,14 @@ public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
         return null;
     }
 
+    @Override
+    protected void addMatch(String queryId, ScoringMatch match) {
+        ScoringMatch prev = this.matches(queryId);
+        if (prev == null || prev.getScore() < match.getScore()) {
+            super.addMatch(queryId, match);
+        }
+    }
+
     /**
      * A MatcherFactory for ScoringMatcher objects
      */

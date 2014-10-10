@@ -45,7 +45,7 @@ public class QueryCacheingMatcher<T extends QueryMatch> extends CandidateMatcher
         if (match == null)
             return null;
         QueryCacheingMatch<T> m = new QueryCacheingMatch<>(queryId, matchQuery, match);
-        this.matches.put(queryId, m);
+        this.addMatch(queryId, m);
         return m;
     }
 

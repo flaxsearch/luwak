@@ -46,13 +46,13 @@ public class TestCachePurging {
 
         Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
         MonitorQuery[] queries = new MonitorQuery[] {
-                new MonitorQuery("1", "test1"),
+                new MonitorQuery("1", "test1 test4"),
                 new MonitorQuery("2", "test2"),
                 new MonitorQuery("3", "test3")
         };
         monitor.update(queries);
-        assertThat(monitor.getQueryCount()).isEqualTo(3);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(3);
+        assertThat(monitor.getQueryCount()).isEqualTo(4);       // MQ 1 is split by the decomposer
+        assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField("field", "test1 test2 test3", new WhitespaceAnalyzer(Constants.VERSION)).build();
@@ -60,7 +60,7 @@ public class TestCachePurging {
 
         monitor.deleteById("1");
         assertThat(monitor.getQueryCount()).isEqualTo(2);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(3);
+        assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
         assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(2);
 
         monitor.purgeCache();

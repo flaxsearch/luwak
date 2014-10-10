@@ -76,7 +76,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             for (Future<CandidateMatcher<T>> future : futures) {
                 CandidateMatcher<T> matches = future.get();
                 for (T match : matches) {
-                    this.matches.put(match.getQueryId(), match);
+                    this.addMatch(match.getQueryId(), match);
                 }
                 for (MatchError error : matches.getErrors()) {
                     this.reportError(error);
