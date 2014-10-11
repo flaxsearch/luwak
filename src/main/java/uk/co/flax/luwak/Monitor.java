@@ -485,9 +485,18 @@ public class Monitor implements Closeable {
         return writer.numDocs();
     }
 
-    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc,
-                                                              MatcherFactory<? extends CandidateMatcher<T>> factory) throws IOException {
-        PresearcherMatchCollector collector = new PresearcherMatchCollector(factory.createMatcher(doc));
+    /**
+     * Match an InputDocument against the queries stored in the Monitor, also returning information
+     * about which queries were selected by the presearcher, and why.
+     * @param doc an InputDocument to match against the index
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of QueryMatch produced by the CandidateMatcher
+     * @return a PresearcherMatches object
+     * @throws IOException
+     */
+    public <T extends QueryMatch> PresearcherMatches<T>
+            debug(InputDocument doc, MatcherFactory<? extends CandidateMatcher<T>> factory) throws IOException {
+        PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
         match(doc, collector);
         return collector.getMatches();
     }
@@ -601,7 +610,7 @@ public class Monitor implements Closeable {
 
     }
 
-    public static class PresearcherMatchCollector<T extends QueryMatch>
+    private static class PresearcherMatchCollector<T extends QueryMatch>
             extends MonitorQueryCollector implements IntervalCollector {
 
         private IntervalIterator positions;
