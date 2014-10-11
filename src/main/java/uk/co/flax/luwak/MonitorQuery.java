@@ -1,11 +1,19 @@
 package uk.co.flax.luwak;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
+import org.apache.lucene.store.InputStreamDataInput;
+import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
 /**
@@ -43,8 +51,8 @@ public class MonitorQuery {
     public MonitorQuery(String id, String query, String highlightQuery, Map<String, String> metadata) {
         this.id = id;
         this.query = query;
-        this.highlightQuery = highlightQuery;
-        this.metadata = ImmutableMap.copyOf(metadata);
+        this.highlightQuery = Strings.isNullOrEmpty(highlightQuery) ? null : highlightQuery;
+        this.metadata = ImmutableSortedMap.copyOf(metadata);
     }
 
     /**
@@ -65,6 +73,53 @@ public class MonitorQuery {
      */
     public MonitorQuery(String id, String query) {
         this(id, query, null, ImmutableMap.<String, String>of());
+    }
+
+    public static MonitorQuery deserialize(BytesRef bytes)  {
+
+        ByteArrayInputStream is = new ByteArrayInputStream(bytes.bytes);
+        try (InputStreamDataInput data = new InputStreamDataInput(is)) {
+
+            String id = data.readString();
+            String query = data.readString();
+            String hl = data.readInt() == 1 ? data.readString() : null;
+            Map<String, String> metadata = new HashMap<>();
+            for (int i = data.readInt(); i > 0; i--) {
+                metadata.put(data.readString(), data.readString());
+            }
+            return new MonitorQuery(id, query, hl, metadata);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // shouldn't happen, we're reading from a bytearray!
+        }
+
+    }
+
+    public static BytesRef serialize(MonitorQuery mq) {
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try (OutputStreamDataOutput data = new OutputStreamDataOutput(os)) {
+
+            data.writeString(mq.getId());
+            data.writeString(mq.getQuery());
+            if (!Strings.isNullOrEmpty(mq.getHighlightQuery())) {
+                data.writeInt(1);
+                data.writeString(mq.getHighlightQuery());
+            }
+            else {
+                data.writeInt(0);
+            }
+            data.writeInt(mq.getMetadata().size());
+            for (Map.Entry<String, String> entry : mq.getMetadata().entrySet()) {
+                data.writeString(entry.getKey());
+                data.writeString(entry.getValue());
+            }
+            return new BytesRef(os.toByteArray());
+
+        } catch (IOException e) {
+            throw new RuntimeException(e); // shouldn't happen, we're writing to a bytearray!
+        }
+
     }
 
     /**

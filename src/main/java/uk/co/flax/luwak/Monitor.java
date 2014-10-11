@@ -71,6 +71,7 @@ public class Monitor implements Closeable {
         public static final String id = "_id";
         public static final String del = "_del";
         public static final String hash = "_hash";
+        public static final String mq = "_mq";
     }
 
     private final ScheduledExecutorService purgeExecutor;
@@ -87,6 +88,7 @@ public class Monitor implements Closeable {
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher,
                    Directory directory, QueryDecomposer decomposer) throws IOException {
+
         this.queryParser = queryParser;
         this.presearcher = presearcher;
         this.directory = directory;
@@ -97,9 +99,10 @@ public class Monitor implements Closeable {
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
 
-        this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
+        loadCache();
 
         long purgeFrequency = configurePurgeFrequency();
+        this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
         this.purgeExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -113,8 +116,25 @@ public class Monitor implements Closeable {
         }, purgeFrequency, purgeFrequency, TimeUnit.SECONDS);
     }
 
+    /**
+     * Create a new Monitor instance, using a RAMDirectory and the default QueryDecomposer
+     * @param queryParser the query parser to use
+     * @param presearcher the presearcher to use
+     * @throws IOException
+     */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
         this(queryParser, presearcher, new RAMDirectory(), new QueryDecomposer());
+    }
+
+    /**
+     * Create a new Monitor instance, using the default QueryDecomposer
+     * @param queryParser the query parser to use
+     * @param presearcher the presearcher to use
+     * @param directory the directory where the queryindex is stored
+     * @throws IOException
+     */
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
+        this(queryParser, presearcher, directory, new QueryDecomposer());
     }
 
     /**
@@ -140,18 +160,37 @@ public class Monitor implements Closeable {
 
     protected static class CacheEntry {
 
-        public final MonitorQuery mq;
         public final Query matchQuery;
         public final Query highlightQuery;
         public final BytesRef hash;
 
-        public CacheEntry(MonitorQuery mq, BytesRef hash, Query matchQuery, Query highlightQuery) {
-            this.mq = mq;
+        public CacheEntry(BytesRef hash, Query matchQuery, Query highlightQuery) {
             this.hash = hash;
             this.matchQuery = matchQuery;
             this.highlightQuery = highlightQuery;
         }
     }
+
+    private void loadCache() throws IOException {
+        final List<Exception> parseErrors = new LinkedList<>();
+
+        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+            @Override
+            public void collect(int doc) throws IOException {
+                mqDV.get(doc, serializedMQ);
+                MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
+                try {
+                    for (CacheEntry ce : decomposeQuery(mq)) {
+                        queries.put(ce.hash, ce);
+                    }
+                } catch (Exception e) {
+                    parseErrors.add(e);
+                }
+            }
+        });
+
+        if (parseErrors.size() != 0)
+            throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);}
 
     /**
      * @return Statistics for the internal query index and cache
@@ -242,6 +281,7 @@ public class Monitor implements Closeable {
         TieredMergePolicy mergePolicy = new TieredMergePolicy();
         mergePolicy.setSegmentsPerTier(4);
         iwc.setMergePolicy(mergePolicy);
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         return iwc;
     }
 
@@ -292,7 +332,7 @@ public class Monitor implements Closeable {
                 writer.deleteDocuments(new Term(FIELDS.del, query.getId()));
                 for (CacheEntry cacheEntry : decomposeQuery(query)) {
                     updates.add(cacheEntry);
-                    writer.addDocument(buildIndexableQuery(query.getId(), cacheEntry));
+                    writer.addDocument(buildIndexableQuery(query.getId(), query, cacheEntry));
                 }
             } catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
@@ -303,7 +343,7 @@ public class Monitor implements Closeable {
         return errors;
     }
 
-    protected Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
+    private Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
 
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
         Query hq = Strings.isNullOrEmpty(query.getHighlightQuery())
@@ -316,7 +356,7 @@ public class Monitor implements Closeable {
         for (Query subquery : decomposer.decompose(q)) {
             BytesRef subHash = BytesRef.deepCopyOf(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            cacheEntries.add(new CacheEntry(query, subHash, subquery, hq));
+            cacheEntries.add(new CacheEntry(subHash, subquery, hq));
         }
 
         return cacheEntries;
@@ -428,10 +468,11 @@ public class Monitor implements Closeable {
      */
     public MonitorQuery getQuery(String queryId) throws IOException {
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
-        match(new TermQuery(new Term(FIELDS.id, queryId)), new SearchingCollector() {
+        match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String id, BytesRef hash) {
-                queryHolder[0] = queries.get(hash).mq;
+            public void collect(int doc) throws IOException {
+                mqDV.get(doc, serializedMQ);
+                queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
             }
         });
         return queryHolder[0];
@@ -463,12 +504,13 @@ public class Monitor implements Closeable {
         }
     }
 
-    protected Document buildIndexableQuery(String id, CacheEntry query) {
-        Document doc = presearcher.indexQuery(query.matchQuery, query.mq.getMetadata());
-        doc.add(new StringField(Monitor.FIELDS.id, id, Field.Store.NO));
-        doc.add(new StringField(Monitor.FIELDS.del, id, Field.Store.NO));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.id, new BytesRef(id)));
-        doc.add(new BinaryDocValuesField(Monitor.FIELDS.hash, query.hash));
+    protected Document buildIndexableQuery(String id, MonitorQuery mq, CacheEntry query) {
+        Document doc = presearcher.indexQuery(query.matchQuery, mq.getMetadata());
+        doc.add(new StringField(FIELDS.id, id, Field.Store.NO));
+        doc.add(new StringField(FIELDS.del, id, Field.Store.NO));
+        doc.add(new BinaryDocValuesField(FIELDS.id, new BytesRef(id)));
+        doc.add(new BinaryDocValuesField(FIELDS.hash, query.hash));
+        doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
         return doc;
     }
 
@@ -520,8 +562,10 @@ public class Monitor implements Closeable {
 
         protected BinaryDocValues hashDV;
         protected BinaryDocValues idDV;
+        protected BinaryDocValues mqDV;
         protected AtomicReader reader;
 
+        final BytesRef serializedMQ = new BytesRef();
         final BytesRef hash = new BytesRef();
         final BytesRef id = new BytesRef();
 
@@ -539,10 +583,11 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public final void setNextReader(AtomicReaderContext context) throws IOException {
+        public void setNextReader(AtomicReaderContext context) throws IOException {
             this.reader = context.reader();
             this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
             this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
+            this.mqDV = context.reader().getBinaryDocValues(FIELDS.mq);
         }
 
         @Override
