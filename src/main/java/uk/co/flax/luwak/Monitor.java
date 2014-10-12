@@ -13,10 +13,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.document.BinaryDocValuesField;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.intervals.Interval;
@@ -479,10 +476,25 @@ public class Monitor implements Closeable {
     }
 
     /**
+     * @return the number of queries (after decomposition) stored in this Monitor
+     */
+    public int getDisjunctCount() {
+        return writer.numDocs();
+    }
+
+    /**
      * @return the number of queries stored in this Monitor
      */
-    public int getQueryCount() {
-        return writer.numDocs();
+    public int getQueryCount() throws IOException {
+        final Set<String> ids = new HashSet<>();
+        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+            @Override
+            public void collect(int doc) throws IOException {
+                idDV.get(doc, id);
+                ids.add(id.utf8ToString());
+            }
+        });
+        return ids.size();
     }
 
     /**
@@ -517,7 +529,7 @@ public class Monitor implements Closeable {
         Document doc = presearcher.indexQuery(query.matchQuery, mq.getMetadata());
         doc.add(new StringField(FIELDS.id, id, Field.Store.NO));
         doc.add(new StringField(FIELDS.del, id, Field.Store.NO));
-        doc.add(new BinaryDocValuesField(FIELDS.id, new BytesRef(id)));
+        doc.add(new SortedDocValuesField(FIELDS.id, new BytesRef(id)));
         doc.add(new BinaryDocValuesField(FIELDS.hash, query.hash));
         doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
         return doc;
@@ -570,7 +582,7 @@ public class Monitor implements Closeable {
     public static abstract class MonitorQueryCollector extends Collector {
 
         protected BinaryDocValues hashDV;
-        protected BinaryDocValues idDV;
+        protected SortedDocValues idDV;
         protected BinaryDocValues mqDV;
         protected AtomicReader reader;
 
@@ -595,7 +607,7 @@ public class Monitor implements Closeable {
         public void setNextReader(AtomicReaderContext context) throws IOException {
             this.reader = context.reader();
             this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
-            this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
+            this.idDV = context.reader().getSortedDocValues(FIELDS.id);
             this.mqDV = context.reader().getBinaryDocValues(FIELDS.mq);
         }
 

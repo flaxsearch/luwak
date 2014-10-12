@@ -51,7 +51,8 @@ public class TestCachePurging {
                 new MonitorQuery("3", "test3")
         };
         monitor.update(queries);
-        assertThat(monitor.getQueryCount()).isEqualTo(4);       // MQ 1 is split by the decomposer
+        assertThat(monitor.getQueryCount()).isEqualTo(3);
+        assertThat(monitor.getDisjunctCount()).isEqualTo(4);
         assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
 
         InputDocument doc = InputDocument.builder("doc1")
