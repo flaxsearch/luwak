@@ -34,7 +34,7 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
 
     public PresearcherMatch<T> match(String id) {
         if (matchingTerms.containsKey(id))
-            return new PresearcherMatch<>(matchingTerms.get(id).toString(), matcher.matches(id));
+            return new PresearcherMatch<>(id, matchingTerms.get(id).toString(), matcher.matches(id));
         return null;
     }
 
@@ -50,7 +50,7 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
             @Override
             public PresearcherMatch<T> next() {
                 String id = ids.next();
-                return new PresearcherMatch<>(matchingTerms.get(id).toString(), matcher.matches(id));
+                return new PresearcherMatch<>(id, matchingTerms.get(id).toString(), matcher.matches(id));
             }
 
             @Override

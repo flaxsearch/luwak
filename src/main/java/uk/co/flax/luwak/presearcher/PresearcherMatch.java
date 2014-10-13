@@ -24,8 +24,11 @@ public class PresearcherMatch<T extends QueryMatch> {
 
     public final T queryMatch;
 
-    public PresearcherMatch(String presearcherMatches, T queryMatch) {
+    public final String queryId;
+
+    public PresearcherMatch(String id, String presearcherMatches, T queryMatch) {
         this.presearcherMatches = presearcherMatches;
         this.queryMatch = queryMatch;
+        this.queryId = id;
     }
 }
