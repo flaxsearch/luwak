@@ -25,7 +25,7 @@ import uk.co.flax.luwak.QueryMatch;
 public class PresearcherMatches<T extends QueryMatch> implements Iterable<PresearcherMatch<T>> {
 
     private final Map<String, StringBuilder> matchingTerms;
-    private final CandidateMatcher<T> matcher;
+    public final CandidateMatcher<T> matcher;
 
     public PresearcherMatches(Map<String, StringBuilder> matchingTerms, CandidateMatcher<T> matcher) {
         this.matcher = matcher;
