@@ -38,6 +38,11 @@ public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatche
         return new QueryCacheingMatch<>(matchQuery, match);
     }
 
+    @Override
+    public QueryCacheingMatch<T> resolve(QueryCacheingMatch<T> match1, QueryCacheingMatch<T> match2) {
+        return match1;
+    }
+
     public static class QueryCacheingMatcherFactory<T extends QueryMatch> implements MatcherFactory<QueryCacheingMatch<T>> {
 
         private final MatcherFactory<T> matcherFactory;

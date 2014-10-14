@@ -101,7 +101,7 @@ public class TestSlowLog {
         ParallelMatcher.ParallelMatcherFactory<QueryMatch> factory
                 = ParallelMatcher.factory(executor, SimpleMatcher.FACTORY);
 
-        ParallelMatcher<QueryMatch> matches = monitor.match(doc1, factory);
+        Matches<QueryMatch> matches = monitor.match(doc1, factory);
         System.out.println(matches.getSlowLog());
         assertThat(matches.getSlowLog())
                 .contains("1:")

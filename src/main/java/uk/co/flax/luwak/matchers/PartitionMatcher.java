@@ -53,6 +53,8 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
     private final int threads;
 
+    private final CandidateMatcher<T> resolvingMatcher;
+
     private static class MatchTask {
 
         final String queryId;
@@ -73,12 +75,18 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         this.executor = executor;
         this.matcherFactory = matcherFactory;
         this.threads = threads;
+        this.resolvingMatcher = matcherFactory.createMatcher(doc);
     }
 
     @Override
     public T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
         return null;
+    }
+
+    @Override
+    public T resolve(T match1, T match2) {
+        return resolvingMatcher.resolve(match1, match2);
     }
 
     @Override

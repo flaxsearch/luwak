@@ -61,8 +61,20 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
     protected void addMatch(String queryId, T match) {
-        matches.put(queryId, match);
+        if (matches.containsKey(queryId))
+            matches.put(queryId, resolve(match, matches.get(queryId)));
+        else
+            matches.put(queryId, match);
     }
+
+    /**
+     * If two matches from the same query are found (for example, two branches of a disjunction),
+     * combine them.
+     * @param match1 the first match found
+     * @param match2 the second match found
+     * @return a Match object that combines the two
+     */
+    public abstract T resolve(T match1, T match2);
 
     /**
      * Called by the Monitor if running a query throws an Exception

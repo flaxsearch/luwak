@@ -56,6 +56,10 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
         super.addMatch(queryId, IntervalsQueryMatch.merge(queryId, previousMatch, match));
     }
 
+    public IntervalsQueryMatch resolve(IntervalsQueryMatch match1, IntervalsQueryMatch match2) {
+        return IntervalsQueryMatch.merge(match1.getQueryId(), match1, match2);
+    }
+
     private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
 
         QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(queryId);

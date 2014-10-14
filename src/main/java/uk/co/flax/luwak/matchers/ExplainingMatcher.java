@@ -44,4 +44,10 @@ public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
             return null;
         return new ExplainingMatch(queryId, explanation);
     }
+
+    @Override
+    public ExplainingMatch resolve(ExplainingMatch match1, ExplainingMatch match2) {
+        return match1.getExplanation().getValue() > match2.getExplanation().getValue() ?
+                match1 : match2;
+    }
 }

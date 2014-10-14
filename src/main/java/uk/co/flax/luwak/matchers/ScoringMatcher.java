@@ -40,11 +40,8 @@ public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
     }
 
     @Override
-    protected void addMatch(String queryId, ScoringMatch match) {
-        ScoringMatch prev = this.matches(queryId);
-        if (prev == null || prev.getScore() < match.getScore()) {
-            super.addMatch(queryId, match);
-        }
+    public ScoringMatch resolve(ScoringMatch match1, ScoringMatch match2) {
+        return match1.getScore() < match2.getScore() ? match2 : match1;
     }
 
     /**

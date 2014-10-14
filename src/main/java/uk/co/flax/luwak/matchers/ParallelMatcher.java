@@ -47,6 +47,8 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
     private final List<MatcherWorker> workers = new ArrayList<>();
 
+    private final CandidateMatcher<T> collectorMatcher;
+
     /**
      * Create a new ParallelMatcher
      * @param doc the InputDocument to match against
@@ -62,6 +64,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             workers.add(mw);
             futures.add(executor.submit(mw));
         }
+        collectorMatcher = matcherFactory.createMatcher(doc);
     }
 
     @Override
@@ -72,6 +75,11 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             throw new IOException("Interrupted during match", e);
         }
         return null;
+    }
+
+    @Override
+    public T resolve(T match1, T match2) {
+        return collectorMatcher.resolve(match1, match2);
     }
 
     @Override
