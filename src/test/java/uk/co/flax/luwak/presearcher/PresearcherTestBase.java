@@ -62,4 +62,16 @@ public abstract class PresearcherTestBase {
 
     }
 
+    @Test
+    public void testEmptyMonitorHandling() throws IOException {
+
+        monitor.clear();
+        InputDocument doc = InputDocument.builder("doc1").addField("field_2", "test", WHITESPACE).build();
+
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasMatchCount(0)
+                .hasQueriesRunCount(0);
+
+    }
+
 }

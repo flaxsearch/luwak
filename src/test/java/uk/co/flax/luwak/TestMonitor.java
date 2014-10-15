@@ -131,6 +131,18 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
     }
 
+    @Test
+    public void testMatchesAgainstAnEmptyMonitor() throws IOException {
+
+        monitor.clear();
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+
+        InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "other things", WHITESPACE).build();
+        SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+
+        Assertions.assertThat(matches.getQueriesRun()).isEqualTo(0);
+    }
+
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
 
 }
