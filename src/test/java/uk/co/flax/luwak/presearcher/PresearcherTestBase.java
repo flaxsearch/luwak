@@ -1,9 +1,13 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
@@ -71,6 +75,41 @@ public abstract class PresearcherTestBase {
         assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(0);
+
+    }
+
+    static class TestQuery extends Query {
+
+        @Override
+        public String toString(String field) {
+            return "TestQuery";
+        }
+
+        @Override
+        public Query rewrite(IndexReader reader) throws IOException {
+            return new MatchAllDocsQuery();
+        }
+    }
+
+    static class TestQueryParser implements MonitorQueryParser {
+
+        @Override
+        public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+            return new TestQuery();
+        }
+    }
+
+    @Test
+    public void testAnyTokenHandling() throws IOException {
+
+        Monitor monitor = new Monitor(new TestQueryParser(), presearcher);
+        monitor.update(new MonitorQuery("1", "testquery"));
+
+        InputDocument doc = buildDoc("1", "f", "wibble");
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasMatchCount(1)
+                .hasQueriesRunCount(1);
+
 
     }
 

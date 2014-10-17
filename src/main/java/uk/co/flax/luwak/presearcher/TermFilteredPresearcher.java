@@ -39,7 +39,6 @@ import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -60,19 +59,12 @@ public class TermFilteredPresearcher extends Presearcher {
 
     private final List<PresearcherComponent> components = Lists.newArrayList();
 
-    public TermFilteredPresearcher(TreeWeightor weightor, QueryTreeBuilder... queryTreeBuilders) {
-        this.extractor = new QueryAnalyzer(weightor, queryTreeBuilders);
-        this.components.add(new DefaultPresearcherComponent());
-        this.components.add(new PresearcherComponent(queryTreeBuilders));
-    }
+    public static final String ANYTOKEN_FIELD = "__anytokenfield";
 
-    public TermFilteredPresearcher(QueryTreeBuilder... queryTreeBuilders) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
-    }
+    public static final String ANYTOKEN = "__ANYTOKEN__";
 
     public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
         this.extractor = PresearcherComponent.buildQueryAnalyzer(weightor, components);
-        this.components.add(new DefaultPresearcherComponent());
         this.components.addAll(Arrays.asList(components));
     }
 
@@ -81,7 +73,7 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     public TermFilteredPresearcher() {
-        this(new DefaultPresearcherComponent());
+        this(TreeWeightor.DEFAULT_WEIGHTOR);
     }
 
     @Override
@@ -105,10 +97,15 @@ public class TermFilteredPresearcher extends Presearcher {
 
             }
             Query presearcherQuery = queryBuilder.build();
+
             for (PresearcherComponent component : components) {
                 presearcherQuery = component.adjustPresearcherQuery(doc, presearcherQuery);
             }
-            return presearcherQuery;
+
+            BooleanQuery bq = new BooleanQuery();
+            bq.add(presearcherQuery, BooleanClause.Occur.SHOULD);
+            bq.add(new TermQuery(new Term(ANYTOKEN_FIELD, ANYTOKEN)), BooleanClause.Occur.SHOULD);
+            return bq;
         }
         catch (IOException e) {
             // We're a MemoryIndex, so this shouldn't happen...
@@ -175,6 +172,10 @@ public class TermFilteredPresearcher extends Presearcher {
             if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
                 termslist.append(" ").append(queryTerm.term);
             }
+            else if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
+                if (!fieldTerms.containsKey(ANYTOKEN_FIELD))
+                    fieldTerms.put(ANYTOKEN_FIELD, new StringBuilder(ANYTOKEN));
+            }
             else {
                 termslist.append(" ").append(queryTerm.term);
                 for (PresearcherComponent component : components) {
@@ -184,6 +185,7 @@ public class TermFilteredPresearcher extends Presearcher {
                 }
             }
         }
+
         return fieldTerms;
     }
 

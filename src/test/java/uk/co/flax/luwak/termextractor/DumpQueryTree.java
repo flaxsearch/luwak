@@ -1,14 +1,12 @@
 package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.presearcher.DefaultPresearcherComponent;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.FieldWeightNorm;
-import uk.co.flax.luwak.termextractor.weights.TermTypeNorm;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
 import uk.co.flax.luwak.util.ParserUtils;
 
@@ -38,7 +36,7 @@ public class DumpQueryTree {
                                                  new TermWeightNorm(1, "google"),
                                                  new TermWeightNorm(4, "user", "data"),
                                                  new FieldWeightNorm(0.1f, "wire"));
-        QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(weightor, new DefaultPresearcherComponent());
+        QueryAnalyzer analyzer = PresearcherComponent.buildQueryAnalyzer(weightor);
         TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
 
         QueryTree tree = analyzer.buildTree(bq);
