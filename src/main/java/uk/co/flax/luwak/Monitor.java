@@ -54,6 +54,8 @@ public class Monitor implements Closeable {
 
     private long slowLogLimit = 2000000;
 
+    private long commitBatchSize = 5000;
+
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
 
@@ -333,6 +335,10 @@ public class Monitor implements Closeable {
                 }
             } catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
+            }
+            if (updates.size() > commitBatchSize) {
+                commit(updates);
+                updates.clear();
             }
         }
 
