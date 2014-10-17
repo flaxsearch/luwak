@@ -42,20 +42,31 @@ public class QueryDecomposer {
 
         List<Query> subqueries = new LinkedList<>();
         List<Query> exclusions = new LinkedList<>();
+        List<Query> mandatory = new LinkedList<>();
 
         for (BooleanClause clause : q) {
-            // Any MUST clauses mean we can't decompose
             if (clause.getOccur() == BooleanClause.Occur.MUST)
-                return ImmutableList.<Query>of(q);
-            if (clause.getOccur() == BooleanClause.Occur.MUST_NOT)
+                mandatory.add(clause.getQuery());
+            else if (clause.getOccur() == BooleanClause.Occur.MUST_NOT)
                 exclusions.add(clause.getQuery());
             else
                 subqueries.addAll(decompose(clause.getQuery()));
         }
 
+        // More than one MUST clause, or a single MUST clause with disjunctions
+        if (mandatory.size() > 1 || (mandatory.size() == 1 && subqueries.size() > 0))
+            return ImmutableList.<Query>of(q);
+
+        // If we only have a single MUST clause and no SHOULD clauses, then we can
+        // decompose the MUST clause instead
+        if (mandatory.size() == 1)
+            subqueries.addAll(decompose(mandatory.get(0)));
+
         if (exclusions.size() == 0)
             return subqueries;
 
+        // If there are exclusions, then we need to add them to all the decomposed
+        // queries
         List<Query> rewrittenSubqueries = new ArrayList<>(subqueries.size());
         for (Query subquery : subqueries) {
             BooleanQuery bq = new BooleanQuery();

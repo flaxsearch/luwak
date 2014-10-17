@@ -67,4 +67,16 @@ public class TestQueryDecomposer {
                         q("+(+world -goodbye) -greeting"));
     }
 
+    @Test
+    public void testSingleValuedConjunctions() throws Exception {
+        assertThat(decomposer.decompose(q("+(hello world)")))
+                .containsExactly(q("hello"), q("world"));
+    }
+
+    @Test
+    public void testSingleValuedConjunctWithExclusions() throws Exception {
+        assertThat(decomposer.decompose(q("+(hello world) -goodbye")))
+                .containsExactly(q("+hello -goodbye"), q("+world -goodbye"));
+    }
+
 }
