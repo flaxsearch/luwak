@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.miscellaneous.CodepointCountFilter;
 import org.apache.lucene.analysis.tokenattributes.*;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.CharacterUtils;
 import uk.co.flax.luwak.Constants;
 
@@ -27,7 +27,6 @@ import uk.co.flax.luwak.Constants;
 
 public final class SuffixingNGramTokenFilter extends TokenFilter {
 
-    private final int minGram, maxGram;
     private final String suffix;
     private final int maxTokenLength;
     private final String anyToken;
@@ -48,17 +47,19 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final KeywordAttribute keywordAtt = addAttribute(KeywordAttribute.class);
 
+    private final CharArraySet seenTerms = new CharArraySet(Constants.VERSION, 1024, false);
+
     /**
-     * Creates NGramTokenFilter with given min and max n-grams.
+     * Creates SuffixingNGramTokenFilter.
      * @param input {@link org.apache.lucene.analysis.TokenStream} holding the input to be tokenized
      * @param suffix a string to suffix to all ngrams
+     * @param wildcardToken a token to emit if the input token is longer than maxTokenLength
+     * @param maxTokenLength tokens longer than this will not be ngrammed
      */
     public SuffixingNGramTokenFilter(TokenStream input, String suffix, String wildcardToken, int maxTokenLength) {
-        super(new CodepointCountFilter(Constants.VERSION, input, 1, Integer.MAX_VALUE));
+        super(input);
         this.charUtils = CharacterUtils.getInstance(Constants.VERSION);
 
-        this.minGram = 1;
-        this.maxGram = Integer.MAX_VALUE;
         this.suffix = suffix;
         this.anyToken = wildcardToken;
         this.maxTokenLength = maxTokenLength;
@@ -81,40 +82,45 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
                 if (keywordAtt.isKeyword())
                     return true;
 
-                if (termAtt.length() > maxTokenLength) {
-                    termAtt.setEmpty().append(anyToken);
-                    return true;
-                }
-
                 curTermBuffer = termAtt.buffer().clone();
                 curTermLength = termAtt.length();
                 curCodePointCount = charUtils.codePointCount(termAtt);
-                curGramSize = minGram;
+                curGramSize = curTermLength;
                 curPos = 0;
                 curPosInc = posIncAtt.getPositionIncrement();
                 curPosLen = posLenAtt.getPositionLength();
                 tokStart = offsetAtt.startOffset();
                 tokEnd = offsetAtt.endOffset();
-                termAtt.setEmpty().append(suffix);
+                //termAtt.setEmpty().append(suffix);
                 return true;
 
             }
 
-            if (curGramSize > maxGram || (curPos + curGramSize) > curCodePointCount) {
-                ++curPos;
-                curGramSize = minGram;
+            if (termAtt.length() > maxTokenLength) {
+                termAtt.setEmpty().append(anyToken);
+                curTermBuffer = null;
+                return true;
             }
-            if ((curPos + curGramSize) <= curCodePointCount) {
+
+            if (curGramSize == 0) {
+                ++curPos;
+                curGramSize = curTermLength - curPos;
+            }
+            if (curGramSize >= 0 && (curPos + curGramSize) <= curCodePointCount) {
                 clearAttributes();
                 final int start = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, 0, curPos);
                 final int end = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, start, curGramSize);
                 termAtt.copyBuffer(curTermBuffer, start, end - start);
                 termAtt.append(suffix);
+                if ((curGramSize == curTermLength - curPos) && !seenTerms.add(termAtt.subSequence(0, termAtt.length()))) {
+                    curTermBuffer = null;
+                    continue;
+                }
                 posIncAtt.setPositionIncrement(curPosInc);
                 curPosInc = 0;
                 posLenAtt.setPositionLength(curPosLen);
                 offsetAtt.setOffset(tokStart, tokEnd);
-                curGramSize++;
+                curGramSize--;
                 return true;
             }
 
