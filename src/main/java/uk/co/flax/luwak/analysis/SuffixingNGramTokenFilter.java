@@ -47,7 +47,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final KeywordAttribute keywordAtt = addAttribute(KeywordAttribute.class);
 
-    private final CharArraySet seenTerms = new CharArraySet(Constants.VERSION, 1024, false);
+    private final CharArraySet seenSuffixes = new CharArraySet(Constants.VERSION, 1024, false);
+    private final CharArraySet seenInfixes = new CharArraySet(Constants.VERSION, 1024, false);
 
     /**
      * Creates SuffixingNGramTokenFilter.
@@ -112,8 +113,12 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
                 final int end = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, start, curGramSize);
                 termAtt.copyBuffer(curTermBuffer, start, end - start);
                 termAtt.append(suffix);
-                if ((curGramSize == curTermLength - curPos) && !seenTerms.add(termAtt.subSequence(0, termAtt.length()))) {
+                if ((curGramSize == curTermLength - curPos) && !seenSuffixes.add(termAtt.subSequence(0, termAtt.length()))) {
                     curTermBuffer = null;
+                    continue;
+                }
+                if (!seenInfixes.add(termAtt.subSequence(0, termAtt.length()))) {
+                    curGramSize = 0;
                     continue;
                 }
                 posIncAtt.setPositionIncrement(curPosInc);
@@ -132,5 +137,7 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     public void reset() throws IOException {
         super.reset();
         curTermBuffer = null;
+        seenInfixes.clear();
+        seenSuffixes.clear();
     }
 }

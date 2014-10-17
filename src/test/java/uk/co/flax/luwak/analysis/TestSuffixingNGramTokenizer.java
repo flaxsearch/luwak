@@ -95,6 +95,28 @@ public class TestSuffixingNGramTokenizer {
     }
 
     @Test
+    public void testRepeatedInfixesAreNotEmitted() throws IOException {
+
+        TokenStream ts = analyzer.tokenStream("f", "alarm alas harm");
+        assertThat(ts)
+                .nextEquals("alarm")
+                .nextEquals("alarmXX").nextEquals("alarXX").nextEquals("alaXX").nextEquals("alXX").nextEquals("aXX")
+                .nextEquals("larmXX").nextEquals("larXX").nextEquals("laXX").nextEquals("lXX")
+                .nextEquals("armXX").nextEquals("arXX")
+                .nextEquals("rmXX").nextEquals("rXX")
+                .nextEquals("mXX")
+                .nextEquals("XX")
+                .nextEquals("alas")
+                .nextEquals("alasXX")
+                .nextEquals("lasXX")
+                .nextEquals("asXX")
+                .nextEquals("sXX")
+                .nextEquals("harm")
+                .nextEquals("harmXX").nextEquals("harXX").nextEquals("haXX").nextEquals("hXX")
+                .isExhausted();
+    }
+
+    @Test
     public void testLengthyTokensAreNotNgrammed() throws IOException {
 
         TokenStream ts = analyzer.tokenStream("f", "alongtermthatshouldntbengrammed");
@@ -117,6 +139,7 @@ public class TestSuffixingNGramTokenizer {
 
             TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator(null));
             ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
+            //ts = new DuplicateRemovalTokenFilter(ts);
             int tokencount = 0;
             ts.reset();
             while (ts.incrementToken()) {
