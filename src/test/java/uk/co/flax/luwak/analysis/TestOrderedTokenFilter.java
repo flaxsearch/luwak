@@ -45,9 +45,9 @@ public class TestOrderedTokenFilter {
 
         TokenStream ts = analyzer.tokenStream("f", "term");
         assertThat(ts)
-                .nextEquals("XX")
-                .nextEquals("eXX")
-                .nextEquals("erXX")
+                .nextEquals("XX", 0)
+                .nextEquals("eXX", 0)
+                .nextEquals("erXX", 0)
                 .nextEquals("ermXX")
                 .nextEquals("mXX")
                 .nextEquals("rXX")

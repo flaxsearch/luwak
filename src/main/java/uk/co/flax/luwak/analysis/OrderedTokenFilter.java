@@ -6,6 +6,7 @@ import java.util.PriorityQueue;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -26,6 +27,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 public class OrderedTokenFilter extends TokenFilter {
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
+    private final PositionIncrementAttribute posAtt = addAttribute(PositionIncrementAttribute.class);
+
     private final CharTermAttribute inputAtt;
 
     private final PriorityQueue<String> tokens = new PriorityQueue<>();
@@ -53,6 +56,7 @@ public class OrderedTokenFilter extends TokenFilter {
             done = true;
 
         termAtt.setEmpty().append(nextToken);
+        posAtt.setPositionIncrement(0);
         return true;
     }
 
