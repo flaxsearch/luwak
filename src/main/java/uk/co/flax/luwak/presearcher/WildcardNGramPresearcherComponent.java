@@ -3,7 +3,6 @@ package uk.co.flax.luwak.presearcher;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.DuplicateRemovalTokenFilter;
-import uk.co.flax.luwak.analysis.OrderedTokenFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
@@ -76,7 +75,7 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
         TokenStream duped = new KeywordRepeatFilter(ts);
         TokenStream ngrammed
                 = new SuffixingNGramTokenFilter(duped, ngramSuffix, wildcardToken, maxTokenSize);
-        return new OrderedTokenFilter(new DuplicateRemovalTokenFilter(ngrammed));
+        return new DuplicateRemovalTokenFilter(ngrammed);
     }
 
     @Override
