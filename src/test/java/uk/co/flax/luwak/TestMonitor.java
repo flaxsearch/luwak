@@ -1,6 +1,8 @@
 package uk.co.flax.luwak;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -12,6 +14,8 @@ import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
@@ -141,6 +145,22 @@ public class TestMonitor {
         SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
 
         Assertions.assertThat(matches.getQueriesRun()).isEqualTo(0);
+    }
+
+    @Test
+    public void testUpdateReporting() throws IOException {
+
+        Monitor.UpdateReporter reporter = mock(Monitor.UpdateReporter.class);
+        List<MonitorQuery> queries = new ArrayList<>(10400);
+        for (int i = 0; i < 10355; i++) {
+            queries.add(new MonitorQuery(Integer.toString(i), "test"));
+        }
+
+        monitor.update(queries, reporter);
+        verify(reporter).progress(5001, 5001);
+        verify(reporter).progress(10002, 5001);
+        verify(reporter).finish(10355, 353);
+
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
