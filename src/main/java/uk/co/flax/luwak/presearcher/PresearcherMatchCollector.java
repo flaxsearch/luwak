@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.BinaryDocValues;
-import org.apache.lucene.index.StoredDocument;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
@@ -35,8 +35,8 @@ import uk.co.flax.luwak.TimedCollector;
 public class PresearcherMatchCollector extends TimedCollector implements IntervalCollector {
 
     private IntervalIterator positions;
-    private AtomicReader reader;
-    private StoredDocument document;
+    private LeafReader reader;
+    private Document document;
     private BinaryDocValues idValues;
     private String currentId;
 
@@ -68,7 +68,7 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
     }
 
     @Override
-    public void doSetNextReader(AtomicReaderContext context) throws IOException {
+    public void doSetNextReader(LeafReaderContext context) throws IOException {
         this.reader = context.reader();
         this.idValues = this.reader.getBinaryDocValues(Monitor.FIELDS.id);
     }

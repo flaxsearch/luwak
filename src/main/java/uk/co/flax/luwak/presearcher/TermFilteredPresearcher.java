@@ -14,6 +14,10 @@ package uk.co.flax.luwak.presearcher;/*
  * limitations under the License.
  */
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -21,8 +25,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanClause;
@@ -31,16 +35,12 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.Extractor;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTermExtractor;
-import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -68,7 +68,7 @@ public class TermFilteredPresearcher implements Presearcher {
     @Override
     public final Query buildQuery(InputDocument doc, PerFieldTokenFilter filter) {
         try {
-            AtomicReader reader = doc.asAtomicReader();
+            LeafReader reader = doc.asAtomicReader();
             BooleanQuery bq = new BooleanQuery();
             for (String field : reader.fields()) {
 

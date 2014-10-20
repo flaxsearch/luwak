@@ -33,7 +33,7 @@ import org.apache.lucene.util.BytesRefBuilder;
  */
 public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
 
-    private final AtomicReader reader;
+    private final LeafReader reader;
 
     public TermsEnumFilter(IndexWriter writer) throws IOException {
         this.reader = SlowCompositeReaderWrapper.wrap(DirectoryReader.open(writer, true));

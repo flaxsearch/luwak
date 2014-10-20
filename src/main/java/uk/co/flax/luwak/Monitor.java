@@ -337,7 +337,7 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public final void doSetNextReader(AtomicReaderContext context) throws IOException {
+        public final void doSetNextReader(LeafReaderContext context) throws IOException {
             this.queryDV = context.reader().getBinaryDocValues(Monitor.FIELDS.query);
             this.highlightDV = context.reader().getBinaryDocValues(Monitor.FIELDS.highlight);
             this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
