@@ -11,7 +11,7 @@ import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 

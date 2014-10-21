@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import com.google.common.collect.ImmutableMap;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.store.MMapDirectory;
-import org.fest.assertions.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

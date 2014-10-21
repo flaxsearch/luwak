@@ -1,9 +1,9 @@
 package uk.co.flax.luwak.intervals;
 
-import org.fest.assertions.api.AbstractAssert;
-import org.fest.assertions.api.Assertions;
-
 import java.util.Collection;
+
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.

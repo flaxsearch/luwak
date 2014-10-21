@@ -1,7 +1,7 @@
 package uk.co.flax.luwak.util;
 
-import org.fest.assertions.api.AbstractAssert;
-import org.fest.assertions.api.Assertions;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 import uk.co.flax.luwak.CandidateMatcher;
 
 /**

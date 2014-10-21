@@ -4,7 +4,7 @@ import org.apache.lucene.search.Query;
 import org.junit.Test;
 import uk.co.flax.luwak.util.ParserUtils;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.

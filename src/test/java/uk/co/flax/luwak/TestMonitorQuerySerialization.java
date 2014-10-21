@@ -1,8 +1,8 @@
 package uk.co.flax.luwak;
 
 import com.google.common.collect.ImmutableMap;
-import org.fest.assertions.api.AbstractAssert;
-import org.fest.assertions.api.Assertions;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import static uk.co.flax.luwak.TestMonitorQuerySerialization.AssertSerializes.assertThat;

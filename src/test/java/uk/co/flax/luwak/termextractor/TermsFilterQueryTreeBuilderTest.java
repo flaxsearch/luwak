@@ -9,7 +9,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.termextractor.treebuilder.TermsFilterQueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TermsFilterQueryTreeBuilderTest {
 
