@@ -2,6 +2,7 @@ package uk.co.flax.luwak.intervals;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
@@ -121,7 +122,7 @@ public class IntervalsQueryMatch extends QueryMatch {
 
         @Override
         public String toString() {
-            return String.format("%d(%d)->%d(%d)", startPosition, startOffset, endPosition, endOffset);
+            return String.format(Locale.ROOT, "%d(%d)->%d(%d)", startPosition, startOffset, endPosition, endOffset);
         }
 
         @Override
