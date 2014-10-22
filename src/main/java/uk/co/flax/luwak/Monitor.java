@@ -175,7 +175,7 @@ public class Monitor implements Closeable {
 
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
-            public void collect(int doc) throws IOException {
+            public void doMatch(int doc, String queryId, BytesRef hash) {
                 mqDV.get(doc, serializedMQ);
                 MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
                 try {
@@ -252,9 +252,9 @@ public class Monitor implements Closeable {
             purgeLock.writeLock().unlock();
         }
 
-        match(new MatchAllDocsQuery(), new SearchingCollector() {
+        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
-            protected void doSearch(String id, BytesRef hash) {
+            protected void doMatch(int doc, String id, BytesRef hash) {
                 newCache.put(hash.clone(), queries.get(hash));
             }
         });
@@ -462,13 +462,13 @@ public class Monitor implements Closeable {
         commit(null);
     }
 
-    private void match(CandidateMatcher matcher) throws IOException {
+    private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
 
         long buildTime = System.nanoTime();
         Query query = buildQuery(matcher.getDocument());
         buildTime = (System.nanoTime() - buildTime) / 1000000;
 
-        MatchingCollector collector = new MatchingCollector(matcher);
+        MatchingCollector<T> collector = new MatchingCollector<>(matcher);
         match(query, collector);
         matcher.finish(buildTime, collector.getQueryCount());
 
@@ -518,7 +518,7 @@ public class Monitor implements Closeable {
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
-            public void collect(int doc) throws IOException {
+            public void doMatch(int doc, String queryId, BytesRef hash) {
                 mqDV.get(doc, serializedMQ);
                 queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
             }
@@ -540,9 +540,8 @@ public class Monitor implements Closeable {
         final Set<String> ids = new HashSet<>();
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
-            public void collect(int doc) throws IOException {
-                idDV.get(doc, id);
-                ids.add(id.utf8ToString());
+            public void doMatch(int doc, String queryId, BytesRef hash) {
+                ids.add(queryId);
             }
         });
         return ids.size();
@@ -587,16 +586,16 @@ public class Monitor implements Closeable {
     }
 
     // For each query selected by the presearcher, pass on to a CandidateMatcher
-    private static class MatchingCollector extends SearchingCollector {
+    private static class MatchingCollector<T extends QueryMatch> extends MonitorQueryCollector {
 
-        final CandidateMatcher matcher;
+        final CandidateMatcher<T> matcher;
 
-        private MatchingCollector(CandidateMatcher matcher) {
+        private MatchingCollector(CandidateMatcher<T> matcher) {
             this.matcher = matcher;
         }
 
         @Override
-        protected void doSearch(String queryId, BytesRef hash) {
+        protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
                 CacheEntry entry = queries.get(hash);
                 matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQuery);
@@ -604,25 +603,6 @@ public class Monitor implements Closeable {
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
             }
-        }
-
-    }
-
-    public static abstract class SearchingCollector extends MonitorQueryCollector {
-
-        /**
-         * Do something with the matching query
-         * @param id the queryId
-         * @param hash the hash value to use to look up the query in QueryCache
-         */
-        protected abstract void doSearch(String id, BytesRef hash);
-
-        @Override
-        public final void collect(int doc) throws IOException {
-            hashDV.get(doc, hash);
-            idDV.get(doc, id);
-            queryCount++;
-            doSearch(id.utf8ToString(), hash);
         }
 
     }
@@ -655,6 +635,16 @@ public class Monitor implements Closeable {
         }
 
         @Override
+        public void collect(int doc) throws IOException {
+            hashDV.get(doc, hash);
+            idDV.get(doc, id);
+            queryCount++;
+            doMatch(doc, id.utf8ToString(), hash);
+        }
+
+        protected abstract void doMatch(int doc, String queryId, BytesRef queryHash) throws IOException;
+
+        @Override
         public void setNextReader(AtomicReaderContext context) throws IOException {
             this.reader = context.reader();
             this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
@@ -674,7 +664,7 @@ public class Monitor implements Closeable {
     }
 
     private static class PresearcherMatchCollector<T extends QueryMatch>
-            extends MonitorQueryCollector implements IntervalCollector {
+            extends MatchingCollector<T> implements IntervalCollector {
 
         private IntervalIterator positions;
         private StoredDocument document;
@@ -682,12 +672,8 @@ public class Monitor implements Closeable {
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-        private final BytesRef scratch = new BytesRef();
-
-        final CandidateMatcher<T> matcher;
-
         private PresearcherMatchCollector(CandidateMatcher<T> matcher) {
-            this.matcher = matcher;
+            super(matcher);
         }
 
         public PresearcherMatches<T> getMatches() {
@@ -695,26 +681,16 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public void collect(int doc) throws IOException {
+        protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
 
-            idDV.get(doc, scratch);
-            this.currentId = scratch.utf8ToString();
-
+            currentId = queryId;
             document = reader.document(doc);
             positions.scorerAdvanced(doc);
-            while(positions.next() != null) {
+            while (positions.next() != null) {
                 positions.collect(this);
             }
 
-            hashDV.get(doc, hash);
-            queryCount++;
-            try {
-                CacheEntry entry = queries.get(hash);
-                matcher.matchQuery(currentId, entry.matchQuery, entry.highlightQuery);
-            }
-            catch (Exception e) {
-                matcher.reportError(new MatchError(currentId, e));
-            }
+            super.doMatch(doc, queryId, hash);
         }
 
         @Override
