@@ -16,6 +16,10 @@ package uk.co.flax.luwak.intervals;
 * limitations under the License.
 */
 
+import java.io.IOException;
+
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
@@ -23,9 +27,6 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
-
-import java.io.IOException;
-import uk.co.flax.luwak.QueryMatch;
 
 /**
  * a specialized Collector that uses an {@link IntervalIterator} to collect
@@ -35,14 +36,14 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
 
     private IntervalIterator positions;
 
-    private final IntervalsQueryMatch matches;
+    private final MatchBuilder matches;
 
     public QueryIntervalsMatchCollector(String queryId) {
-        matches = new IntervalsQueryMatch(queryId);
+        matches = new MatchBuilder(queryId);
     }
 
     public IntervalsQueryMatch getMatches() {
-        return matches;
+        return matches.build();
     }
 
     @Override
@@ -52,6 +53,9 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
             while(positions.next() != null) {
                 positions.collect(this);
             }
+        }
+        else {
+            matches.setMatch();
         }
     }
 
@@ -67,7 +71,12 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
 
     @Override
     public void setScorer(Scorer scorer) throws IOException {
-        positions = scorer.intervals(true);
+        try {
+            positions = scorer.intervals(true);
+        }
+        catch (UnsupportedOperationException e) {
+            // Query doesn't support positions, so we just say if it's a match or not
+        }
     }
 
     @Override
@@ -84,6 +93,34 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
     public void collectComposite(Scorer scorer, Interval interval,
                                  int docID) {
         //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+    }
+
+    private static class MatchBuilder {
+
+        private final Multimap<String, IntervalsQueryMatch.Hit> hits = HashMultimap.create();
+
+        private boolean match;
+
+        private String queryId;
+
+        public MatchBuilder(String queryId) {
+            this.queryId = queryId;
+        }
+
+        public void setMatch() {
+            this.match = true;
+        }
+
+        public void addInterval(Interval interval) {
+            hits.put(interval.field,
+                    new IntervalsQueryMatch.Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
+        }
+
+        public IntervalsQueryMatch build() {
+            if (!match && hits.size() == 0)
+                return null;
+            return new IntervalsQueryMatch(queryId, hits);
+        }
     }
 
 }

@@ -1,17 +1,19 @@
 package uk.co.flax.luwak.intervals;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RegexpQuery;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.Constants;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -130,8 +132,28 @@ public class TestIntervalsMatches {
     @Test
     public void testQueryErrors() throws IOException {
 
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                if (queryString.equals("error!")) {
+                    return new Query() {
+                        @Override
+                        public String toString(String field) {
+                            return "";
+                        }
+
+                        @Override
+                        public Query rewrite(IndexReader reader) throws IOException {
+                            throw new RuntimeException("Oops!");
+                        }
+                    };
+                }
+                return new LuceneQueryParser(textfield).parse(queryString, metadata);
+            }
+        }, new MatchAllPresearcher());
+
         monitor.update(new MonitorQuery("1", "test"),
-                       new MonitorQuery("2", "*:*"),
+                       new MonitorQuery("2", "error!"),
                        new MonitorQuery("3", "document"),
                        new MonitorQuery("4", "foo"));
 
@@ -139,6 +161,27 @@ public class TestIntervalsMatches {
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);
+    }
+
+    @Test
+    public void testFiltersAreHandledGracefully() throws IOException {
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return new RegexpQuery(new Term(textfield, "he.*"));
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+
+        IntervalsMatcher matches = monitor.match(buildDoc("1", "hello world"), IntervalsMatcher.FACTORY);
+        assertThat(matches)
+                .hasQueriesRunCount(1)
+                .hasMatchCount(1);
+
+        Assertions.assertThat(matches.matches("1").getHitCount()).isEqualTo(0);
+
     }
 
 }

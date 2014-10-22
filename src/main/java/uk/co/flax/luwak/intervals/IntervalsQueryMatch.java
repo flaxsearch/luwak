@@ -5,9 +5,9 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
 /**
@@ -26,29 +26,27 @@ import uk.co.flax.luwak.QueryMatch;
  * limitations under the License.
  */
 
+/**
+ * QueryMatch object that contains the hit positions of a matching Query
+ *
+ * If the Query does not support interval iteration (eg, if it gets re-written to
+ * a Filter), then no hits will be reported, but an IntervalsQueryMatch will still
+ * be returned from an IntervalsMatcher to indicate a match.
+ */
 public class IntervalsQueryMatch extends QueryMatch {
 
-    private final Multimap<String, Hit> hits = TreeMultimap.create();
+    private static final Multimap<String, Hit> EMPTYMAP = HashMultimap.create();
+
+    private final Multimap<String, Hit> hits;
 
     /**
      * Create a new QueryMatch object for a query
      *
      * @param queryId the ID of the query
      */
-    public IntervalsQueryMatch(String queryId) {
+    public IntervalsQueryMatch(String queryId, Multimap<String, Hit> hits) {
         super(queryId);
-    }
-
-    /**
-     * Add a new {@link uk.co.flax.luwak.intervals.IntervalsQueryMatch.Hit}
-     * @param interval
-     */
-    public void addInterval(Interval interval) {
-        hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
-    }
-
-    public void addHits(String field, Iterable<Hit> newHits) {
-        hits.putAll(field, newHits);
+        this.hits = TreeMultimap.create(hits);
     }
 
     /**
@@ -75,15 +73,14 @@ public class IntervalsQueryMatch extends QueryMatch {
     }
 
     public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
-        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId);
+        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId, EMPTYMAP);
         for (IntervalsQueryMatch match : matches) {
             for (String field : match.getFields()) {
-                newMatch.addHits(field, match.getHits(field));
+                newMatch.hits.putAll(field, match.getHits(field));
             }
         }
         return newMatch;
     }
-
 
     /**
      * Represents an individual hit
