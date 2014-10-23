@@ -3,7 +3,7 @@ package uk.co.flax.luwak.presearcher;
 import java.util.Iterator;
 import java.util.Map;
 
-import uk.co.flax.luwak.CandidateMatcher;
+import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.QueryMatch;
 
 /**
@@ -25,9 +25,9 @@ import uk.co.flax.luwak.QueryMatch;
 public class PresearcherMatches<T extends QueryMatch> implements Iterable<PresearcherMatch<T>> {
 
     private final Map<String, StringBuilder> matchingTerms;
-    public final CandidateMatcher<T> matcher;
+    public final Matches<T> matcher;
 
-    public PresearcherMatches(Map<String, StringBuilder> matchingTerms, CandidateMatcher<T> matcher) {
+    public PresearcherMatches(Map<String, StringBuilder> matchingTerms, Matches<T> matcher) {
         this.matcher = matcher;
         this.matchingTerms = matchingTerms;
     }

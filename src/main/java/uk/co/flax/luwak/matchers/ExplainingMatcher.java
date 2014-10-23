@@ -26,7 +26,7 @@ import uk.co.flax.luwak.MatcherFactory;
 
 public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
 
-    public static final MatcherFactory<ExplainingMatcher> FACTORY = new MatcherFactory<ExplainingMatcher>() {
+    public static final MatcherFactory<ExplainingMatch> FACTORY = new MatcherFactory<ExplainingMatch>() {
         @Override
         public ExplainingMatcher createMatcher(InputDocument doc) {
             return new ExplainingMatcher(doc);

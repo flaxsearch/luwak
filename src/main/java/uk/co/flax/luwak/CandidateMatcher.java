@@ -26,18 +26,17 @@ import org.apache.lucene.search.Query;
  * Class used to match candidate queries selected by a Presearcher from a Monitor
  * query index.
  */
-public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
+public abstract class CandidateMatcher<T extends QueryMatch> {
+
+    protected final InputDocument doc;
+    protected long slowLogLimit;
 
     private final List<MatchError> errors = new ArrayList<>();
     private final Map<String, T> matches = new HashMap<>();
 
-    protected final InputDocument doc;
-
     private long queryBuildTime = -1;
     private long searchTime = System.nanoTime();
     private int queriesRun = -1;
-
-    protected long slowLogLimit;
 
     protected final StringBuilder slowlog = new StringBuilder();
 
@@ -61,28 +60,8 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      */
     public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
-    /**
-     * Returns the QueryMatch for the given query, or null if it did not match
-     * @param queryId the query id
-     */
-    public T matches(String queryId) {
-        return matches.get(queryId);
-    }
-
     protected void addMatch(String queryId, T match) {
         matches.put(queryId, match);
-    }
-
-    /**
-     * @return the number of queries that matched
-     */
-    public int getMatchCount() {
-        return matches.size();
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return matches.values().iterator();
     }
 
     /**
@@ -94,45 +73,10 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
     }
 
     /**
-     * @return a List of any MatchErrors created during the matcher run
-     */
-    public List<MatchError> getErrors() {
-        return errors;
-    }
-
-    /**
      * @return the InputDocument for this CandidateMatcher
      */
     public InputDocument getDocument() {
         return doc;
-    }
-
-    /**
-     * @return the id of the InputDocument for this CandidateMatcher
-     */
-    public String docId() {
-        return doc.getId();
-    }
-
-    /**
-     * @return how long (in ms) it took to build the Presearcher query for the matcher run
-     */
-    public long getQueryBuildTime() {
-        return queryBuildTime;
-    }
-
-    /**
-     * @return how long (in ms) it took to run the selected queries
-     */
-    public long getSearchTime() {
-        return searchTime;
-    }
-
-    /**
-     * @return the number of queries passed to this CandidateMatcher during the matcher run
-     */
-    public int getQueriesRun() {
-        return queriesRun;
     }
 
     public void finish(long buildTime, int queryCount) {
@@ -149,15 +93,14 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
     }
 
     /**
-     * Return the slow log for this match run.
-     *
-     * The slow log contains a list of all queries that took longer than the slow log
-     * limit to run.
-     *
-     * @return the slow log
+     * Returns the QueryMatch for the given query, or null if it did not match
+     * @param queryId the query id
      */
-    public String getSlowLog() {
-        return slowlog.toString();
+    protected T matches(String queryId) {
+        return matches.get(queryId);
     }
 
+    public Matches<T> getMatches() {
+        return new Matches<>(doc.getId(), matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
+    }
 }

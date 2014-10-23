@@ -303,7 +303,7 @@ public class Monitor implements Closeable {
      *
      * @param limit the limit in nanoseconds
      *
-     * @see CandidateMatcher#getSlowLog()
+     * @see Matches#getSlowLog()
      */
     protected void setSlowLogLimit(long limit) {
         this.slowLogLimit = limit;
@@ -478,21 +478,14 @@ public class Monitor implements Closeable {
      * @return a {@link CandidateMatcher} summarizing the match run.
      * @throws IOException
      */
-    public <T extends CandidateMatcher> T match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
-        T matcher = factory.createMatcher(doc);
+    public <T extends QueryMatch> Matches<T> match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        CandidateMatcher<T> matcher = factory.createMatcher(doc);
         matcher.setSlowLogLimit(slowLogLimit);
         match(matcher);
-        return matcher;
+        return matcher.getMatches();
     }
 
-    /**
-     * Convert the supplied document to a query using the presearcher, and run it over the query
-     * index, passing each query to the supplied Collector.
-     * @param doc an InputDocument to match against the index
-     * @param collector the Collector to call for each match
-     * @throws IOException
-     */
-    public void match(InputDocument doc, MonitorQueryCollector collector) throws IOException {
+    private void match(InputDocument doc, MonitorQueryCollector collector) throws IOException {
         match(buildQuery(doc), collector);
     }
 
@@ -569,7 +562,7 @@ public class Monitor implements Closeable {
      * @throws IOException
      */
     public <T extends QueryMatch> PresearcherMatches<T>
-            debug(InputDocument doc, MatcherFactory<? extends CandidateMatcher<T>> factory) throws IOException {
+            debug(InputDocument doc, MatcherFactory<T> factory) throws IOException {
         PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
         match(doc, collector);
         return collector.getMatches();
@@ -677,7 +670,7 @@ public class Monitor implements Closeable {
         }
 
         public PresearcherMatches<T> getMatches() {
-            return new PresearcherMatches<>(matchingTerms, matcher);
+            return new PresearcherMatches<>(matchingTerms, matcher.getMatches());
         }
 
         @Override

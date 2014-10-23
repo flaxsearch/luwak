@@ -3,9 +3,7 @@ package uk.co.flax.luwak.presearcher;
 import java.io.IOException;
 
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
@@ -45,7 +43,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                 .addField("field", "hello world and goodbye", WHITESPACE)
                 .build();
 
-        SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(2)
                 .matchesQuery("1");

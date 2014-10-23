@@ -46,7 +46,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
      * @param threads the number of threads to execute on
      */
     public ParallelMatcher(InputDocument doc, ExecutorService executor,
-                           MatcherFactory<? extends CandidateMatcher<T>> matcherFactory, int threads) {
+                           MatcherFactory<T> matcherFactory, int threads) {
         super(doc);
         for (int i = 0; i < threads; i++) {
             futures.add(executor.submit(new MatcherWorker(matcherFactory)));
@@ -74,7 +74,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             }
 
             for (Future<CandidateMatcher<T>> future : futures) {
-                CandidateMatcher<T> matches = future.get();
+                Matches<T> matches = future.get().getMatches();
                 for (T match : matches) {
                     this.addMatch(match.getQueryId(), match);
                 }
@@ -93,7 +93,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
         final CandidateMatcher<T> matcher;
 
-        private MatcherWorker(MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
+        private MatcherWorker(MatcherFactory<T> matcherFactory) {
             this.matcher = matcherFactory.createMatcher(doc);
             this.matcher.setSlowLogLimit(slowLogLimit);
         }
@@ -134,13 +134,13 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
        worker threads that they should finish */
     private static final MatcherTask END = new MatcherTask("", null, null);
 
-    public static class ParallelMatcherFactory<T extends QueryMatch> implements MatcherFactory<ParallelMatcher<T>> {
+    public static class ParallelMatcherFactory<T extends QueryMatch> implements MatcherFactory<T> {
 
         private final ExecutorService executor;
-        private final MatcherFactory<? extends CandidateMatcher<T>> matcherFactory;
+        private final MatcherFactory<T> matcherFactory;
         private final int threads;
 
-        public ParallelMatcherFactory(ExecutorService executor, MatcherFactory<? extends CandidateMatcher<T>> matcherFactory,
+        public ParallelMatcherFactory(ExecutorService executor, MatcherFactory<T> matcherFactory,
                                       int threads) {
             this.executor = executor;
             this.matcherFactory = matcherFactory;
@@ -161,7 +161,8 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
      * @param <T> the type of QueryMatch generated
      * @return a ParallelMatcherFactory
      */
-    public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor, MatcherFactory<? extends CandidateMatcher<T>> matcherFactory, int threads) {
+    public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor,
+                                                                           MatcherFactory<T> matcherFactory, int threads) {
         return new ParallelMatcherFactory<>(executor, matcherFactory, threads);
     }
 
@@ -176,7 +177,8 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
      * @param <T> the type of QueryMatch generated
      * @return a ParallelMatcherFactory
      */
-    public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor, MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
+    public static <T extends QueryMatch> ParallelMatcherFactory<T> factory(ExecutorService executor,
+                                                                           MatcherFactory<T> matcherFactory) {
         int threads = Runtime.getRuntime().availableProcessors();
         return new ParallelMatcherFactory<>(executor, matcherFactory, threads);
     }

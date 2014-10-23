@@ -56,7 +56,7 @@ public class LuwakDemo {
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
-            SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+            Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
             outputMatches(matches);
         }
 
@@ -97,7 +97,7 @@ public class LuwakDemo {
         return docs;
     }
 
-    static void outputMatches(SimpleMatcher matches) {
+    static void outputMatches(Matches<QueryMatch> matches) {
         logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
         for (QueryMatch query : matches) {
             logger.info("\tQuery: {}", query.getQueryId());

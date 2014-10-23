@@ -67,7 +67,7 @@ public class TestCachePurging {
         monitor.purgeCache();
         assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
 
-        SimpleMatcher result = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(result.getMatchCount()).isEqualTo(2);
     }
 
@@ -124,7 +124,7 @@ public class TestCachePurging {
             assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
             InputDocument doc = InputDocument.builder("doc1")
                     .addField("field", "test", new WhitespaceAnalyzer(Constants.VERSION)).build();
-            SimpleMatcher matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+            Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
             assertThat(matcher.getErrors()).isEmpty();
             assertThat(matcher.getMatchCount()).isEqualTo(340);
 

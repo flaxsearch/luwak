@@ -20,13 +20,13 @@ package uk.co.flax.luwak;
  * Interface for the creation of new CandidateMatcher objects
  * @param <T> a subclass of {@link uk.co.flax.luwak.CandidateMatcher}
  */
-public interface MatcherFactory<T extends CandidateMatcher> {
+public interface MatcherFactory<T extends QueryMatch> {
 
     /**
      * Create a new {@link uk.co.flax.luwak.CandidateMatcher} object
      * @param doc an {@link InputDocument} to match.
      * @return the CandidateMatcher
      */
-    T createMatcher(InputDocument doc);
+    CandidateMatcher<T> createMatcher(InputDocument doc);
 
 }

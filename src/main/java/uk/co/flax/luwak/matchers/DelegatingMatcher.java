@@ -28,7 +28,7 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
 
     private final CandidateMatcher<M> matcher;
 
-    public DelegatingMatcher(InputDocument doc, MatcherFactory<? extends CandidateMatcher<M>> factory) {
+    public DelegatingMatcher(InputDocument doc, MatcherFactory<M> factory) {
         super(doc);
         this.matcher = factory.createMatcher(doc);
     }

@@ -74,7 +74,7 @@ public class TestMonitor {
 
         monitor.update(new MonitorQuery("query1", "test"));
 
-        SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
         Assertions.assertThat(matches.getQueriesRun()).isEqualTo(1);
         Assertions.assertThat(matches.getQueryBuildTime()).isGreaterThan(-1);
         Assertions.assertThat(matches.getSearchTime()).isGreaterThan(-1);
@@ -142,7 +142,7 @@ public class TestMonitor {
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
 
         InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "other things", WHITESPACE).build();
-        SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
 
         Assertions.assertThat(matches.getQueriesRun()).isEqualTo(0);
     }

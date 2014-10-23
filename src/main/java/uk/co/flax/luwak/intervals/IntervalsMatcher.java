@@ -79,7 +79,7 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
             return hits;
     }
 
-    public static final MatcherFactory<IntervalsMatcher> FACTORY = new MatcherFactory<IntervalsMatcher>() {
+    public static final MatcherFactory<IntervalsQueryMatch> FACTORY = new MatcherFactory<IntervalsQueryMatch>() {
         @Override
         public IntervalsMatcher createMatcher(InputDocument doc) {
             return new IntervalsMatcher(doc);

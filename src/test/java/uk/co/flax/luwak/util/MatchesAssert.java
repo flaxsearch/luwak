@@ -2,7 +2,7 @@ package uk.co.flax.luwak.util;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
-import uk.co.flax.luwak.CandidateMatcher;
+import uk.co.flax.luwak.Matches;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -20,13 +20,13 @@ import uk.co.flax.luwak.CandidateMatcher;
  * limitations under the License.
  */
 
-public class MatchesAssert extends AbstractAssert<MatchesAssert, CandidateMatcher> {
+public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches> {
 
-    protected MatchesAssert(CandidateMatcher actual) {
+    protected MatchesAssert(Matches actual) {
         super(actual, MatchesAssert.class);
     }
 
-    public static MatchesAssert assertThat(CandidateMatcher matches) {
+    public static MatchesAssert assertThat(Matches matches) {
         return new MatchesAssert(matches);
     }
 

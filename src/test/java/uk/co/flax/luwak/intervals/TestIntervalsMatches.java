@@ -59,7 +59,7 @@ public class TestIntervalsMatches {
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        IntervalsMatcher matcher = monitor.match(buildDoc("doc1", "this is a test document"), IntervalsMatcher.FACTORY);
+        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), IntervalsMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
@@ -79,7 +79,7 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("query1", "field1:test field2:test"));
 
-        IntervalsMatcher matcher = monitor.match(doc, IntervalsMatcher.FACTORY);
+        Matches<IntervalsQueryMatch> matcher = monitor.match(doc, IntervalsMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
@@ -121,7 +121,7 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", "test", "document"));
 
-        IntervalsMatcher matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY);
+        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY);
 
         IntervalsQueryMatch match = Iterables.getFirst(matcher, null);
         Assertions.assertThat(match).isNotNull();
@@ -175,7 +175,7 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", ""));
 
-        IntervalsMatcher matches = monitor.match(buildDoc("1", "hello world"), IntervalsMatcher.FACTORY);
+        Matches<IntervalsQueryMatch> matches = monitor.match(buildDoc("1", "hello world"), IntervalsMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(1)
                 .hasMatchCount(1);

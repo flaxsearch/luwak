@@ -50,7 +50,7 @@ public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
     /**
      * A MatcherFactory for ScoringMatcher objects
      */
-    public static final MatcherFactory<ScoringMatcher> FACTORY = new MatcherFactory<ScoringMatcher>() {
+    public static final MatcherFactory<ScoringMatch> FACTORY = new MatcherFactory<ScoringMatch>() {
         @Override
         public ScoringMatcher createMatcher(InputDocument doc) {
             return new ScoringMatcher(doc);

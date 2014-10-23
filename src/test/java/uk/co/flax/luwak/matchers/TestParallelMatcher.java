@@ -48,7 +48,7 @@ public class TestParallelMatcher {
 
         InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
 
-        CandidateMatcher<QueryMatch> matches
+        Matches<QueryMatch> matches
                 = monitor.match(doc, ParallelMatcher.factory(executor, SimpleMatcher.FACTORY, 10));
 
         assertThat(matches.getMatchCount()).isEqualTo(1000);

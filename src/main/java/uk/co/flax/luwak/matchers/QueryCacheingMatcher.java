@@ -1,7 +1,6 @@
 package uk.co.flax.luwak.matchers;
 
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
@@ -30,7 +29,7 @@ import uk.co.flax.luwak.QueryMatch;
  */
 public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatcher<T, QueryCacheingMatch<T>> {
 
-    public QueryCacheingMatcher(InputDocument doc, MatcherFactory<? extends CandidateMatcher<T>> factory) {
+    public QueryCacheingMatcher(InputDocument doc, MatcherFactory<T> factory) {
         super(doc, factory);
     }
 
@@ -39,21 +38,21 @@ public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatche
         return new QueryCacheingMatch<>(matchQuery, match);
     }
 
-    public static class QueryCacheingMatcherFactory<T extends QueryMatch> implements MatcherFactory<QueryCacheingMatcher<T>> {
+    public static class QueryCacheingMatcherFactory<T extends QueryMatch> implements MatcherFactory<QueryCacheingMatch<T>> {
 
-        private final MatcherFactory<? extends CandidateMatcher<T>> matcherFactory;
+        private final MatcherFactory<T> matcherFactory;
 
-        public QueryCacheingMatcherFactory(MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
+        public QueryCacheingMatcherFactory(MatcherFactory<T> matcherFactory) {
             this.matcherFactory = matcherFactory;
         }
 
         @Override
         public QueryCacheingMatcher<T> createMatcher(InputDocument doc) {
-            return new QueryCacheingMatcher<>(doc, matcherFactory);
+            return new QueryCacheingMatcher<T>(doc, matcherFactory);
         }
     }
 
-    public static <T extends QueryMatch> QueryCacheingMatcherFactory<T> factory(MatcherFactory<? extends CandidateMatcher<T>> matcherFactory) {
+    public static <T extends QueryMatch> QueryCacheingMatcherFactory<T> factory(MatcherFactory<T> matcherFactory) {
         return new QueryCacheingMatcherFactory<>(matcherFactory);
     }
 }

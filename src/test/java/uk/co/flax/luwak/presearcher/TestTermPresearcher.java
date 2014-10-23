@@ -1,12 +1,10 @@
 package uk.co.flax.luwak.presearcher;
 
-import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.Presearcher;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
-
 import java.io.IOException;
+
+import org.junit.Test;
+import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -40,7 +38,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
                 .build();
 
-        SimpleMatcher matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(matcher)
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);

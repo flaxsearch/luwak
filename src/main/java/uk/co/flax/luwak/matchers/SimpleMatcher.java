@@ -33,7 +33,7 @@ public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
         return new QueryMatch(queryId);
     }
 
-    public static final MatcherFactory<SimpleMatcher> FACTORY = new MatcherFactory<SimpleMatcher>() {
+    public static final MatcherFactory<QueryMatch> FACTORY = new MatcherFactory<QueryMatch>() {
         @Override
         public SimpleMatcher createMatcher(InputDocument doc) {
             return new SimpleMatcher(doc);
