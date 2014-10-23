@@ -462,18 +462,6 @@ public class Monitor implements Closeable {
         commit(null);
     }
 
-    private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
-
-        long buildTime = System.nanoTime();
-        Query query = buildQuery(matcher.getDocument());
-        buildTime = (System.nanoTime() - buildTime) / 1000000;
-
-        MatchingCollector<T> collector = new MatchingCollector<>(matcher);
-        match(query, collector);
-        matcher.finish(buildTime, collector.getQueryCount());
-
-    }
-
     @VisibleForTesting
     Query buildQuery(InputDocument doc) throws IOException {
         try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
@@ -506,6 +494,30 @@ public class Monitor implements Closeable {
      */
     public void match(InputDocument doc, MonitorQueryCollector collector) throws IOException {
         match(buildQuery(doc), collector);
+    }
+
+    private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
+
+        long buildTime = System.nanoTime();
+        Query query = buildQuery(matcher.getDocument());
+        buildTime = (System.nanoTime() - buildTime) / 1000000;
+
+        MatchingCollector<T> collector = new MatchingCollector<>(matcher);
+        match(query, collector);
+        matcher.finish(buildTime, collector.getQueryCount());
+
+    }
+
+    private void match(Query query, MonitorQueryCollector collector) throws IOException {
+        IndexSearcher searcher = null;
+        try {
+            searcher = manager.acquire();
+            collector.setQueryMap(this.queries);
+            searcher.search(query, collector);
+        }
+        finally {
+            manager.release(searcher);
+        }
     }
 
     /**
@@ -561,18 +573,6 @@ public class Monitor implements Closeable {
         PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
         match(doc, collector);
         return collector.getMatches();
-    }
-
-    private void match(Query query, MonitorQueryCollector collector) throws IOException {
-        IndexSearcher searcher = null;
-        try {
-            searcher = manager.acquire();
-            collector.setQueryMap(this.queries);
-            searcher.search(query, collector);
-        }
-        finally {
-            manager.release(searcher);
-        }
     }
 
     protected Document buildIndexableQuery(String id, MonitorQuery mq, CacheEntry query) {

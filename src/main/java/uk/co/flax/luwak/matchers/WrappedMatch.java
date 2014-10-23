@@ -1,6 +1,5 @@
 package uk.co.flax.luwak.matchers;
 
-import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.QueryMatch;
 
 /**
@@ -18,13 +17,13 @@ import uk.co.flax.luwak.QueryMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+public class WrappedMatch<T extends QueryMatch> extends QueryMatch {
 
-public class QueryCacheingMatch<T extends QueryMatch> extends WrappedMatch<T> {
+    public final T wrappedMatch;
 
-    public final Query query;
-
-    public QueryCacheingMatch(Query query, T wrappedMatch) {
-        super(wrappedMatch);
-        this.query = query;
+    public WrappedMatch(T wrappedMatch) {
+        super(wrappedMatch.getQueryId());
+        this.wrappedMatch = wrappedMatch;
     }
+
 }

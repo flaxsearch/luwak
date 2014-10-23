@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.matchers;
 
-import java.io.IOException;
-
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
@@ -30,23 +28,15 @@ import uk.co.flax.luwak.QueryMatch;
  *
  * @param <T> the QueryMatch type of the delegate
  */
-public class QueryCacheingMatcher<T extends QueryMatch> extends CandidateMatcher<QueryCacheingMatch<T>> {
-
-    private final CandidateMatcher<T> matcher;
+public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatcher<T, QueryCacheingMatch<T>> {
 
     public QueryCacheingMatcher(InputDocument doc, MatcherFactory<? extends CandidateMatcher<T>> factory) {
-        super(doc);
-        this.matcher = factory.createMatcher(doc);
+        super(doc, factory);
     }
 
     @Override
-    public QueryCacheingMatch<T> matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        T match = this.matcher.matchQuery(queryId, matchQuery, highlightQuery);
-        if (match == null)
-            return null;
-        QueryCacheingMatch<T> m = new QueryCacheingMatch<>(queryId, matchQuery, match);
-        this.addMatch(queryId, m);
-        return m;
+    protected QueryCacheingMatch<T> wrapMatch(T match, String queryId, Query matchQuery, Query highlightQuery) {
+        return new QueryCacheingMatch<>(matchQuery, match);
     }
 
     public static class QueryCacheingMatcherFactory<T extends QueryMatch> implements MatcherFactory<QueryCacheingMatcher<T>> {
