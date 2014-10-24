@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -34,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestParallelMatcher {
 
     @Test
-    @Ignore("Ignore this for now, there are thread-safety issues with MemoryIndex")
     public void testAllMatchesAreCollected() throws IOException {
 
         Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());

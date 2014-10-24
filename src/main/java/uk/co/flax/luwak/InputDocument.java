@@ -48,6 +48,7 @@ public class InputDocument {
     }
 
     private void finish() {
+        index.freeze();
         searcher = index.createSearcher();
     }
 
