@@ -7,11 +7,11 @@ import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
-import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
@@ -55,6 +55,9 @@ public class GenericQueryTreeBuilder extends QueryTreeBuilder<Query> {
         }
 
         List<QueryTree> children = new ArrayList<>();
+        if (termSet.size() == 0)
+            return new AnyNode("Can't extract terms from " + query.toString());
+
         for (Term term : termSet) {
             children.add(new TermNode(new QueryTerm(term)));
         }

@@ -78,6 +78,33 @@ public abstract class PresearcherTestBase {
 
     }
 
+    @Test
+    public void testMatchAllQueryHandling() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "*:*"));
+
+        InputDocument doc = InputDocument.builder("doc1").addField("f", "wibble", WHITESPACE).build();
+
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasMatchCount(1);
+
+    }
+
+    @Test
+    public void testNegativeQueryHandling() throws IOException {
+
+        monitor.update(new MonitorQuery("1", "*:* -f:foo"));
+
+        InputDocument doc1 = InputDocument.builder("doc1").addField("f", "bar", WHITESPACE).build();
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
+                .hasMatchCount(1);
+
+        InputDocument doc2 = InputDocument.builder("doc2").addField("f", "foo", WHITESPACE).build();
+        assertThat(monitor.match(doc2, SimpleMatcher.FACTORY))
+                .hasMatchCount(0);
+
+    }
+
     static class TestQuery extends Query {
 
         @Override
