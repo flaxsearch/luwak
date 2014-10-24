@@ -30,6 +30,13 @@ import uk.co.flax.luwak.*;
  * This class delegates the actual matching to separate CandidateMatcher classes,
  * built from a passed in MatcherFactory.
  *
+ * Use this when individual queries can take a long time to run, and you want
+ * to minimize latency.  The matcher distributes queries amongst its worker
+ * threads using a BlockingQueue, and synchronization overhead may affect performance
+ * if the individual queries are very fast.
+ *
+ * @see uk.co.flax.luwak.matchers.PartitionMatcher
+ *
  * @param <T> the QueryMatch type returned
  */
 public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
@@ -58,7 +65,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
         try {
             queue.put(new MatcherTask(queryId, matchQuery, highlightQuery));
         } catch (InterruptedException e) {
-            throw new IOException("Interrupted during match");
+            throw new IOException("Interrupted during match", e);
         }
         return null;
     }
@@ -85,7 +92,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             }
 
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Interrupted during match");
+            throw new RuntimeException("Interrupted during match", e);
         }
     }
 
@@ -110,7 +117,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
                     }
                 }
             } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted during match");
+                throw new RuntimeException("Interrupted during match", e);
             }
             return matcher;
         }
