@@ -2,7 +2,7 @@ package uk.co.flax.luwak.termextractor;
 
 import java.io.IOException;
 
-import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.queries.TermsFilter;
@@ -92,7 +92,7 @@ public class TestExtractors {
     private static class MyFilter extends Filter {
 
         @Override
-        public DocIdSet getDocIdSet(AtomicReaderContext context, Bits acceptDocs) throws IOException {
+        public DocIdSet getDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
             return null;
         }
     }

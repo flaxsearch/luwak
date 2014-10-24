@@ -27,8 +27,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -79,7 +79,7 @@ public class TermFilteredPresearcher extends Presearcher {
     @Override
     public final Query buildQuery(InputDocument doc, PerFieldTokenFilter filter) {
         try {
-            AtomicReader reader = doc.asAtomicReader();
+            LeafReader reader = doc.asAtomicReader();
             DocumentQueryBuilder queryBuilder = getQueryBuilder();
 
             for (String field : reader.fields()) {

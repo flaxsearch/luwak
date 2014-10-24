@@ -40,7 +40,7 @@ import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 public class LuwakDemo {
 
-    public static final Analyzer ANALYZER = new StandardAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new StandardAnalyzer();
 
     public static final String FIELD = "text";
 

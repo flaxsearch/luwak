@@ -47,7 +47,7 @@ public class TestMonitorPersistence {
     public void testCacheIsRepopulated() throws IOException {
 
         Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
-                                        new MMapDirectory(indexDirectory.toFile()));
+                                        new MMapDirectory(indexDirectory));
         monitor.update(new MonitorQuery("1", "test"),
                        new MonitorQuery("2", "test", "test"),
                        new MonitorQuery("3", "test", ImmutableMap.of("language", "en")),
@@ -61,7 +61,7 @@ public class TestMonitorPersistence {
         monitor.close();
 
         Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
-                                        new MMapDirectory(indexDirectory.toFile()));
+                                        new MMapDirectory(indexDirectory));
 
         Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
         assertThat(monitor2.match(doc, SimpleMatcher.FACTORY)).hasMatchCount(4);

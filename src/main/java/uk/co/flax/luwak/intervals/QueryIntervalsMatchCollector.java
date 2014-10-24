@@ -20,9 +20,8 @@ import java.io.IOException;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
@@ -32,7 +31,7 @@ import org.apache.lucene.search.intervals.IntervalIterator;
  * a specialized Collector that uses an {@link IntervalIterator} to collect
  * match positions from a Scorer.
  */
-public class QueryIntervalsMatchCollector extends Collector implements IntervalCollector {
+public class QueryIntervalsMatchCollector extends SimpleCollector implements IntervalCollector {
 
     private IntervalIterator positions;
 
@@ -57,11 +56,6 @@ public class QueryIntervalsMatchCollector extends Collector implements IntervalC
         else {
             matches.setMatch();
         }
-    }
-
-    @Override
-    public void setNextReader(AtomicReaderContext context) throws IOException {
-
     }
 
     @Override

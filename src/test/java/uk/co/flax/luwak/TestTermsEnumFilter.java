@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestTermsEnumFilter {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {

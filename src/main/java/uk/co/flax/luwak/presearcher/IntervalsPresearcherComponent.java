@@ -30,9 +30,7 @@ public class IntervalsPresearcherComponent extends PresearcherComponent {
 
     private static final List<? extends QueryTreeBuilder<?>> BUILDERS = ImmutableList.of(
             new IntervalFilterQueryTreeBuilder(),
-            new NonOverlappingQueryTreeBuilder(),
-            new FieldedConjunctionQueryTreeBuilder(),
-            new FieldedBooleanQueryQueryTreeBuilder()
+            new NonOverlappingQueryTreeBuilder()
     );
 
     public IntervalsPresearcherComponent() {

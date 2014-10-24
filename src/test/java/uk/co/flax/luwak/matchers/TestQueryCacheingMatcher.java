@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestQueryCacheingMatcher {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     @Test
     public void testQueryCacheingMatcher() throws IOException {

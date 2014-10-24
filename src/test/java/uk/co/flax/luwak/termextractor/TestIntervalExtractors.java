@@ -1,11 +1,8 @@
 package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.intervals.FieldedBooleanQuery;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.junit.Test;
@@ -62,15 +59,4 @@ public class TestIntervalExtractors {
         assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
     }
 
-    @Test
-    public void testFieldedBooleanQuery() {
-
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.MUST);
-        bq.add(new TermQuery(new Term("field1", "term")), BooleanClause.Occur.MUST);
-        FieldedBooleanQuery q = new FieldedBooleanQuery(bq);
-
-        assertThat(treeBuilder.collectTerms(q))
-                .containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
-    }
 }

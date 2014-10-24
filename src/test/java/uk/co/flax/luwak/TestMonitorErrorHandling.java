@@ -41,7 +41,7 @@ public class TestMonitorErrorHandling {
 
     public static final String FIELD = "f";
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     private static MonitorQueryParser createMockCache() throws Exception {
 

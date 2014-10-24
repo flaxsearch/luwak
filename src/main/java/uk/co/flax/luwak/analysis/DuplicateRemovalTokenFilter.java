@@ -16,24 +16,23 @@ package uk.co.flax.luwak.analysis;
  * limitations under the License.
  */
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
-import uk.co.flax.luwak.Constants;
-
-import java.io.IOException;
 
 /**
  * A TokenFilter that removes tokens that have already been seen in the TokenStream
  */
 public class DuplicateRemovalTokenFilter extends FilteringTokenFilter {
 
-    private final CharArraySet seenTerms = new CharArraySet(Constants.VERSION, 1024, false);
+    private final CharArraySet seenTerms = new CharArraySet(1024, false);
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
     public DuplicateRemovalTokenFilter(TokenStream input) {
-        super(Constants.VERSION, input);
+        super(input);
     }
 
     @Override

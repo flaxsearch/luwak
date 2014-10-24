@@ -163,6 +163,6 @@ public class TestMonitor {
 
     }
 
-    static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
+    static final Analyzer WHITESPACE = new WhitespaceAnalyzer();
 
 }

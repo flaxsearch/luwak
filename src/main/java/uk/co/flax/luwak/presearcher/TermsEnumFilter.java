@@ -8,8 +8,7 @@ import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
 import org.apache.lucene.index.*;
-import org.apache.lucene.util.BytesRef;
-import uk.co.flax.luwak.Constants;
+import org.apache.lucene.util.BytesRefBuilder;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -34,7 +33,7 @@ import uk.co.flax.luwak.Constants;
  */
 public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
 
-    private final AtomicReader reader;
+    private final LeafReader reader;
 
     public TermsEnumFilter(IndexWriter writer) throws IOException {
         this.reader = SlowCompositeReaderWrapper.wrap(DirectoryReader.open(writer, true));
@@ -59,19 +58,19 @@ public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
     public static final class Filter extends FilteringTokenFilter {
 
         private final TermsEnum terms;
-        private final BytesRef scratch = new BytesRef();
+        private final BytesRefBuilder scratch = new BytesRefBuilder();
 
         private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
         public Filter(TokenStream in, TermsEnum terms) {
-            super(Constants.VERSION, in);
+            super(in);
             this.terms = terms;
         }
 
         @Override
         protected boolean accept() throws IOException {
             scratch.copyChars(termAtt);
-            return terms.seekExact(scratch);
+            return terms.seekExact(scratch.get());
         }
     }
 }

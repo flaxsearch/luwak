@@ -8,7 +8,6 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import org.junit.Test;
-import uk.co.flax.luwak.Constants;
 
 import static uk.co.flax.luwak.util.TokenStreamAssert.assertThat;
 
@@ -33,7 +32,7 @@ public class TestOrderedTokenFilter {
     Analyzer analyzer = new Analyzer() {
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
-            Tokenizer source = new WhitespaceTokenizer(Constants.VERSION);
+            Tokenizer source = new WhitespaceTokenizer();
             TokenStream sink = new SuffixingNGramTokenFilter(new KeywordRepeatFilter(source), "XX", "ANY", 10);
             sink = new OrderedTokenFilter(new DuplicateRemovalTokenFilter(sink));
             return new TokenStreamComponents(source, sink);

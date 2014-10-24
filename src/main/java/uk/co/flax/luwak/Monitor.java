@@ -22,6 +22,7 @@ import org.apache.lucene.search.intervals.IntervalIterator;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
@@ -93,7 +94,7 @@ public class Monitor implements Closeable {
         this.directory = directory;
         this.decomposer = decomposer;
 
-        IndexWriterConfig iwc = new IndexWriterConfig(Constants.VERSION, new WhitespaceAnalyzer(Constants.VERSION));
+        IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
         this.writer = new IndexWriter(directory, configureIndexWriterConfig(iwc));
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
@@ -176,7 +177,7 @@ public class Monitor implements Closeable {
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
             public void doMatch(int doc, String queryId, BytesRef hash) {
-                mqDV.get(doc, serializedMQ);
+                BytesRef serializedMQ = mqDV.get(doc);
                 MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
                 try {
                     for (CacheEntry ce : decomposeQuery(mq)) {
@@ -255,7 +256,7 @@ public class Monitor implements Closeable {
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
             protected void doMatch(int doc, String id, BytesRef hash) {
-                newCache.put(hash.clone(), queries.get(hash));
+                newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
             }
         });
 
@@ -402,9 +403,10 @@ public class Monitor implements Closeable {
         int upto = 0;
         List<CacheEntry> cacheEntries = new LinkedList<>();
         for (Query subquery : decomposer.decompose(q)) {
-            BytesRef subHash = BytesRef.deepCopyOf(rootHash);
+            BytesRefBuilder subHash = new BytesRefBuilder();
+            subHash.append(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            cacheEntries.add(new CacheEntry(subHash, subquery, hq));
+            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, hq));
         }
 
         return cacheEntries;
@@ -524,7 +526,7 @@ public class Monitor implements Closeable {
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
             public void doMatch(int doc, String queryId, BytesRef hash) {
-                mqDV.get(doc, serializedMQ);
+                BytesRef serializedMQ = mqDV.get(doc);
                 queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
             }
         });
@@ -603,16 +605,12 @@ public class Monitor implements Closeable {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public static abstract class MonitorQueryCollector extends Collector {
+    public static abstract class MonitorQueryCollector extends SimpleCollector {
 
         protected BinaryDocValues hashDV;
         protected SortedDocValues idDV;
         protected BinaryDocValues mqDV;
-        protected AtomicReader reader;
-
-        final BytesRef serializedMQ = new BytesRef();
-        final BytesRef hash = new BytesRef();
-        final BytesRef id = new BytesRef();
+        protected LeafReader reader;
 
         protected Map<BytesRef, CacheEntry> queries;
 
@@ -623,14 +621,9 @@ public class Monitor implements Closeable {
         protected int queryCount = 0;
 
         @Override
-        public void setScorer(Scorer scorer) throws IOException {
-
-        }
-
-        @Override
         public void collect(int doc) throws IOException {
-            hashDV.get(doc, hash);
-            idDV.get(doc, id);
+            BytesRef hash = hashDV.get(doc);
+            BytesRef id = idDV.get(doc);
             queryCount++;
             doMatch(doc, id.utf8ToString(), hash);
         }
@@ -638,7 +631,7 @@ public class Monitor implements Closeable {
         protected abstract void doMatch(int doc, String queryId, BytesRef queryHash) throws IOException;
 
         @Override
-        public void setNextReader(AtomicReaderContext context) throws IOException {
+        public void doSetNextReader(LeafReaderContext context) throws IOException {
             this.reader = context.reader();
             this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
             this.idDV = context.reader().getSortedDocValues(FIELDS.id);
@@ -660,7 +653,7 @@ public class Monitor implements Closeable {
             extends MatchingCollector<T> implements IntervalCollector {
 
         private IntervalIterator positions;
-        private StoredDocument document;
+        private Document document;
         private String currentId;
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();

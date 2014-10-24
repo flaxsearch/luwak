@@ -20,7 +20,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.MonitorQueryParser;
 
 public class LuceneQueryParser implements MonitorQueryParser {
@@ -29,11 +28,11 @@ public class LuceneQueryParser implements MonitorQueryParser {
 
     public LuceneQueryParser(String defaultField, Analyzer analyzer) {
         super();
-        this.parser = new QueryParser(Constants.VERSION, defaultField, analyzer);
+        this.parser = new QueryParser(defaultField, analyzer);
     }
 
     public LuceneQueryParser(String defaultField) {
-        this(defaultField,  new StandardAnalyzer(Constants.VERSION));
+        this(defaultField,  new StandardAnalyzer());
     }
 
     @Override

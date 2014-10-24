@@ -7,7 +7,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.*;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.CharacterUtils;
-import uk.co.flax.luwak.Constants;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -47,8 +46,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final KeywordAttribute keywordAtt = addAttribute(KeywordAttribute.class);
 
-    private final CharArraySet seenSuffixes = new CharArraySet(Constants.VERSION, 1024, false);
-    private final CharArraySet seenInfixes = new CharArraySet(Constants.VERSION, 1024, false);
+    private final CharArraySet seenSuffixes = new CharArraySet(1024, false);
+    private final CharArraySet seenInfixes = new CharArraySet(1024, false);
 
     /**
      * Creates SuffixingNGramTokenFilter.
@@ -59,7 +58,7 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
      */
     public SuffixingNGramTokenFilter(TokenStream input, String suffix, String wildcardToken, int maxTokenLength) {
         super(input);
-        this.charUtils = CharacterUtils.getInstance(Constants.VERSION);
+        this.charUtils = CharacterUtils.getInstance();
 
         this.suffix = suffix;
         this.anyToken = wildcardToken;

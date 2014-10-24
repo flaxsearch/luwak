@@ -11,7 +11,6 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.junit.Test;
-import uk.co.flax.luwak.Constants;
 import uk.co.flax.luwak.InputDocument;
 
 import static uk.co.flax.luwak.util.TokenStreamAssert.assertThat;
@@ -37,7 +36,7 @@ public class TestSuffixingNGramTokenizer {
     Analyzer analyzer = new Analyzer() {
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
-            Tokenizer source = new WhitespaceTokenizer(Constants.VERSION);
+            Tokenizer source = new WhitespaceTokenizer();
             TokenStream sink = new SuffixingNGramTokenFilter(source, "XX", "ANY", 10);
             return new TokenStreamComponents(source, sink);
         }
@@ -131,7 +130,7 @@ public class TestSuffixingNGramTokenizer {
 
         String text = Files.toString(new File("src/test/resources/gutenberg/README"), Charsets.UTF_8);
         InputDocument doc = InputDocument.builder("1")
-                .addField("f", text, new WhitespaceAnalyzer(Constants.VERSION)).build();
+                .addField("f", text, new WhitespaceAnalyzer()).build();
 
         for (int i = 0; i < 50; i++) {
 

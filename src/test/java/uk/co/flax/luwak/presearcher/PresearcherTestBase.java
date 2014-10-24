@@ -48,7 +48,7 @@ public abstract class PresearcherTestBase {
 
     public static final String TEXTFIELD = "text";
 
-    public static final Analyzer WHITESPACE = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer WHITESPACE = new WhitespaceAnalyzer();
 
     public static InputDocument buildDoc(String id, String field, String text) {
         return InputDocument.builder(id).addField(field, text, WHITESPACE).build();

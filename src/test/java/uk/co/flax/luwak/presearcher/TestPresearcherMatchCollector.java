@@ -40,7 +40,7 @@ public class TestPresearcherMatchCollector {
         monitor.update(new MonitorQuery("4", "baz"));
 
         InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer(Constants.VERSION))
+                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
                 .build();
 
         PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);

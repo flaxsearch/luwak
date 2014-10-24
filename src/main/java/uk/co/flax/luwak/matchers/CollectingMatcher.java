@@ -2,10 +2,8 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.*;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.QueryMatch;
@@ -58,6 +56,10 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
         return coll.match;
     }
 
+    protected Weight.PostingFeatures getPostingFeatures() {
+        return Weight.PostingFeatures.DOCS_ONLY;
+    }
+
     /**
      * Called when a query matches the InputDocument
      * @param queryId the query ID
@@ -67,7 +69,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
      */
     protected abstract T doMatch(String queryId, Scorer scorer) throws IOException;
 
-    protected class MatchCollector extends Collector {
+    protected class MatchCollector implements Collector {
 
         T match = null;
 
@@ -78,24 +80,34 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
             this.queryId = queryId;
         }
 
+
         @Override
-        public void setScorer(Scorer scorer) throws IOException {
-            this.scorer = scorer;
+        public LeafCollector getLeafCollector(LeafReaderContext leafReaderContext) throws IOException {
+            return new MatchLeafCollector();
         }
 
-        @Override
-        public void collect(int doc) throws IOException {
-            match = doMatch(queryId, scorer);
-        }
+        public class MatchLeafCollector implements LeafCollector {
 
-        @Override
-        public void setNextReader(AtomicReaderContext context) throws IOException {
+            @Override
+            public void setScorer(Scorer scorer) throws IOException {
+                MatchCollector.this.scorer = scorer;
+            }
 
-        }
+            @Override
+            public void collect(int doc) throws IOException {
+                match = doMatch(queryId, scorer);
+            }
 
-        @Override
-        public boolean acceptsDocsOutOfOrder() {
-            return false;
+            @Override
+            public boolean acceptsDocsOutOfOrder() {
+                return false;
+            }
+
+            @Override
+            public Weight.PostingFeatures postingFeatures() {
+                return getPostingFeatures();
+            }
+
         }
     }
 }

@@ -2,7 +2,7 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
 
@@ -65,9 +65,9 @@ public class InputDocument {
 
     /**
      * Get an atomic reader over the internal index
-     * @return an {@link org.apache.lucene.index.AtomicReader} over the internal index
+     * @return an {@link org.apache.lucene.index.LeafReader} over the internal index
      */
-    public AtomicReader asAtomicReader() {
+    public LeafReader asAtomicReader() {
         return searcher.getIndexReader().leaves().get(0).reader();
     }
 
