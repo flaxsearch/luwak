@@ -8,6 +8,7 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
+import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
 /**
@@ -99,11 +100,15 @@ public class IntervalsQueryMatch extends QueryMatch {
         /** The end offset */
         public final int endOffset;
 
-        Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
+        public Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
             this.startPosition = startPosition;
             this.startOffset = startOffset;
             this.endPosition = endPosition;
             this.endOffset = endOffset;
+        }
+
+        public Hit(Interval interval) {
+            this(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd);
         }
 
         @Override
