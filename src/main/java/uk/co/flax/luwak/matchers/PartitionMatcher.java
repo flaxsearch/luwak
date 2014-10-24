@@ -2,7 +2,6 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -92,16 +91,20 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     @Override
     public void finish(long buildTime, int queryCount) {
 
-        List<Callable<List<T>>> workers = new ArrayList<>(threads);
+        List<Callable<Matches<T>>> workers = new ArrayList<>(threads);
         for (List<MatchTask> taskset : Lists.partition(tasks, threads)) {
-            workers.add(new MatcherWorker(taskset, matcherFactory.createMatcher(doc)));
+            CandidateMatcher<T> matcher = matcherFactory.createMatcher(doc);
+            matcher.setSlowLogLimit(this.slowLogLimit);
+            workers.add(new MatcherWorker(taskset, matcher));
         }
 
         try {
-            for (Future<List<T>> future : executor.invokeAll(workers)) {
-                for (T match : future.get()) {
+            for (Future<Matches<T>> future : executor.invokeAll(workers)) {
+                Matches<T> matches = future.get();
+                for (T match : matches) {
                     addMatch(match.getQueryId(), match);
                 }
+                this.slowlog.append(matches.getSlowLog());
             }
 
         } catch (InterruptedException | ExecutionException e) {
@@ -111,12 +114,10 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         super.finish(buildTime, queryCount);
     }
 
-    private class MatcherWorker implements Callable<List<T>> {
+    private class MatcherWorker implements Callable<Matches<T>> {
 
         final List<MatchTask> tasks;
         final CandidateMatcher<T> matcher;
-
-        final List<T> matches = new LinkedList<>();
 
         private MatcherWorker(List<MatchTask> tasks, CandidateMatcher<T> matcher) {
             this.tasks = tasks;
@@ -124,17 +125,15 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         }
 
         @Override
-        public List<T> call() {
+        public Matches<T> call() {
             for (MatchTask task : tasks) {
                 try {
-                    T match = matcher.matchQuery(task.queryId, task.matchQuery, task.highlightQuery);
-                    if (match != null)
-                        matches.add(match);
+                    matcher.matchQuery(task.queryId, task.matchQuery, task.highlightQuery);
                 } catch (IOException e) {
                     PartitionMatcher.this.reportError(new MatchError(task.queryId, e));
                 }
             }
-            return matches;
+            return matcher.getMatches();
         }
     }
 

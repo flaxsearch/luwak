@@ -306,7 +306,7 @@ public class Monitor implements Closeable {
      *
      * @see Matches#getSlowLog()
      */
-    protected void setSlowLogLimit(long limit) {
+    public void setSlowLogLimit(long limit) {
         this.slowLogLimit = limit;
     }
 

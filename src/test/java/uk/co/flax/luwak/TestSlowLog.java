@@ -2,15 +2,12 @@ package uk.co.flax.luwak;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Weight;
 import org.junit.Test;
-import uk.co.flax.luwak.matchers.ParallelMatcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 
@@ -34,11 +31,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSlowLog {
 
-    static class SlowQueryParser implements MonitorQueryParser {
+    public static class SlowQueryParser implements MonitorQueryParser {
 
         final long delay;
 
-        SlowQueryParser(long delay) {
+        public SlowQueryParser(long delay) {
             this.delay = delay;
         }
 
@@ -88,36 +85,5 @@ public class TestSlowLog {
 
     }
 
-    @Test
-    public void testParallelSlowLog() throws IOException {
-
-        ExecutorService executor = Executors.newCachedThreadPool();
-
-        Monitor monitor = new Monitor(new SlowQueryParser(250), new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
-
-        InputDocument doc1 = InputDocument.builder("doc1").build();
-
-        ParallelMatcher.ParallelMatcherFactory<QueryMatch> factory
-                = ParallelMatcher.factory(executor, SimpleMatcher.FACTORY);
-
-        Matches<QueryMatch> matches = monitor.match(doc1, factory);
-        System.out.println(matches.getSlowLog());
-        assertThat(matches.getSlowLog())
-                .contains("1:")
-                .contains("3:")
-                .doesNotContain("2:");
-
-        monitor.setSlowLogLimit(1);
-        assertThat(monitor.match(doc1, factory).getSlowLog())
-                .contains("1:")
-                .contains("2:")
-                .contains("3:");
-
-        monitor.setSlowLogLimit(2000000000000l);
-        assertThat(monitor.match(doc1, factory).getSlowLog())
-                .isEmpty();
-
-    }
 
 }

@@ -1,18 +1,9 @@
 package uk.co.flax.luwak.matchers;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.junit.Test;
-import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import uk.co.flax.luwak.MatcherFactory;
+import uk.co.flax.luwak.QueryMatch;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -30,27 +21,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * limitations under the License.
  */
 
-public class TestPartitionMatcher {
+public class TestPartitionMatcher extends ConcurrentMatcherTestBase {
 
-    @Test
-    public void testAllMatchesAreCollected() throws IOException {
-
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-        List<MonitorQuery> queries = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
-            queries.add(new MonitorQuery(Integer.toString(i), "+test " + Integer.toString(i)));
-        }
-        monitor.update(queries);
-
-        ExecutorService executor = Executors.newFixedThreadPool(10);
-
-        InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
-
-        Matches<QueryMatch> matches
-                = monitor.match(doc, PartitionMatcher.factory(executor, SimpleMatcher.FACTORY, 10));
-
-        assertThat(matches.getMatchCount()).isEqualTo(1000);
-
+    @Override
+    protected <T extends QueryMatch> MatcherFactory<T> matcherFactory(ExecutorService executor, MatcherFactory<T> factory, int threads) {
+        return PartitionMatcher.factory(executor, factory, threads);
     }
-
 }
