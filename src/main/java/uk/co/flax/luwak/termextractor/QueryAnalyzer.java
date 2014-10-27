@@ -7,6 +7,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
@@ -74,6 +75,37 @@ public class QueryAnalyzer {
      */
     public QueryAnalyzer(TreeWeightor weightor, QueryTreeBuilder<?>... queryTreeBuilders) {
         this(weightor, Arrays.asList(queryTreeBuilders));
+    }
+
+    /**
+     * Build a new QueryAnalyzer using a TreeWeightor and a list of PresearcherComponents
+     *
+     * A list of QueryTreeBuilders is extracted from each component, and combined to use
+     * on the QueryAnalyzer
+     *
+     * @param weightor a TreeWeightor
+     * @param components a list of PresearcherComponents
+     * @return a QueryAnalyzer
+     */
+    public static QueryAnalyzer fromComponents(TreeWeightor weightor, PresearcherComponent... components) {
+        List<QueryTreeBuilder<?>> builders = new ArrayList<>();
+        for (PresearcherComponent component : components) {
+            builders.addAll(component.getQueryTreeBuilders());
+        }
+        return new QueryAnalyzer(weightor, builders);
+    }
+
+    /**
+     * Build a new QueryAnalyzer using a list of PresearcherComponents
+     *
+     * A list of QueryTreeBuilders is extracted from each component, and combined to use
+     * on the QueryAnalyzer with a default TreeWeightor.
+     *
+     * @param components a list of PresearcherComponents
+     * @return a QueryAnalyzer
+     */
+    public static QueryAnalyzer fromComponents(PresearcherComponent... components) {
+        return fromComponents(TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     /**

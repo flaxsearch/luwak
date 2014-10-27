@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestExtractors {
 
     private static final QueryAnalyzer treeBuilder
-            = PresearcherComponent.buildQueryAnalyzer(new FilterQueryPresearcherComponent());
+            = QueryAnalyzer.fromComponents(new FilterQueryPresearcherComponent());
 
     private static QueryAnalyzer getBuilder(QueryTreeBuilder... queryTreeBuilder) {
         return new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilder);
@@ -121,8 +121,8 @@ public class TestExtractors {
     public void testExtendedFilteredQueryExtractor() {
 
         QueryAnalyzer treeBuilder
-                = PresearcherComponent.buildQueryAnalyzer(new MyFilterPresearcherComponent(),
-                                                          new FilterQueryPresearcherComponent());
+                = QueryAnalyzer.fromComponents(new MyFilterPresearcherComponent(),
+                new FilterQueryPresearcherComponent());
 
         Query q = new RegexpQuery(new Term("FILTER", "*"));
         Filter f = new MyFilter();

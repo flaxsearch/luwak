@@ -7,7 +7,6 @@ import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.presearcher.IntervalsPresearcherComponent;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestIntervalExtractors {
 
     private static final QueryAnalyzer treeBuilder
-            = PresearcherComponent.buildQueryAnalyzer(new IntervalsPresearcherComponent());
+            = QueryAnalyzer.fromComponents(new IntervalsPresearcherComponent());
 
     @Test
     public void testOrderedNearExtractor() {

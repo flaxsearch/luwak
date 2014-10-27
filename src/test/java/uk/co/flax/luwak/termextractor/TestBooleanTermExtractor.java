@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.util.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestBooleanTermExtractor {
 
-    private static final QueryAnalyzer treeBuilder = PresearcherComponent.buildQueryAnalyzer();
+    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer();
 
     @Test
     public void allDisjunctionQueriesAreIncluded() throws Exception {

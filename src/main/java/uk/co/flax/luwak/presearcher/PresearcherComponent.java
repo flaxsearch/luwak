@@ -1,7 +1,6 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -10,10 +9,8 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -69,37 +66,6 @@ public class PresearcherComponent {
      */
     public TokenStream filterDocumentTokens(String field, TokenStream ts) {
         return ts;
-    }
-
-    /**
-     * Build a new QueryAnalyzer using a TreeWeightor and a list of PresearcherComponents
-     *
-     * A list of QueryTreeBuilders is extracted from each component, and combined to use
-     * on the QueryAnalyzer
-     *
-     * @param weightor a TreeWeightor
-     * @param components a list of PresearcherComponents
-     * @return a QueryAnalyzer
-     */
-    public static QueryAnalyzer buildQueryAnalyzer(TreeWeightor weightor, PresearcherComponent... components) {
-        List<QueryTreeBuilder<?>> builders = new ArrayList<>();
-        for (PresearcherComponent component : components) {
-            builders.addAll(component.getQueryTreeBuilders());
-        }
-        return new QueryAnalyzer(weightor, builders);
-    }
-
-    /**
-     * Build a new QueryAnalyzer using a list of PresearcherComponents
-     *
-     * A list of QueryTreeBuilders is extracted from each component, and combined to use
-     * on the QueryAnalyzer with a default TreeWeightor.
-     *
-     * @param components a list of PresearcherComponents
-     * @return a QueryAnalyzer
-     */
-    public static QueryAnalyzer buildQueryAnalyzer(PresearcherComponent... components) {
-        return buildQueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     /**

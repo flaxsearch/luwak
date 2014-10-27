@@ -64,7 +64,7 @@ public class TermFilteredPresearcher extends Presearcher {
     public static final String ANYTOKEN = "__ANYTOKEN__";
 
     public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
-        this.extractor = PresearcherComponent.buildQueryAnalyzer(weightor, components);
+        this.extractor = QueryAnalyzer.fromComponents(weightor, components);
         this.components.addAll(Arrays.asList(components));
     }
 

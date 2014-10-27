@@ -8,15 +8,13 @@ import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause;
 import org.junit.Test;
 import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestBooleanFilterTermExtractor {
 
     private static final QueryAnalyzer treeBuilder
-            = PresearcherComponent.buildQueryAnalyzer(new FilterQueryPresearcherComponent());
+            = QueryAnalyzer.fromComponents(new FilterQueryPresearcherComponent());
 
     @Test
     public void allDisjunctionQueriesAreIncluded() {

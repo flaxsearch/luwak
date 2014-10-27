@@ -2,7 +2,6 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.util.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestBooleanClauseWeightings {
 
-    private static QueryAnalyzer treeBuilder = PresearcherComponent.buildQueryAnalyzer();
+    private static QueryAnalyzer treeBuilder = new QueryAnalyzer();
 
     @Test
     public void exactClausesPreferred() throws Exception {
