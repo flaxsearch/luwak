@@ -149,4 +149,5 @@ public class TestSuffixingNGramTokenizer {
         }
 
     }
+
 }

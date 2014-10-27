@@ -1,7 +1,9 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
@@ -49,30 +51,35 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
 
     private final int maxTokenSize;
 
+    private final Set<String> excludedFields;
+
     /**
      * Create a new WildcardNGramPresearcherComponent
      * @param ngramSuffix the suffix with which to mark ngrams
      * @param maxTokenSize the maximum length of an input token before WILDCARD tokens are generated
      * @param wildcardToken the token to emit if a token is longer than maxTokenSize in length
+     * @param excludedFields a Set of fields to ignore when generating ngrams
      */
-    public WildcardNGramPresearcherComponent(String ngramSuffix, int maxTokenSize, String wildcardToken) {
+    public WildcardNGramPresearcherComponent(String ngramSuffix, int maxTokenSize, String wildcardToken, Set<String> excludedFields) {
         super(new RegexpNGramTermQueryTreeBuilder(ngramSuffix, wildcardToken));
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
         this.wildcardToken = wildcardToken;
+        this.excludedFields = excludedFields == null ? new HashSet<String>() : excludedFields;
     }
 
     /**
      * Create a new WildcardNGramPresearcherComponent using default settings
      */
     public WildcardNGramPresearcherComponent() {
-        this(DEFAULT_NGRAM_SUFFIX, DEFAULT_MAX_TOKEN_SIZE, DEFAULT_WILDCARD_TOKEN);
+        this(DEFAULT_NGRAM_SUFFIX, DEFAULT_MAX_TOKEN_SIZE, DEFAULT_WILDCARD_TOKEN, null);
     }
 
     @Override
     public TokenStream filterDocumentTokens(String field, TokenStream ts) {
-        TokenStream duped = new KeywordRepeatFilter(ts);
-        return new SuffixingNGramTokenFilter(duped, ngramSuffix, wildcardToken, maxTokenSize);
+        if (excludedFields.contains(field))
+            return ts;
+        return new SuffixingNGramTokenFilter(ts, ngramSuffix, wildcardToken, maxTokenSize);
     }
 
     @Override
