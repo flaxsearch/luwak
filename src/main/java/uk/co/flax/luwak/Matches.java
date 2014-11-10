@@ -66,6 +66,13 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
     }
 
     /**
+     * @return all matches
+     */
+    public Collection<T> getMatches() {
+        return matches.values();
+    }
+
+    /**
      * @return the number of queries that matched
      */
     public int getMatchCount() {
