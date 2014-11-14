@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -395,7 +393,7 @@ public class Monitor implements Closeable {
     private Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
 
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
-        Query hq = Strings.isNullOrEmpty(query.getHighlightQuery())
+        Query hq = query.getHighlightQuery() == null
                 ? null : queryParser.parse(query.getHighlightQuery(), query.getMetadata());
 
         BytesRef rootHash = query.hash();
@@ -464,7 +462,6 @@ public class Monitor implements Closeable {
         commit(null);
     }
 
-    @VisibleForTesting
     Query buildQuery(InputDocument doc) throws IOException {
         try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
             return presearcher.buildQuery(doc, filter);

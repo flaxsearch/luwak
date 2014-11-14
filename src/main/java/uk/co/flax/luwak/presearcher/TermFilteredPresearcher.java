@@ -15,12 +15,8 @@ package uk.co.flax.luwak.presearcher;/*
  */
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import com.google.common.collect.Lists;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
@@ -57,7 +53,7 @@ public class TermFilteredPresearcher extends Presearcher {
 
     protected final QueryAnalyzer extractor;
 
-    private final List<PresearcherComponent> components = Lists.newArrayList();
+    private final List<PresearcherComponent> components = new ArrayList<>();
 
     public static final String ANYTOKEN_FIELD = "__anytokenfield";
 

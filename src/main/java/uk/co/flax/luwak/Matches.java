@@ -2,9 +2,6 @@ package uk.co.flax.luwak;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -37,8 +34,8 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
     public Matches(String docId, Map<String, T> matches, List<MatchError> errors,
                    long queryBuildTime, long searchTime, int queriesRun, String slowlog) {
         this.docId = docId;
-        this.matches = ImmutableMap.copyOf(matches);
-        this.errors = ImmutableList.copyOf(errors);
+        this.matches = Collections.unmodifiableMap(matches);
+        this.errors = Collections.unmodifiableList(errors);
         this.queryBuildTime = queryBuildTime;
         this.searchTime = searchTime;
         this.queriesRun = queriesRun;

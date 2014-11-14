@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -33,12 +32,18 @@ public class QueryDecomposer {
         if (q instanceof BooleanQuery)
             return decomposeBoolean((BooleanQuery) q);
 
-        return ImmutableList.of(q);
+        return listOf(q);
+    }
+
+    private static Collection<Query> listOf(Query q) {
+        List<Query> qs = new ArrayList<>(1);
+        qs.add(q);
+        return qs;
     }
 
     public Collection<Query> decomposeBoolean(BooleanQuery q) {
         if (q.getMinimumNumberShouldMatch() > 1)
-            return ImmutableList.<Query>of(q);
+            return listOf(q);
 
         List<Query> subqueries = new LinkedList<>();
         List<Query> exclusions = new LinkedList<>();
@@ -55,7 +60,7 @@ public class QueryDecomposer {
 
         // More than one MUST clause, or a single MUST clause with disjunctions
         if (mandatory.size() > 1 || (mandatory.size() == 1 && subqueries.size() > 0))
-            return ImmutableList.<Query>of(q);
+            return listOf(q);
 
         // If we only have a single MUST clause and no SHOULD clauses, then we can
         // decompose the MUST clause instead

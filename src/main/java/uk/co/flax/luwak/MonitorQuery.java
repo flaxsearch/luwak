@@ -3,15 +3,13 @@ package uk.co.flax.luwak;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
 import org.apache.lucene.store.InputStreamDataInput;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
@@ -40,7 +38,7 @@ public class MonitorQuery {
     private final String id;
     private final String query;
     private final String highlightQuery;
-    private final ImmutableMap<String, String> metadata;
+    private final Map<String, String> metadata;
 
     /**
      * Creates a new MonitorQuery
@@ -51,8 +49,8 @@ public class MonitorQuery {
     public MonitorQuery(String id, String query, String highlightQuery, Map<String, String> metadata) {
         this.id = id;
         this.query = query;
-        this.highlightQuery = Strings.isNullOrEmpty(highlightQuery) ? null : highlightQuery;
-        this.metadata = ImmutableSortedMap.copyOf(metadata);
+        this.highlightQuery = (highlightQuery == null || highlightQuery.isEmpty()) ? null : highlightQuery;
+        this.metadata = new TreeMap<>(metadata);
     }
 
     /**
@@ -63,7 +61,7 @@ public class MonitorQuery {
     }
 
     public MonitorQuery(String id, String query, String highlight) {
-        this(id, query, highlight, ImmutableMap.<String, String>of());
+        this(id, query, highlight, new HashMap<String, String>());
     }
 
     /**
@@ -72,7 +70,7 @@ public class MonitorQuery {
      * @param query the query to store
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, null, ImmutableMap.<String, String>of());
+        this(id, query, null, new HashMap<String, String>());
     }
 
     public static MonitorQuery deserialize(BytesRef bytes)  {
@@ -102,7 +100,7 @@ public class MonitorQuery {
 
             data.writeString(mq.getId());
             data.writeString(mq.getQuery());
-            if (!Strings.isNullOrEmpty(mq.getHighlightQuery())) {
+            if (mq.getHighlightQuery() != null) {
                 data.writeInt(1);
                 data.writeString(mq.getHighlightQuery());
             }
@@ -173,12 +171,12 @@ public class MonitorQuery {
     public BytesRef hash() {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
-            md5.update(query.getBytes(Charsets.UTF_8));
+            md5.update(query.getBytes(StandardCharsets.UTF_8));
             if (highlightQuery != null)
-                md5.update(highlightQuery.getBytes(Charsets.UTF_8));
+                md5.update(highlightQuery.getBytes(StandardCharsets.UTF_8));
             for (Map.Entry<String, String> entry : metadata.entrySet()) {
-                md5.update(entry.getKey().getBytes(Charsets.UTF_8));
-                md5.update(entry.getValue().getBytes(Charsets.UTF_8));
+                md5.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
+                md5.update(entry.getValue().getBytes(StandardCharsets.UTF_8));
             }
             return new BytesRef(md5.digest());
         } catch (NoSuchAlgorithmException e) {

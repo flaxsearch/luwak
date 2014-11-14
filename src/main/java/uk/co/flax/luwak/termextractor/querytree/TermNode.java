@@ -1,9 +1,9 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -77,7 +77,9 @@ public class TermNode extends QueryTree {
 
     @Override
     public Set<QueryTerm> terms(TreeWeightor weightor) {
-        return Sets.newHashSet(term);
+        Set<QueryTerm> ts = new HashSet<>();
+        ts.add(term);
+        return ts;
     }
 
     @Override

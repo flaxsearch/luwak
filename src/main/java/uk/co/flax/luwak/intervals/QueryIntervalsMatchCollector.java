@@ -17,9 +17,11 @@ package uk.co.flax.luwak.intervals;
 */
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
@@ -91,7 +93,7 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
 
     private static class MatchBuilder {
 
-        private final Multimap<String, IntervalsQueryMatch.Hit> hits = HashMultimap.create();
+        private final Map<String, List<IntervalsQueryMatch.Hit>> hits = new HashMap<>();
 
         private boolean match;
 
@@ -106,8 +108,10 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
         }
 
         public void addInterval(Interval interval) {
-            hits.put(interval.field,
-                    new IntervalsQueryMatch.Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
+            if (!hits.containsKey(interval.field))
+                hits.put(interval.field, new ArrayList<IntervalsQueryMatch.Hit>());
+            hits.get(interval.field)
+                    .add(new IntervalsQueryMatch.Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
         }
 
         public IntervalsQueryMatch build() {

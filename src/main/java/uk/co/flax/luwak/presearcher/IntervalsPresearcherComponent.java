@@ -2,9 +2,10 @@ package uk.co.flax.luwak.presearcher;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.treebuilder.*;
+import uk.co.flax.luwak.termextractor.treebuilder.IntervalFilterQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.treebuilder.NonOverlappingQueryTreeBuilder;
+import uk.co.flax.luwak.util.CollectionUtils;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -28,7 +29,7 @@ import uk.co.flax.luwak.termextractor.treebuilder.*;
  */
 public class IntervalsPresearcherComponent extends PresearcherComponent {
 
-    private static final List<? extends QueryTreeBuilder<?>> BUILDERS = ImmutableList.of(
+    private static final List<? extends QueryTreeBuilder<?>> BUILDERS = CollectionUtils.makeUnmodifiableList(
             new IntervalFilterQueryTreeBuilder(),
             new NonOverlappingQueryTreeBuilder()
     );

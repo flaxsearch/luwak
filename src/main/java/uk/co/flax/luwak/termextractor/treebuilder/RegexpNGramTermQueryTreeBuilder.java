@@ -1,11 +1,5 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
-import java.util.regex.Pattern;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
-import com.google.common.primitives.Ints;
 import org.apache.lucene.search.RegexpQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
@@ -47,22 +41,11 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
         this.wildcardToken = wildcardToken;
     }
 
-    public static Pattern regexpChars = Pattern.compile("\\.|\\*|.\\?");
-
-    public static Splitter regexpSplitter = Splitter.on(regexpChars);
-
-    /** Orders strings by length, longest first */
-    public static Ordering<String> byLengthOrdering = new Ordering<String>() {
-        public int compare(String left, String right) {
-            return Ints.compare(left.length(), right.length());
-        }
-    };
-
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
         String regexp = parseOutRegexp(query.toString(""));
-        String substr = Iterables.getFirst(byLengthOrdering.greatestOf(regexpSplitter.split(regexp), 1), "");
-        return new TermNode(new QueryTerm(query.getField(), substr + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
+        String selected = selectLongestSubstring(regexp);
+        return new TermNode(new QueryTerm(query.getField(), selected + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
     }
 
     /**
@@ -76,5 +59,17 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
         int firstSlash = queryRepresentation.indexOf("/", fieldSepPos);
         int lastSlash = queryRepresentation.lastIndexOf("/");
         return queryRepresentation.substring(firstSlash + 1, lastSlash);
+    }
+
+    /**
+     * Given a regular expression, parse out the longest static substring from it
+     */
+    public static String selectLongestSubstring(String regexp) {
+        String selected = "";
+        for (String substr : regexp.split("\\.|\\*|.\\?")) {
+            if (substr.length() > selected.length())
+                selected = substr;
+        }
+        return selected;
     }
 }

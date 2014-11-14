@@ -1,8 +1,9 @@
 package uk.co.flax.luwak.termextractor.weights;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -46,7 +47,7 @@ public class FieldSpecificTermWeightNorm extends TermWeightNorm {
      * @param terms the terms to scale
      */
     public FieldSpecificTermWeightNorm(float k, String field, String... terms) {
-        this(k, field, Sets.newHashSet(terms));
+        this(k, field, new HashSet<>(Arrays.asList(terms)));
     }
 
     @Override

@@ -1,13 +1,7 @@
 package uk.co.flax.luwak.intervals;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
 import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
@@ -36,18 +30,18 @@ import uk.co.flax.luwak.QueryMatch;
  */
 public class IntervalsQueryMatch extends QueryMatch {
 
-    private static final Multimap<String, Hit> EMPTYMAP = HashMultimap.create();
+    private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
 
-    private final Multimap<String, Hit> hits;
+    private final Map<String, List<Hit>> hits;
 
     /**
      * Create a new QueryMatch object for a query
      *
      * @param queryId the ID of the query
      */
-    public IntervalsQueryMatch(String queryId, Multimap<String, Hit> hits) {
+    public IntervalsQueryMatch(String queryId, Map<String, List<Hit>> hits) {
         super(queryId);
-        this.hits = TreeMultimap.create(hits);
+        this.hits = new TreeMap<>(hits);
     }
 
     /**
@@ -70,14 +64,16 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @return the total number of hits for the query
      */
     public int getHitCount() {
-        return hits.keys().size();
+        return hits.size();
     }
 
     public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
         IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId, EMPTYMAP);
         for (IntervalsQueryMatch match : matches) {
             for (String field : match.getFields()) {
-                newMatch.hits.putAll(field, match.getHits(field));
+                if (!newMatch.hits.containsKey(field))
+                    newMatch.hits.put(field, new ArrayList<Hit>());
+                newMatch.hits.get(field).addAll(match.getHits(field));
             }
         }
         return newMatch;

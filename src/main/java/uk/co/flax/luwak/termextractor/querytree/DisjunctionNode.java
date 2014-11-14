@@ -1,10 +1,10 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.Sets;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /**
@@ -87,7 +87,9 @@ public class DisjunctionNode extends QueryTree {
     public Set<QueryTerm> terms(TreeWeightor weightor) {
         List<QueryTerm> qterms = new ArrayList<>();
         this.collectTerms(qterms, weightor);
-        return Sets.newHashSet(qterms);
+        Set<QueryTerm> terms = new HashSet<>();
+        terms.addAll(qterms);
+        return terms;
     }
 
     @Override

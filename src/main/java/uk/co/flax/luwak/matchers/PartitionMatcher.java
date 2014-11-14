@@ -8,9 +8,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import com.google.common.collect.Lists;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.util.CollectionUtils;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -92,7 +92,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     public void finish(long buildTime, int queryCount) {
 
         List<Callable<Matches<T>>> workers = new ArrayList<>(threads);
-        for (List<MatchTask> taskset : Lists.partition(tasks, threads)) {
+        for (List<MatchTask> taskset : CollectionUtils.partition(tasks, threads)) {
             CandidateMatcher<T> matcher = matcherFactory.createMatcher(doc);
             matcher.setSlowLogLimit(this.slowLogLimit);
             workers.add(new MatcherWorker(taskset, matcher));
