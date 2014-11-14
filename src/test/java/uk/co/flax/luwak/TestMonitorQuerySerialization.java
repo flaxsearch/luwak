@@ -61,4 +61,20 @@ public class TestMonitorQuerySerialization {
         assertThat(mq).serializes();
     }
 
+    @Test
+    public void testMonitorQueryToString() {
+        MonitorQuery mq = new MonitorQuery("1", "test");
+        Assertions.assertThat(mq.toString()).isEqualTo("1: test");
+
+        Assertions.assertThat(new MonitorQuery("1", "test", "").toString())
+                .isEqualTo("1: test");
+        Assertions.assertThat(new MonitorQuery("1", "test", "testhl").toString())
+                .isEqualTo("1: test { hl: testhl }");
+        Assertions.assertThat(new MonitorQuery("1", "test", ImmutableMap.of("lang", "en", "foo", "bar")).toString())
+                .isEqualTo("1: test { foo: bar, lang: en }");
+        Assertions.assertThat(new MonitorQuery("1", "test", "testhl", ImmutableMap.of("lang", "en")).toString())
+                .isEqualTo("1: test { hl: testhl, lang: en }");
+
+    }
+
 }

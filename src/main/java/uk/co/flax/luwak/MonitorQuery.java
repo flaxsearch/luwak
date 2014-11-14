@@ -185,4 +185,27 @@ public class MonitorQuery {
             throw new RuntimeException("Can't use MD5 hash on this system", e);
         }
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(id);
+        sb.append(": ").append(query);
+        if (highlightQuery != null || metadata.size() != 0) {
+            sb.append(" { ");
+            if (highlightQuery != null) {
+                sb.append("hl: ").append(highlightQuery);
+                if (metadata.size() != 0)
+                    sb.append(", ");
+            }
+            int n = metadata.size();
+            for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                n--;
+                sb.append(entry.getKey()).append(": ").append(entry.getValue());
+                if (n > 0)
+                    sb.append(", ");
+            }
+            sb.append(" }");
+        }
+        return sb.toString();
+    }
 }
