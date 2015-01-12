@@ -1,10 +1,14 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
+import java.util.Map;
 
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -85,5 +89,17 @@ public class TestTermPresearcher extends PresearcherTestBase {
     @Override
     protected Presearcher createPresearcher() {
         return new TermFilteredPresearcher();
+    }
+
+    @Test
+    public void testAnyTermsAreCorrectlyAnalyzed() {
+
+        TermFilteredPresearcher presearcher = new TermFilteredPresearcher();
+        QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery());
+
+        Map<String, StringBuilder> extractedTerms = presearcher.collectTerms(qt);
+
+        Assertions.assertThat(extractedTerms.size()).isEqualTo(1);
+
     }
 }

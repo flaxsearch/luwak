@@ -49,7 +49,8 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
 
         monitor.update(new MonitorQuery("1", "test", ImmutableMap.of("language", "en")),
                        new MonitorQuery("2", "test", ImmutableMap.of("language", "de")),
-                       new MonitorQuery("3", "wibble", ImmutableMap.of("language", "en")));
+                       new MonitorQuery("3", "wibble", ImmutableMap.of("language", "en")),
+                       new MonitorQuery("4", "*:*", ImmutableMap.of("language", "de")));
 
         InputDocument enDoc = InputDocument.builder("enDoc")
                 .addField(TEXTFIELD, "this is a test", WHITESPACE)
@@ -66,8 +67,9 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
                 .build();
         assertThat(monitor.match(deDoc, SimpleMatcher.FACTORY))
                 .matchesQuery("2")
-                .hasMatchCount(1)
-                .hasQueriesRunCount(1);
+                .matchesQuery("4")
+                .hasMatchCount(2)
+                .hasQueriesRunCount(2);
 
         InputDocument bothDoc = InputDocument.builder("bothDoc")
                 .addField(TEXTFIELD, "this is ein test", WHITESPACE)
@@ -77,8 +79,22 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
         assertThat(monitor.match(bothDoc, SimpleMatcher.FACTORY))
                 .matchesQuery("1")
                 .matchesQuery("2")
-                .hasMatchCount(2)
-                .hasQueriesRunCount(2);
+                .matchesQuery("4")
+                .hasMatchCount(3)
+                .hasQueriesRunCount(3);
+    }
+
+    @Test
+    public void testFilteringOnMatchAllQueries() throws IOException {
+        monitor.update(new MonitorQuery("1", "*:*", ImmutableMap.of("language", "de")));
+
+        InputDocument enDoc = InputDocument.builder("enDoc")
+                .addField(TEXTFIELD, "this is a test", WHITESPACE)
+                .addField("language", "en", WHITESPACE)
+                .build();
+        assertThat(monitor.match(enDoc, SimpleMatcher.FACTORY))
+                .hasMatchCount(0)
+                .hasQueriesRunCount(0);
     }
 
 }

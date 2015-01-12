@@ -94,14 +94,16 @@ public class TermFilteredPresearcher extends Presearcher {
             }
             Query presearcherQuery = queryBuilder.build();
 
+            BooleanQuery bq = new BooleanQuery();
+            bq.add(presearcherQuery, BooleanClause.Occur.SHOULD);
+            bq.add(new TermQuery(new Term(ANYTOKEN_FIELD, ANYTOKEN)), BooleanClause.Occur.SHOULD);
+            presearcherQuery = bq;
+
             for (PresearcherComponent component : components) {
                 presearcherQuery = component.adjustPresearcherQuery(doc, presearcherQuery);
             }
 
-            BooleanQuery bq = new BooleanQuery();
-            bq.add(presearcherQuery, BooleanClause.Occur.SHOULD);
-            bq.add(new TermQuery(new Term(ANYTOKEN_FIELD, ANYTOKEN)), BooleanClause.Occur.SHOULD);
-            return bq;
+            return presearcherQuery;
         }
         catch (IOException e) {
             // We're a MemoryIndex, so this shouldn't happen...
@@ -160,24 +162,25 @@ public class TermFilteredPresearcher extends Presearcher {
         Map<String, StringBuilder> fieldTerms = new HashMap<>();
 
         for (QueryTerm queryTerm : extractor.collectTerms(tree)) {
-            if (!fieldTerms.containsKey(queryTerm.field))
-                fieldTerms.put(queryTerm.field, new StringBuilder());
-
-            //noinspection MismatchedQueryAndUpdateOfStringBuilder
-            StringBuilder termslist = fieldTerms.get(queryTerm.field);
-            if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
-                termslist.append(" ").append(queryTerm.term);
-            }
-            else if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
+            if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
                 if (!fieldTerms.containsKey(ANYTOKEN_FIELD))
                     fieldTerms.put(ANYTOKEN_FIELD, new StringBuilder(ANYTOKEN));
             }
             else {
-                termslist.append(" ").append(queryTerm.term);
-                for (PresearcherComponent component : components) {
-                    String extratoken = component.extraToken(queryTerm);
-                    if (extratoken != null)
-                        termslist.append(" ").append(extratoken);
+                if (!fieldTerms.containsKey(queryTerm.field))
+                    fieldTerms.put(queryTerm.field, new StringBuilder());
+
+                //noinspection MismatchedQueryAndUpdateOfStringBuilder
+                StringBuilder termslist = fieldTerms.get(queryTerm.field);
+                if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
+                    termslist.append(" ").append(queryTerm.term);
+                } else {
+                    termslist.append(" ").append(queryTerm.term);
+                    for (PresearcherComponent component : components) {
+                        String extratoken = component.extraToken(queryTerm);
+                        if (extratoken != null)
+                            termslist.append(" ").append(extratoken);
+                    }
                 }
             }
         }
