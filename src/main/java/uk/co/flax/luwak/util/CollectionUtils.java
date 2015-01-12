@@ -30,15 +30,17 @@ public final class CollectionUtils {
     }
 
     public static <T> List<List<T>> partition(List<T> items, int slices) {
-        int size = (int) Math.floor(items.size() / (double) slices);
+        double size = items.size() / (double) slices;
+        double accum = 0;
         int start = 0;
         List<List<T>> list = new ArrayList<>(slices);
         for (int i = 0; i < slices; i++) {
-            int end = start + size;
+            int end = (int) Math.floor(accum + size);
             if (i == slices - 1)
                 end = items.size();
             list.add(items.subList(start, end));
-            start += size;
+            accum += size;
+            start = (int) Math.floor(accum);
         }
         return list;
     }

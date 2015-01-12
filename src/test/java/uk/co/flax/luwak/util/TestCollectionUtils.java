@@ -36,10 +36,10 @@ public class TestCollectionUtils {
                 .containsExactly(list("1", "2", "3"), list("4", "5", "6"), list("7", "8", "9", "10"));
 
         assertThat(CollectionUtils.partition(terms, 4))
-                .containsExactly(list("1", "2"), list("3", "4"), list("5", "6"), list("7", "8", "9", "10"));
+                .containsExactly(list("1", "2"), list("3", "4", "5"), list("6", "7"), list("8", "9", "10"));
 
         assertThat(CollectionUtils.partition(terms, 6))
-                .containsExactly(list("1"), list("2"), list("3"), list("4"), list("5"), list("6", "7", "8", "9", "10"));
+                .containsExactly(list("1"), list("2", "3"), list("4", "5"), list("6"), list("7", "8"), list("9", "10"));
 
     }
 
