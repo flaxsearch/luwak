@@ -54,6 +54,11 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
         try {
             final float[] scores = new float[1]; // inits to 0.0f (no match)
             searcher.search(query, new SimpleCollector() {
+                @Override
+                public boolean needsScores() {
+                    return true;
+                }
+
                 private Scorer scorer;
 
                 @Override
@@ -66,10 +71,6 @@ public class ScoringMatcher extends CandidateMatcher<ScoringMatch> {
                     this.scorer = scorer;
                 }
 
-                @Override
-                public boolean acceptsDocsOutOfOrder() {
-                    return true;
-                }
             });
             return scores[0];
         }

@@ -25,7 +25,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
@@ -114,7 +114,7 @@ public class TermFilteredPresearcher implements Presearcher {
     public static final FieldType QUERYFIELDTYPE;
     static {
         QUERYFIELDTYPE = new FieldType(TextField.TYPE_STORED);
-        QUERYFIELDTYPE.setIndexOptions(FieldInfo.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        QUERYFIELDTYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         QUERYFIELDTYPE.freeze();
     }
 

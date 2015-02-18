@@ -1,15 +1,14 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.intervals.OrderedNearQuery;
 import org.apache.lucene.search.intervals.UnorderedNearQuery;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -101,23 +100,6 @@ public class TestExtractors {
 
         terms = qte.extract(bq);
         assertThat(terms).containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
-    }
-
-    @Test
-    public void testFilteredQueryTermExtractor() {
-
-        QueryTermExtractor qte = new QueryTermExtractor(new FilteredQueryExtractor());
-
-        Query q = new TermQuery(new Term("field", "term"));
-        Filter f = new TermFilter(new Term("field", "filterterm"));
-        FilteredQuery fq = new FilteredQuery(q, f);
-
-        Set<QueryTerm> terms = qte.extract(fq);
-        assertThat(terms).hasSize(1);   // treat filterquery as a conjunction, only need one subclause
-
-        // selects 'filterterm' over 'term' because it's longer
-        assertThat(terms).containsExactly(new QueryTerm("field", "filterterm", QueryTerm.Type.EXACT));
-
     }
 
 }

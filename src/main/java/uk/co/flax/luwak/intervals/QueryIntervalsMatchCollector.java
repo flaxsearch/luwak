@@ -16,14 +16,13 @@ package uk.co.flax.luwak.intervals;
 * limitations under the License.
 */
 
+import java.io.IOException;
+
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
-
-import java.io.IOException;
 
 /**
  * a specialized Collector that uses an {@link IntervalIterator} to collect
@@ -52,18 +51,18 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
     }
 
     @Override
-    public boolean acceptsDocsOutOfOrder() {
+    public boolean needsScores() {
         return false;
+    }
+
+    @Override
+    public boolean needsIntervals() {
+        return true;
     }
 
     @Override
     public void setScorer(Scorer scorer) throws IOException {
         positions = scorer.intervals(true);
-    }
-
-    @Override
-    public Weight.PostingFeatures postingFeatures() {
-        return Weight.PostingFeatures.OFFSETS;
     }
 
     @Override

@@ -9,7 +9,6 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
@@ -63,19 +62,19 @@ public class PresearcherMatchCollector extends TimedCollector implements Interva
     }
 
     @Override
-    public Weight.PostingFeatures postingFeatures() {
-        return Weight.PostingFeatures.OFFSETS;
+    public boolean needsScores() {
+        return false;
+    }
+
+    @Override
+    public boolean needsIntervals() {
+        return true;
     }
 
     @Override
     public void doSetNextReader(LeafReaderContext context) throws IOException {
         this.reader = context.reader();
         this.idValues = this.reader.getBinaryDocValues(Monitor.FIELDS.id);
-    }
-
-    @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return false;
     }
 
     @Override

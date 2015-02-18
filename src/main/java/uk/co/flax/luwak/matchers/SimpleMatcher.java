@@ -36,8 +36,8 @@ public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
         doc.getSearcher().search(matchQuery, new SimpleCollector() {
 
             @Override
-            public boolean acceptsDocsOutOfOrder() {
-                return true;
+            public boolean needsScores() {
+                return false;
             }
 
             @Override

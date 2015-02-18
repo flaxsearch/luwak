@@ -1,15 +1,15 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.FilteredQuery;
 import uk.co.flax.luwak.termextractor.weights.CompoundRuleWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 
 public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
@@ -18,7 +18,6 @@ public class FilteredQueryExtractor extends Extractor<FilteredQuery> {
      */
     public static final List<FilterTermExtractor<? extends Filter>> DEFAULT_FILTER_EXTRACTORS = ImmutableList.of(
             new TermsFilterTermExtractor(),
-            new TermFilterTermExtractor(),
             new GenericFilterTermExtractor()
     );
 

@@ -343,11 +343,6 @@ public class Monitor implements Closeable {
             this.idDV = context.reader().getBinaryDocValues(FIELDS.id);
         }
 
-        @Override
-        public final boolean acceptsDocsOutOfOrder() {
-            return true;
-        }
-
         public int getQueryCount() {
             return queryCount;
         }
@@ -359,6 +354,11 @@ public class Monitor implements Closeable {
         @Override
         public void setSearchTime(long searchTime) {
             this.searchTime = searchTime;
+        }
+
+        @Override
+        public boolean needsScores() {
+            return false;
         }
     }
 
