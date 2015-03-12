@@ -79,4 +79,14 @@ public class TestQueryDecomposer {
                 .containsExactly(q("+hello -goodbye"), q("+world -goodbye"));
     }
 
+    @Test
+    public void testBoostsArePreserved() throws Exception {
+        assertThat(decomposer.decompose(q("+(hello world)^0.7")))
+                .containsExactly(q("hello^0.7"), q("world^0.7"));
+        assertThat(decomposer.decompose(q("+(hello world)^0.7 -goodbye")))
+                .containsExactly(q("+hello^0.7 -goodbye"), q("+world^0.7 -goodbye"));
+        assertThat(decomposer.decompose(q("+(hello^0.5 world)^0.8")))
+                .containsExactly(q("hello^0.4"), q("world^0.8"));
+    }
+
 }

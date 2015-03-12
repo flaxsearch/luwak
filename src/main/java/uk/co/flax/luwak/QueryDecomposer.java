@@ -41,6 +41,11 @@ public class QueryDecomposer {
         return qs;
     }
 
+    private static Query boost(Query q, float boost) {
+        q.setBoost(boost * q.getBoost());
+        return q;
+    }
+
     public Collection<Query> decomposeBoolean(BooleanQuery q) {
         if (q.getMinimumNumberShouldMatch() > 1)
             return listOf(q);
@@ -49,13 +54,18 @@ public class QueryDecomposer {
         List<Query> exclusions = new LinkedList<>();
         List<Query> mandatory = new LinkedList<>();
 
+        float parentBoost = q.getBoost();
+
         for (BooleanClause clause : q) {
             if (clause.getOccur() == BooleanClause.Occur.MUST)
                 mandatory.add(clause.getQuery());
             else if (clause.getOccur() == BooleanClause.Occur.MUST_NOT)
                 exclusions.add(clause.getQuery());
-            else
-                subqueries.addAll(decompose(clause.getQuery()));
+            else {
+                for (Query subQuery : decompose(clause.getQuery())) {
+                    subqueries.add(boost(subQuery, parentBoost));
+                }
+            }
         }
 
         // More than one MUST clause, or a single MUST clause with disjunctions
@@ -64,8 +74,11 @@ public class QueryDecomposer {
 
         // If we only have a single MUST clause and no SHOULD clauses, then we can
         // decompose the MUST clause instead
-        if (mandatory.size() == 1)
-            subqueries.addAll(decompose(mandatory.get(0)));
+        if (mandatory.size() == 1) {
+            for (Query subQuery : decompose(mandatory.get(0))) {
+                subqueries.add(boost(subQuery, parentBoost));
+            }
+        }
 
         if (exclusions.size() == 0)
             return subqueries;
