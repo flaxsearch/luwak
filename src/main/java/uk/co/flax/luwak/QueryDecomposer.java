@@ -41,7 +41,7 @@ public class QueryDecomposer {
         return qs;
     }
 
-    private static Query boost(Query q, float boost) {
+    public static Query boost(Query q, float boost) {
         q.setBoost(boost * q.getBoost());
         return q;
     }
