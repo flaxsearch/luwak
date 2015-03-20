@@ -42,7 +42,9 @@ public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
         Explanation explanation = doc.getSearcher().explain(matchQuery, 0);
         if (!explanation.isMatch())
             return null;
-        return new ExplainingMatch(queryId, explanation);
+        ExplainingMatch result = new ExplainingMatch(queryId, explanation);
+        addMatch(queryId, result);
+        return result;
     }
 
     @Override
