@@ -1,8 +1,11 @@
 package uk.co.flax.luwak.termextractor.weights;
 
-import uk.co.flax.luwak.termextractor.QueryTerm;
+import java.util.Collection;
+import java.util.Set;
 
-import java.util.List;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -19,24 +22,67 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class ReportingWeightor implements TermWeightor {
+public class ReportingWeightor extends TreeWeightor {
 
-    private final TermWeightor delegate;
     private final Reporter reporter;
 
-    public ReportingWeightor(Reporter reporter, TermWeightor delegate) {
-        this.delegate = delegate;
+    public ReportingWeightor(Reporter reporter, TreeWeightor delegate) {
+        super(delegate);
         this.reporter = reporter;
     }
 
+    public ReportingWeightor(TreeWeightor delegate) {
+        this(new SystemOutReporter(), delegate);
+    }
+
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float weight = delegate.weigh(terms);
-        reporter.report(weight, terms);
+    public float weigh(QueryTerm term) {
+        float weight = super.weigh(term);
+        reporter.reportTerm(weight, term);
         return weight;
     }
 
+    @Override
+    public float combine(Collection<QueryTree> children) {
+        float weight = super.combine(children);
+        reporter.reportCombination(weight, children);
+        return weight;
+    }
+
+    @Override
+    public QueryTree select(Set<QueryTree> children) {
+        QueryTree selected = super.select(children);
+        reporter.reportSelected(selected, children);
+        return selected;
+    }
+
     public static interface Reporter {
-        void report(float weight, List<QueryTerm> terms);
+
+        void reportTerm(float weight, QueryTerm term);
+
+        void reportSelected(QueryTree selected, Set<QueryTree> children);
+
+        void reportCombination(float weight, Collection<QueryTree> children);
+
+    }
+
+    public static class SystemOutReporter implements Reporter {
+
+        @Override
+        public void reportTerm(float weight, QueryTerm term) {
+            System.out.println("Term: " + term + " weight: " + weight);
+        }
+
+        @Override
+        public void reportSelected(QueryTree selected, Set<QueryTree> children) {
+            System.out.println("Selected " + selected + "\n\tfrom " + children);
+        }
+
+        @Override
+        public void reportCombination(float weight, Collection<QueryTree> children) {
+            System.out.println("Derived weight " + weight + " from combination of " + children);
+        }
+
+
     }
 }

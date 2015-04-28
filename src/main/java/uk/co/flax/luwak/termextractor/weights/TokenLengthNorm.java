@@ -2,8 +2,6 @@ package uk.co.flax.luwak.termextractor.weights;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
-import java.util.List;
-
 /**
 * Copyright (c) 2014 Lemur Consulting Ltd.
 * <p/>
@@ -19,25 +17,33 @@ import java.util.List;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-public class TokenLengthNorm implements WeightRule {
+
+/**
+ * Weight a token by its length
+ */
+public class TokenLengthNorm extends WeightNorm {
 
     private final float a;
     private final float k;
 
+    /**
+     * Create a new TokenLengthNorm
+     *
+     * Tokens will be scaled according to the equation a * e^(-k * tokenlength)
+     *
+     * @param a a
+     * @param k k
+     */
     public TokenLengthNorm(float a, float k) {
         this.a = a;
         this.k = k;
     }
 
     @Override
-    public float weigh(List<QueryTerm> terms) {
-        float result = 0;
-        for (QueryTerm term : terms) {
-            if (term.type == QueryTerm.Type.ANY)
-                result += 1;
-            else
-                result += (4 - CompoundRuleWeightor.exp(a, k, term.term.length()));
-        }
-        return result / terms.size();
+    public float norm(QueryTerm term) {
+        if (term.type == QueryTerm.Type.ANY)
+            return 1;
+        else
+            return (4 - WeightNorm.exp(a, k, term.term.length()));
     }
 }

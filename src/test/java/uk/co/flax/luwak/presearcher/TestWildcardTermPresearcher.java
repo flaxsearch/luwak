@@ -1,13 +1,17 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+
 import com.google.common.base.Strings;
+import com.google.common.collect.Sets;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-
-import java.io.IOException;
+import uk.co.flax.luwak.util.TokenStreamAssert;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
@@ -63,7 +67,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         monitor.update(new MonitorQuery("1", "/a.*/"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcher.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
+                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcherComponent.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
                 .build();
 
         assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
@@ -88,6 +92,36 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return WildcardNGramPresearcher.DEFAULT;
+        return new TermFilteredPresearcher(new WildcardNGramPresearcherComponent());
+    }
+
+    @Test
+    public void testPresearcherComponent() throws IOException {
+
+        PresearcherComponent comp
+                = new WildcardNGramPresearcherComponent("FOO", 10, "__wibble__", Sets.newHashSet("field1"));
+
+        Analyzer input = new WhitespaceAnalyzer();
+
+        // field1 is in the excluded set, so nothing should happen
+        TokenStreamAssert.assertThat(comp.filterDocumentTokens("field1", input.tokenStream("field1", "hello world")))
+                .nextEquals("hello")
+                .nextEquals("world")
+                .isExhausted();
+
+        // field2 is not excluded
+        TokenStreamAssert.assertThat(comp.filterDocumentTokens("field", input.tokenStream("field", "harm alarm asdasasdasdasd")))
+                .nextEquals("harm")
+                .nextEquals("harmFOO").nextEquals("harFOO").nextEquals("haFOO").nextEquals("hFOO")
+                .nextEquals("armFOO").nextEquals("arFOO").nextEquals("aFOO")
+                .nextEquals("rmFOO").nextEquals("rFOO")
+                .nextEquals("mFOO")
+                .nextEquals("FOO")
+                .nextEquals("alarm")
+                .nextEquals("alarmFOO").nextEquals("alarFOO").nextEquals("alaFOO").nextEquals("alFOO")
+                .nextEquals("larmFOO").nextEquals("larFOO").nextEquals("laFOO").nextEquals("lFOO")
+                .nextEquals("asdasasdasdasd")
+                .nextEquals("__wibble__")
+                .isExhausted();
     }
 }

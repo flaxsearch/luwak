@@ -1,0 +1,68 @@
+indexer thread              purge thread
+
+                            clone tlog
+    add docs                                <-- dropped!
+
+                            collect
+
+    commit
+
+    clear tlog
+
+                            swap tlog
+
+-----------------------------------------
+
+* add docs + commit is guarded by a read lock
+* purge thread creates purge log
+* purge log creation guarded by write lock
+* if purge log exists, indexer adds its queries to it
+* purge thread adds purge log contents after collectiong
+
+
+
+    add docs         |_
+    add to purge log |      <-- no purge log, so dropped!
+
+                         -| create purge log
+
+                            collect
+
+    commit           
+                         _| copy purge log
+                          | swap cache      
+
+So I need to make adding docs to the cache and committing protected by the
+readlock.
+
+* update _parses_ the docs, but doesn't add them to the cache
+* commit() now takes a list of CacheEntry objects
+
+    add & parse docs
+                        -| create purge log
+
+                           collect
+
+                        _| copy purge log
+                         | swap cache
+
+    add to cache     |
+    add to purge log |-
+    commit           |
+
+
+* problem now is: what happens if another thread commits before the cache is
+  populated?  We can get NPEs from the cache
+    - silently drop?  We don't guarantee that the doc is there until update()
+      returns, so I think this is OK.
+
+    add & parse docs
+                            delete docs
+                            commit
+                                                match in index
+                                                retrieve from cache -> NPE!
+
+
+    add to cache     |
+    add to purge log |-
+    commit           |

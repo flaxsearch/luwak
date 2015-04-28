@@ -1,17 +1,12 @@
 package uk.co.flax.luwak.termextractor;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
+import java.util.List;
+
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
+import uk.co.flax.luwak.util.ParserUtils;
 
-import java.util.Set;
-
-import static org.fest.assertions.api.Assertions.assertThat;
-import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.BQBuilder;
-import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -31,15 +26,13 @@ import static uk.co.flax.luwak.termextractor.BooleanQueryUtils.newTermQuery;
 
 public class TestBooleanTermExtractor {
 
+    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer();
+
     @Test
-    public void allDisjunctionQueriesAreIncluded() {
+    public void allDisjunctionQueriesAreIncluded() throws Exception {
 
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
-        bq.add(new TermQuery(new Term("field1", "term2")), BooleanClause.Occur.SHOULD);
-
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(bq);
+        Query bq = ParserUtils.parse("field1:term1 field1:term2");
+        List<QueryTerm> terms = treeBuilder.collectTerms(bq);
 
         assertThat(terms).containsOnly(
                 new QueryTerm("field1", "term1", QueryTerm.Type.EXACT),
@@ -48,47 +41,48 @@ public class TestBooleanTermExtractor {
     }
 
     @Test
-    public void allNestedDisjunctionClausesAreIncluded() {
-        BooleanQuery superbq = BQBuilder.newBQ()
-                .addShouldClause(newTermQuery("field1", "term3"))
-                .addShouldClause(BooleanQueryUtils.BQBuilder.newBQ()
-                        .addShouldClause(newTermQuery("field1", "term1"))
-                        .addShouldClause(newTermQuery("field1", "term2"))
-                        .build())
-                .build();
+    public void allNestedDisjunctionClausesAreIncluded() throws Exception {
 
-        assertThat(extract(superbq)).hasSize(3);
+        Query q = ParserUtils.parse("field1:term3 (field1:term1 field1:term2)");
+
+        assertThat(treeBuilder.collectTerms(q)).hasSize(3);
     }
 
     @Test
-    public void allDisjunctionClausesOfAConjunctionAreExtracted() {
+    public void allDisjunctionClausesOfAConjunctionAreExtracted() throws Exception {
 
-        BooleanQuery superbq = BooleanQueryUtils.BQBuilder.newBQ()
-                .addMustClause(BooleanQueryUtils.BQBuilder.newBQ()
-                        .addShouldClause(newTermQuery("field1", "term1"))
-                        .addShouldClause(newTermQuery("field1", "term2"))
-                        .build())
-                .addShouldClause(newTermQuery("field1", "term3"))
-                .build();
+        Query q = ParserUtils.parse("+(field1:term1 field1:term2) field1:term3");
 
-        assertThat(extract(superbq)).hasSize(2);
+        assertThat(treeBuilder.collectTerms(q)).hasSize(2);
 
     }
 
     @Test
-    public void conjunctionsOutweighDisjunctions() {
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
-        bq.add(new TermQuery(new Term("field1", "term2")), BooleanClause.Occur.MUST);
+    public void conjunctionsOutweighDisjunctions() throws Exception {
+        Query bq = ParserUtils.parse("field1:term1 +field1:term2");
 
-        QueryTermExtractor qte = new QueryTermExtractor();
-        Set<QueryTerm> terms = qte.extract(bq);
-
-        assertThat(terms).containsOnly(new QueryTerm("field1", "term2", QueryTerm.Type.EXACT));
+        assertThat(treeBuilder.collectTerms(bq))
+                .containsOnly(new QueryTerm("field1", "term2", QueryTerm.Type.EXACT));
     }
 
-    public static Set<QueryTerm> extract(Query query) {
-        return new QueryTermExtractor().extract(query);
+    @Test
+    public void disjunctionsWithPureNegativeClausesReturnANYTOKEN() throws Exception {
+
+        Query q = ParserUtils.parse("+field1:term1 +(field2:term22 (-field2:notterm))");
+
+        assertThat(treeBuilder.collectTerms(q))
+                .containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+
+    }
+
+    @Test
+    public void disjunctionsWithMatchAllNegativeClausesReturnANYTOKEN() throws Exception {
+
+        Query q = ParserUtils.parse("+field1:term1 +(field2:term22 (*:* -field2:notterm))");
+
+        assertThat(treeBuilder.collectTerms(q))
+                .containsOnly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
+
     }
 
 }

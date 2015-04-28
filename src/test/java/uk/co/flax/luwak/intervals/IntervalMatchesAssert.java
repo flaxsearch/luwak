@@ -1,9 +1,11 @@
 package uk.co.flax.luwak.intervals;
 
-import org.fest.assertions.api.AbstractAssert;
-import org.fest.assertions.api.Assertions;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
+import uk.co.flax.luwak.Matches;
 
-import static org.fest.assertions.api.Fail.fail;
+import static org.assertj.core.api.Fail.fail;
+
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -21,9 +23,9 @@ import static org.fest.assertions.api.Fail.fail;
  * limitations under the License.
  */
 
-public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, IntervalsMatcher> {
+public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, Matches<IntervalsQueryMatch>> {
 
-    protected IntervalMatchesAssert(IntervalsMatcher actual) {
+    protected IntervalMatchesAssert(Matches<IntervalsQueryMatch> actual) {
         super(actual, IntervalMatchesAssert.class);
     }
 
@@ -36,7 +38,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
         return null;
     }
 
-    public static IntervalMatchesAssert assertThat(IntervalsMatcher actual) {
+    public static IntervalMatchesAssert assertThat(Matches<IntervalsQueryMatch> actual) {
         return new IntervalMatchesAssert(actual);
     }
 

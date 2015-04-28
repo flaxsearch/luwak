@@ -1,6 +1,7 @@
 package uk.co.flax.luwak;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -10,16 +11,17 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
+import org.mockito.Matchers;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,14 +43,16 @@ public class TestMonitorErrorHandling {
 
     public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
-    private static QueryCache createMockCache() throws Exception {
+    private static MonitorQueryParser createMockCache() throws Exception {
 
         final Query errorQuery = mock(Query.class);
         when(errorQuery.rewrite(any(IndexReader.class))).thenThrow(new RuntimeException("Error rewriting"));
 
-        return new ParsingQueryCache() {
+        return new MonitorQueryParser() {
             @Override
-            protected Query parse(String query) throws Exception {
+            public Query parse(String query, Map<String, String> metadata) throws Exception {
+                if (query == null)
+                    return null;
                 if ("unparseable".equals(query))
                     throw new RuntimeException("Error parsing query [unparseable]");
                 if ("error".equals(query))
@@ -71,7 +75,7 @@ public class TestMonitorErrorHandling {
         assertThat(errors).hasSize(1);
 
         InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
-        SimpleMatcher matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches matcher = monitor.match(doc, SimpleMatcher.FACTORY);
 
         assertThat(matcher.getErrors()).hasSize(1);
         assertThat(matcher.getMatchCount()).isEqualTo(1);
@@ -82,12 +86,12 @@ public class TestMonitorErrorHandling {
     public void testPresearcherErrors() throws Exception {
 
         Presearcher presearcher = mock(Presearcher.class);
-        when(presearcher.indexQuery(any(Query.class)))
+        when(presearcher.indexQuery(any(Query.class), Matchers.<Map<String,String>>any()))
                 .thenReturn(new Document())
                 .thenThrow(new UnsupportedOperationException("Oops"))
                 .thenReturn(new Document());
 
-        Monitor monitor = new Monitor(new LuceneQueryCache("f"), presearcher);
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher);
         List<QueryError> errors
                 = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
 

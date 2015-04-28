@@ -16,6 +16,8 @@ package uk.co.flax.luwak.termextractor;
  * limitations under the License.
  */
 
+import org.apache.lucene.index.Term;
+
 /**
  * Represents information about an extracted term
  */
@@ -30,26 +32,26 @@ public class QueryTerm {
     /** The term type */
     public final Type type;
 
+    /** The payload */
+    public final String payload;
+
     /** Construct a new QueryTerm */
-    public QueryTerm(String field, String term, Type type) {
+    public QueryTerm(String field, String term, Type type, String payload) {
         this.field = field;
         this.term = term;
         this.type = type;
+        this.payload = payload;
     }
 
-    /**
-     * Type of a term
-     */
-    public enum Type {
-        /** Queries will match against the exact term */
-        EXACT,
-
-        /** The term contains wildcards */
-        WILDCARD,
-
-        /** The term will match any document */
-        ANY
+    public QueryTerm(String field, String term, Type type) {
+        this(field, term, type, null);
     }
+
+    public QueryTerm(Term term) {
+        this(term.field(), term.text(), Type.EXACT);
+    }
+
+    public enum Type { EXACT, ANY, CUSTOM }
 
     @Override
     public boolean equals(Object o) {
@@ -60,7 +62,8 @@ public class QueryTerm {
 
         if (field != null ? !field.equals(queryTerm.field) : queryTerm.field != null) return false;
         if (term != null ? !term.equals(queryTerm.term) : queryTerm.term != null) return false;
-        if (type != queryTerm.type) return false;
+        if (type != null ? !type.equals(queryTerm.type) : queryTerm.type != null) return false;
+        if (payload != null ? !payload.equals(queryTerm.payload) : queryTerm.payload != null) return false;
 
         return true;
     }
@@ -70,11 +73,12 @@ public class QueryTerm {
         int result = field != null ? field.hashCode() : 0;
         result = 31 * result + (term != null ? term.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (payload != null ? payload.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "field: " + field + ", term: " + term + " [" + type + "]";
+        return type + " " + field + ":[" + term + (payload == null ? "]" : "]{" + payload + "}");
     }
 }

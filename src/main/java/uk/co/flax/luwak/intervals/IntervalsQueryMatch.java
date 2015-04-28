@@ -1,13 +1,9 @@
 package uk.co.flax.luwak.intervals;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
+import java.util.*;
+
 import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -25,25 +21,27 @@ import java.util.Set;
  * limitations under the License.
  */
 
+/**
+ * QueryMatch object that contains the hit positions of a matching Query
+ *
+ * If the Query does not support interval iteration (eg, if it gets re-written to
+ * a Filter), then no hits will be reported, but an IntervalsQueryMatch will still
+ * be returned from an IntervalsMatcher to indicate a match.
+ */
 public class IntervalsQueryMatch extends QueryMatch {
 
-    private final Multimap<String, Hit> hits = TreeMultimap.create();
+    private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
+
+    private final Map<String, List<Hit>> hits;
 
     /**
      * Create a new QueryMatch object for a query
      *
      * @param queryId the ID of the query
      */
-    public IntervalsQueryMatch(String queryId) {
+    public IntervalsQueryMatch(String queryId, Map<String, List<Hit>> hits) {
         super(queryId);
-    }
-
-    /**
-     * Add a new {@link uk.co.flax.luwak.intervals.IntervalsQueryMatch.Hit}
-     * @param interval
-     */
-    public void addInterval(Interval interval) {
-        hits.put(interval.field, new Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
+        this.hits = new TreeMap<>(hits);
     }
 
     /**
@@ -66,9 +64,20 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @return the total number of hits for the query
      */
     public int getHitCount() {
-        return hits.keys().size();
+        return hits.size();
     }
 
+    public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
+        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId, EMPTYMAP);
+        for (IntervalsQueryMatch match : matches) {
+            for (String field : match.getFields()) {
+                if (!newMatch.hits.containsKey(field))
+                    newMatch.hits.put(field, new ArrayList<Hit>());
+                newMatch.hits.get(field).addAll(match.getHits(field));
+            }
+        }
+        return newMatch;
+    }
 
     /**
      * Represents an individual hit
@@ -87,11 +96,15 @@ public class IntervalsQueryMatch extends QueryMatch {
         /** The end offset */
         public final int endOffset;
 
-        Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
+        public Hit(int startPosition, int startOffset, int endPosition, int endOffset) {
             this.startPosition = startPosition;
             this.startOffset = startOffset;
             this.endPosition = endPosition;
             this.endOffset = endOffset;
+        }
+
+        public Hit(Interval interval) {
+            this(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd);
         }
 
         @Override
@@ -107,7 +120,7 @@ public class IntervalsQueryMatch extends QueryMatch {
 
         @Override
         public String toString() {
-            return String.format("%d(%d)->%d(%d)", startPosition, startOffset, endPosition, endOffset);
+            return String.format(Locale.ROOT, "%d(%d)->%d(%d)", startPosition, startOffset, endPosition, endOffset);
         }
 
         @Override

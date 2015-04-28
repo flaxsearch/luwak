@@ -8,23 +8,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.fest.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,11 +52,11 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache(FIELD, ANALYZER), new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher());
         addQueries(monitor, queriesFile);
 
         for (InputDocument doc : buildDocs(inputDirectory)) {
-            SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+            Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
             outputMatches(matches);
         }
 
@@ -75,7 +73,7 @@ public class LuwakDemo {
                 if (Strings.isNullOrEmpty(queryString))
                     continue;
                 logger.info("Parsing [{}]", queryString);
-                queries.add(new MonitorQuery(String.format("%d-%s", count++, queryString), queryString));
+                queries.add(new MonitorQuery(String.format(Locale.ROOT, "%d-%s", count++, queryString), queryString));
             }
         }
         monitor.update(queries);
@@ -88,7 +86,7 @@ public class LuwakDemo {
         for (Path filePath : Files.newDirectoryStream(FileSystems.getDefault().getPath(inputDirectory))) {
             String content;
             try (FileInputStream fis = new FileInputStream(filePath.toFile());
-                 InputStreamReader reader = new InputStreamReader(fis)) {
+                 InputStreamReader reader = new InputStreamReader(fis, Charsets.UTF_8)) {
                 content = CharStreams.toString(reader);
                 InputDocument doc = InputDocument.builder(filePath.toString())
                         .addField(FIELD, content, ANALYZER)
@@ -99,7 +97,7 @@ public class LuwakDemo {
         return docs;
     }
 
-    static void outputMatches(SimpleMatcher matches) {
+    static void outputMatches(Matches<QueryMatch> matches) {
         logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
         for (QueryMatch query : matches) {
             logger.info("\tQuery: {}", query.getQueryId());

@@ -16,6 +16,8 @@ package uk.co.flax.luwak.presearcher;
  * limitations under the License.
  */
 
+import java.util.Map;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -26,7 +28,7 @@ import uk.co.flax.luwak.Presearcher;
  * A simple Presearcher implementation that runs all queries in a Monitor against
  * each supplied InputDocument.
  */
-public class MatchAllPresearcher implements Presearcher {
+public class MatchAllPresearcher extends Presearcher {
 
     public MatchAllPresearcher() {
         super();
@@ -38,7 +40,7 @@ public class MatchAllPresearcher implements Presearcher {
     }
 
     @Override
-    public Document indexQuery(Query query) {
+    public Document indexQuery(Query query, Map<String, String> metadata) {
         return new Document();
     }
 }

@@ -2,14 +2,12 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SimpleCollector;
-import uk.co.flax.luwak.CandidateMatcher;
+import org.apache.lucene.search.Scorer;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,32 +22,23 @@ import uk.co.flax.luwak.QueryMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class SimpleMatcher extends CandidateMatcher<QueryMatch> {
+public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
 
     public SimpleMatcher(InputDocument doc) {
         super(doc);
     }
 
     @Override
-    public QueryMatch doMatch(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        final QueryMatch[] match = new QueryMatch[] { null };
-        doc.getSearcher().search(matchQuery, new SimpleCollector() {
-
-            @Override
-            public boolean acceptsDocsOutOfOrder() {
-                return true;
-            }
-
-            @Override
-            public void collect(int doc) throws IOException {
-                match[0] = new QueryMatch(queryId);
-            }
-
-        });
-        return match[0];
+    public QueryMatch resolve(QueryMatch match1, QueryMatch match2) {
+        return match1;
     }
 
-    public static final MatcherFactory<SimpleMatcher> FACTORY = new MatcherFactory<SimpleMatcher>() {
+    @Override
+    protected QueryMatch doMatch(String queryId, Scorer scorer) throws IOException {
+        return new QueryMatch(queryId);
+    }
+
+    public static final MatcherFactory<QueryMatch> FACTORY = new MatcherFactory<QueryMatch>() {
         @Override
         public SimpleMatcher createMatcher(InputDocument doc) {
             return new SimpleMatcher(doc);

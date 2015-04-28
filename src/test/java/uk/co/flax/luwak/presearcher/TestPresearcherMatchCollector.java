@@ -4,12 +4,11 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
+import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -34,23 +33,32 @@ public class TestPresearcherMatchCollector {
     @Test
     public void testMatchCollectorShowMatches() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache(TEXTFIELD), new TermFilteredPresearcher());
+        Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher());
         monitor.update(new MonitorQuery("1", "test"));
         monitor.update(new MonitorQuery("2", "foo bar -baz"));
+        monitor.update(new MonitorQuery("3", "foo -test"));
+        monitor.update(new MonitorQuery("4", "baz"));
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
                 .build();
 
-        PresearcherMatchCollector collector = new PresearcherMatchCollector();
-        monitor.match(doc, collector);
+        PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);
 
-        assertThat(collector.matchingTerms)
-                .containsKey("1")
-                .containsKey("2");
+        assertThat(matches.match("1")).isNotNull();
+        assertThat(matches.match("1").presearcherMatches).isEqualTo(" f:test");
+        assertThat(matches.match("1").queryMatch)
+                .isNotNull()
+                .isInstanceOf(QueryMatch.class);
 
-        assertThat(collector.matchingTerms.get("1").toString()).isEqualTo(" f:test");
-        assertThat(collector.matchingTerms.get("2").toString()).isEqualTo(" f:foo");
+        assertThat(matches.match("2")).isNotNull();
+        assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo");
+
+        assertThat(matches.match("3")).isNotNull();
+        assertThat(matches.match("3").presearcherMatches).isEqualTo(" f:foo");
+        assertThat(matches.match("3").queryMatch).isNull();
+
+        assertThat(matches.match("4")).isNull();
 
     }
 

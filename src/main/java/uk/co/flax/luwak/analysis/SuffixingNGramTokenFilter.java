@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.miscellaneous.CodepointCountFilter;
 import org.apache.lucene.analysis.tokenattributes.*;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.CharacterUtils;
 
 /**
@@ -26,7 +26,6 @@ import org.apache.lucene.analysis.util.CharacterUtils;
 
 public final class SuffixingNGramTokenFilter extends TokenFilter {
 
-    private final int minGram, maxGram;
     private final String suffix;
     private final int maxTokenLength;
     private final String anyToken;
@@ -47,19 +46,22 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
     private final KeywordAttribute keywordAtt = addAttribute(KeywordAttribute.class);
 
+    private final CharArraySet seenSuffixes = new CharArraySet(1024, false);
+    private final CharArraySet seenInfixes = new CharArraySet(1024, false);
+
     /**
-     * Creates NGramTokenFilter with given min and max n-grams.
+     * Creates SuffixingNGramTokenFilter.
      * @param input {@link org.apache.lucene.analysis.TokenStream} holding the input to be tokenized
      * @param suffix a string to suffix to all ngrams
+     * @param wildcardToken a token to emit if the input token is longer than maxTokenLength
+     * @param maxTokenLength tokens longer than this will not be ngrammed
      */
-    public SuffixingNGramTokenFilter(TokenStream input, String suffix, String anyToken, int maxTokenLength) {
-        super(new CodepointCountFilter(input, 1, Integer.MAX_VALUE));
+    public SuffixingNGramTokenFilter(TokenStream input, String suffix, String wildcardToken, int maxTokenLength) {
+        super(input);
         this.charUtils = CharacterUtils.getInstance();
 
-        this.minGram = 1;
-        this.maxGram = Integer.MAX_VALUE;
         this.suffix = suffix;
-        this.anyToken = anyToken;
+        this.anyToken = wildcardToken;
         this.maxTokenLength = maxTokenLength;
 
         posIncAtt = addAttribute(PositionIncrementAttribute.class);
@@ -80,38 +82,49 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
                 if (keywordAtt.isKeyword())
                     return true;
 
-                if (termAtt.length() > maxTokenLength) {
-                    termAtt.setEmpty().append(anyToken);
-                    return true;
-                }
-
                 curTermBuffer = termAtt.buffer().clone();
                 curTermLength = termAtt.length();
                 curCodePointCount = charUtils.codePointCount(termAtt);
-                curGramSize = minGram;
+                curGramSize = curTermLength;
                 curPos = 0;
                 curPosInc = posIncAtt.getPositionIncrement();
                 curPosLen = posLenAtt.getPositionLength();
                 tokStart = offsetAtt.startOffset();
                 tokEnd = offsetAtt.endOffset();
+                //termAtt.setEmpty().append(suffix);
+                return true;
 
             }
 
-            if (curGramSize > maxGram || (curPos + curGramSize) > curCodePointCount) {
+            if (termAtt.length() > maxTokenLength) {
+                termAtt.setEmpty().append(anyToken);
+                curTermBuffer = null;
+                return true;
+            }
+
+            if (curGramSize == 0) {
                 ++curPos;
-                curGramSize = minGram;
+                curGramSize = curTermLength - curPos;
             }
-            if ((curPos + curGramSize) <= curCodePointCount) {
+            if (curGramSize >= 0 && (curPos + curGramSize) <= curCodePointCount) {
                 clearAttributes();
                 final int start = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, 0, curPos);
                 final int end = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, start, curGramSize);
                 termAtt.copyBuffer(curTermBuffer, start, end - start);
                 termAtt.append(suffix);
+                if ((curGramSize == curTermLength - curPos) && !seenSuffixes.add(termAtt.subSequence(0, termAtt.length()))) {
+                    curTermBuffer = null;
+                    continue;
+                }
+                if (!seenInfixes.add(termAtt.subSequence(0, termAtt.length()))) {
+                    curGramSize = 0;
+                    continue;
+                }
                 posIncAtt.setPositionIncrement(curPosInc);
                 curPosInc = 0;
                 posLenAtt.setPositionLength(curPosLen);
                 offsetAtt.setOffset(tokStart, tokEnd);
-                curGramSize++;
+                curGramSize--;
                 return true;
             }
 
@@ -123,5 +136,7 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     public void reset() throws IOException {
         super.reset();
         curTermBuffer = null;
+        seenInfixes.clear();
+        seenSuffixes.clear();
     }
 }

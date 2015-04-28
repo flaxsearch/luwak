@@ -36,4 +36,9 @@ public class MatchError {
         this.queryId = queryId;
         this.error = error;
     }
+
+    @Override
+    public String toString() {
+        return queryId + ":" + error.getMessage();
+    }
 }

@@ -16,14 +16,18 @@ package uk.co.flax.luwak.intervals;
 * limitations under the License.
 */
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
-
-import java.io.IOException;
 
 /**
  * a specialized Collector that uses an {@link IntervalIterator} to collect
@@ -33,21 +37,26 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
 
     private IntervalIterator positions;
 
-    private final IntervalsQueryMatch matches;
+    private final MatchBuilder matches;
 
     public QueryIntervalsMatchCollector(String queryId) {
-        matches = new IntervalsQueryMatch(queryId);
+        matches = new MatchBuilder(queryId);
     }
 
     public IntervalsQueryMatch getMatches() {
-        return matches;
+        return matches.build();
     }
 
     @Override
     public void collect(int doc) throws IOException {
-        positions.scorerAdvanced(doc);
-        while(positions.next() != null) {
-            positions.collect(this);
+        if (positions != null) {
+            positions.scorerAdvanced(doc);
+            while(positions.next() != null) {
+                positions.collect(this);
+            }
+        }
+        else {
+            matches.setMatch();
         }
     }
 
@@ -58,7 +67,12 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
 
     @Override
     public void setScorer(Scorer scorer) throws IOException {
-        positions = scorer.intervals(true);
+        try {
+            positions = scorer.intervals(true);
+        }
+        catch (UnsupportedOperationException e) {
+            // Query doesn't support positions, so we just say if it's a match or not
+        }
     }
 
     @Override
@@ -75,6 +89,36 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
     public void collectComposite(Scorer scorer, Interval interval,
                                  int docID) {
         //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+    }
+
+    private static class MatchBuilder {
+
+        private final Map<String, List<IntervalsQueryMatch.Hit>> hits = new HashMap<>();
+
+        private boolean match;
+
+        private String queryId;
+
+        public MatchBuilder(String queryId) {
+            this.queryId = queryId;
+        }
+
+        public void setMatch() {
+            this.match = true;
+        }
+
+        public void addInterval(Interval interval) {
+            if (!hits.containsKey(interval.field))
+                hits.put(interval.field, new ArrayList<IntervalsQueryMatch.Hit>());
+            hits.get(interval.field)
+                    .add(new IntervalsQueryMatch.Hit(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd));
+        }
+
+        public IntervalsQueryMatch build() {
+            if (!match && hits.size() == 0)
+                return null;
+            return new IntervalsQueryMatch(queryId, hits);
+        }
     }
 
 }

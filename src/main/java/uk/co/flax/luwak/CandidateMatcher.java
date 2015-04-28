@@ -2,10 +2,11 @@ package uk.co.flax.luwak;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,16 +26,19 @@ import org.apache.lucene.search.Query;
  * Class used to match candidate queries selected by a Presearcher from a Monitor
  * query index.
  */
-public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable<T> {
+public abstract class CandidateMatcher<T extends QueryMatch> {
+
+    protected final InputDocument doc;
+    protected long slowLogLimit;
 
     private final List<MatchError> errors = new ArrayList<>();
     private final Map<String, T> matches = new HashMap<>();
 
-    protected final InputDocument doc;
-
     private long queryBuildTime = -1;
-    private long searchTime = -1;
+    private long searchTime = System.nanoTime();
     private int queriesRun = -1;
+
+    protected final StringBuilder slowlog = new StringBuilder();
 
     /**
      * Creates a new CandidateMatcher for the supplied InputDocument
@@ -51,54 +55,34 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
      * @param queryId the query id
      * @param matchQuery the query to run
      * @param highlightQuery an optional query to use for highlighting.  May be null
-     * @throws IOException
-     */
-    public final void matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        T match = doMatch(queryId, matchQuery, highlightQuery);
-        if (match != null)
-            matches.put(match.getQueryId(), match);
-    }
-
-    /**
-     * Run the supplied query against this CandidateMatcher's InputDocument
-     * @param queryId the query id
-     * @param matchQuery the query to run
-     * @param highlightQuery an optional query to use for highlighting.  May be null
      * @return a QueryMatch object if the query matched, otherwise null
      * @throws IOException
+     * @return true if the query matches
      */
-    protected abstract T doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
-    /**
-     * Returns true if a given query matched during the matcher run
-     * @param queryId the query id
-     * @return true if the query matched during the matcher run
-     */
-    public boolean matches(String queryId) {
-        return matches.containsKey(queryId);
+    protected void addMatch(String queryId, T match) {
+        if (matches.containsKey(queryId))
+            matches.put(queryId, resolve(match, matches.get(queryId)));
+        else
+            matches.put(queryId, match);
     }
 
     /**
-     * @return the number of queries that matched
+     * If two matches from the same query are found (for example, two branches of a disjunction),
+     * combine them.
+     * @param match1 the first match found
+     * @param match2 the second match found
+     * @return a Match object that combines the two
      */
-    public int getMatchCount() {
-        return matches.size();
-    }
+    public abstract T resolve(T match1, T match2);
 
-    @Override
-    public Iterator<T> iterator() {
-        return matches.values().iterator();
-    }
-
-    void reportError(MatchError e) {
+    /**
+     * Called by the Monitor if running a query throws an Exception
+     * @param e the MatchError detailing the problem
+     */
+    public void reportError(MatchError e) {
         this.errors.add(e);
-    }
-
-    /**
-     * @return a List of any MatchErrors created during the matcher run
-     */
-    public List<MatchError> getErrors() {
-        return errors;
     }
 
     /**
@@ -108,44 +92,28 @@ public abstract class CandidateMatcher<T extends QueryMatch> implements Iterable
         return doc;
     }
 
-    /**
-     * @return the id of the InputDocument for this CandidateMatcher
-     */
-    public String docId() {
-        return doc.getId();
+    public void finish(long buildTime, int queryCount) {
+        this.queryBuildTime = buildTime;
+        this.queriesRun = queryCount;
+        this.searchTime = TimeUnit.MILLISECONDS.convert(System.nanoTime() - searchTime, TimeUnit.NANOSECONDS);
     }
 
-    /**
-     * @return how long (in ms) it took to build the Presearcher query for the matcher run
+    /*
+     * Called by the Monitor
      */
-    public long getQueryBuildTime() {
-        return queryBuildTime;
-    }
-
-    void setQueryBuildTime(long queryBuildTime) {
-        this.queryBuildTime = queryBuildTime;
+    public void setSlowLogLimit(long t) {
+        this.slowLogLimit = t;
     }
 
     /**
-     * @return how long (in ms) it took to run the selected queries
+     * Returns the QueryMatch for the given query, or null if it did not match
+     * @param queryId the query id
      */
-    public long getSearchTime() {
-        return searchTime;
+    protected T matches(String queryId) {
+        return matches.get(queryId);
     }
 
-    void setSearchTime(long searchTime) {
-        this.searchTime = searchTime;
+    public Matches<T> getMatches() {
+        return new Matches<>(doc.getId(), matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
     }
-
-    /**
-     * @return the number of queries passed to this CandidateMatcher during the matcher run
-     */
-    public int getQueriesRun() {
-        return queriesRun;
-    }
-
-    void setQueriesRun(int queriesRun) {
-        this.queriesRun = queriesRun;
-    }
-
 }

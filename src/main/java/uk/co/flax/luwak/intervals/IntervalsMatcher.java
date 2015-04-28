@@ -22,6 +22,17 @@ import uk.co.flax.luwak.MatcherFactory;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * CandidateMatcher class that will return exact hit positions for all matching queries
+ *
+ * If a stored query does not support interval iterators, an IntervalsQueryMatch object
+ * with no Hit positions will be returned.
+ *
+ * If a query is matched, it will be run a second time against the highlight query (if
+ * not null) to get positions.
+ */
+
 public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
 
     public IntervalsMatcher(InputDocument doc) {
@@ -29,13 +40,34 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
     }
 
     @Override
-    public IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public IntervalsQueryMatch matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        IntervalsQueryMatch match = doMatch(queryId, matchQuery, highlightQuery);
+        if (match != null)
+            this.addMatch(queryId, match);
+        return match;
+    }
+
+    @Override
+    protected void addMatch(String queryId, IntervalsQueryMatch match) {
+        IntervalsQueryMatch previousMatch = this.matches(queryId);
+        if (previousMatch == null) {
+            super.addMatch(queryId, match);
+            return;
+        }
+        super.addMatch(queryId, IntervalsQueryMatch.merge(queryId, previousMatch, match));
+    }
+
+    public IntervalsQueryMatch resolve(IntervalsQueryMatch match1, IntervalsQueryMatch match2) {
+        return IntervalsQueryMatch.merge(match1.getQueryId(), match1, match2);
+    }
+
+    private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
 
         QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(queryId);
         doc.getSearcher().search(matchQuery, collector);
         IntervalsQueryMatch hits = collector.getMatches();
 
-        if (hits.getHitCount() == 0)
+        if (hits == null)
             return null;
 
         if (highlightQuery == null) {
@@ -45,14 +77,13 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
         QueryIntervalsMatchCollector collector2 = new QueryIntervalsMatchCollector(queryId);
         doc.getSearcher().search(highlightQuery, collector2);
         IntervalsQueryMatch hlhits = collector2.getMatches();
-
-        if (hlhits.getHitCount() != 0)
+        if (hlhits != null)
             return hlhits;
         else
             return hits;
     }
 
-    public static final MatcherFactory<IntervalsMatcher> FACTORY = new MatcherFactory<IntervalsMatcher>() {
+    public static final MatcherFactory<IntervalsQueryMatch> FACTORY = new MatcherFactory<IntervalsQueryMatch>() {
         @Override
         public IntervalsMatcher createMatcher(InputDocument doc) {
             return new IntervalsMatcher(doc);

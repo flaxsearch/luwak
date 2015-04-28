@@ -1,13 +1,13 @@
 package uk.co.flax.luwak.util;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.fest.assertions.api.AbstractAssert;
-import org.fest.assertions.api.Assertions;
-
-import java.io.IOException;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.

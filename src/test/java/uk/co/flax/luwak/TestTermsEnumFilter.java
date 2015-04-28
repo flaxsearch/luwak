@@ -7,12 +7,12 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.BooleanQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
-import uk.co.flax.luwak.presearcher.WildcardNGramPresearcher;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@ public class TestTermsEnumFilter {
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryCache("f"), WildcardNGramPresearcher.DEFAULT);
+        Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher());
         monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
 
         InputDocument doc = InputDocument.builder("doc")
@@ -44,7 +44,7 @@ public class TestTermsEnumFilter {
 
         BooleanQuery query = (BooleanQuery) monitor.buildQuery(doc);
 
-        assertThat(query.clauses()).hasSize(1);
+        assertThat(query.clauses()).hasSize(2);     // text:world __anytokenfield:__ANYTOKEN__
         assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(1);
 
     }

@@ -1,17 +1,21 @@
 package uk.co.flax.luwak;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.fest.assertions.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.parsers.LuceneQueryCache;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
 /**
@@ -40,8 +44,7 @@ public class TestMonitor {
 
     @Before
     public void setUp() throws IOException {
-        monitor = new Monitor(new LuceneQueryCache(TEXTFIELD, ANALYZER),
-                new MatchAllPresearcher());
+        monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher());
     }
 
     @Test
@@ -59,6 +62,21 @@ public class TestMonitor {
                 .hasMatchCount(1)
                 .matchesQuery("query1");
 
+    }
+
+    @Test
+    public void matchStatisticsAreReported() throws IOException {
+        String document = "This is a test document";
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, document, WHITESPACE)
+                .build();
+
+        monitor.update(new MonitorQuery("query1", "test"));
+
+        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Assertions.assertThat(matches.getQueriesRun()).isEqualTo(1);
+        Assertions.assertThat(matches.getQueryBuildTime()).isGreaterThan(-1);
+        Assertions.assertThat(matches.getSearchTime()).isGreaterThan(-1);
     }
 
     @Test
@@ -114,6 +132,34 @@ public class TestMonitor {
 
         monitor.clear();
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void testMatchesAgainstAnEmptyMonitor() throws IOException {
+
+        monitor.clear();
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+
+        InputDocument doc = InputDocument.builder("doc1").addField(TEXTFIELD, "other things", WHITESPACE).build();
+        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+
+        Assertions.assertThat(matches.getQueriesRun()).isEqualTo(0);
+    }
+
+    @Test
+    public void testUpdateReporting() throws IOException {
+
+        Monitor.UpdateReporter reporter = mock(Monitor.UpdateReporter.class);
+        List<MonitorQuery> queries = new ArrayList<>(10400);
+        for (int i = 0; i < 10355; i++) {
+            queries.add(new MonitorQuery(Integer.toString(i), "test"));
+        }
+
+        monitor.update(queries, reporter);
+        verify(reporter).progress(5001, 5001);
+        verify(reporter).progress(10002, 5001);
+        verify(reporter).finish(10355, 353);
+
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer();

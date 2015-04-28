@@ -2,7 +2,7 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
 
@@ -48,6 +48,7 @@ public class InputDocument {
     }
 
     private void finish() {
+        index.freeze();
         searcher = index.createSearcher();
     }
 
@@ -65,9 +66,9 @@ public class InputDocument {
 
     /**
      * Get an atomic reader over the internal index
-     * @return an {@link org.apache.lucene.index.AtomicReader} over the internal index
+     * @return an {@link org.apache.lucene.index.LeafReader} over the internal index
      */
-    public AtomicReader asAtomicReader() {
+    public LeafReader asAtomicReader() {
         return searcher.getIndexReader().leaves().get(0).reader();
     }
 
@@ -88,9 +89,11 @@ public class InputDocument {
 
         /**
          * Add a field to the InputDocument
+         *
          * @param field the field name
          * @param text the text content of the field
          * @param analyzer the {@link Analyzer} to use for this field
+         *
          * @return the Builder object
          */
         public Builder addField(String field, String text, Analyzer analyzer) {
@@ -100,8 +103,10 @@ public class InputDocument {
 
         /**
          * Add a field to the InputDocument
+         *
          * @param field the field name
          * @param tokenStream a tokenstream containing the field contents
+         *                    
          * @return the Builder object
          */
         public Builder addField(String field, TokenStream tokenStream) {
