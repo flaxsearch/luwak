@@ -12,7 +12,7 @@ import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,6 +89,8 @@ public class PresearcherComponent {
      *
      * @param doc the InputDocument
      * @param presearcherQuery the input query built from the InputDocument
+     *
+     * @throws java.io.IOException on I/O errors
      *
      * @return an adjusted query
      */

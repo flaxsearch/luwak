@@ -13,7 +13,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,7 +34,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  * from different routes through a querytree.  Each route will produce a set of terms
  * that are *sufficient* to select the query, and are indexed into a separate, suffixed field.
  *
- * Routes are selected using an {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer}.
+ * Routes are selected using a {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer}.
  *
  * Incoming InputDocuments are then converted to a set of Disjunction queries over each
  * suffixed field, and these queries are combined into a conjunction query, such that the
@@ -81,6 +81,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     /**
      * Construct a new MultipassTermFilteredPresearcher, using the default TreeWeightor
      * @param passes the number of times a query should be indexed
+     * @param advancer the {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer} to use on subsequent passes
      * @param components the PresearcherComponents to use
      */
     public MultipassTermFilteredPresearcher(int passes, TreeAdvancer advancer, PresearcherComponent... components) {

@@ -15,7 +15,7 @@ import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");

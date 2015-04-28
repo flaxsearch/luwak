@@ -8,7 +8,7 @@ import org.apache.lucene.analysis.tokenattributes.*;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.analysis.util.CharacterUtils;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");

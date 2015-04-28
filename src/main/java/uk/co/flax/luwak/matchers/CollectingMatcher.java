@@ -8,7 +8,7 @@ import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.QueryMatch;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,7 +65,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
      * @param queryId the query ID
      * @param scorer the Scorer for this query
      * @return a match object
-     * @throws IOException
+     * @throws IOException on IO error
      */
     protected abstract T doMatch(String queryId, Scorer scorer) throws IOException;
 

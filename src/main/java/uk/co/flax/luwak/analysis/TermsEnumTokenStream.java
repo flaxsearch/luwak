@@ -31,7 +31,10 @@ public class TermsEnumTokenStream extends TokenStream {
     private final BytesRefIterator termsEnum;
     private final CharTermAttribute charTerm = addAttribute(CharTermAttribute.class);
 
-    /** Create a new TermsEnumTokenStream using a TermsEnum */
+    /**
+     * Create a new TermsEnumTokenStream using a TermsEnum
+     * @param termsEnum the TermsEnum to convert
+     */
     public TermsEnumTokenStream(BytesRefIterator termsEnum) {
         this.termsEnum = termsEnum;
     }

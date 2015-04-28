@@ -9,7 +9,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,17 @@ import org.apache.lucene.search.Query;
  * limitations under the License.
  */
 
+/**
+ * Split a disjunction query into its consituent parts, so that they can be indexed
+ * and run separately in the Monitor.
+ */
 public class QueryDecomposer {
 
+    /**
+     * Split a query up into individual parts that can be indexed and run separately
+     * @param q the query
+     * @return a collection of subqueries
+     */
     public Collection<Query> decompose(Query q) {
 
         if (q instanceof BooleanQuery)
@@ -41,11 +50,22 @@ public class QueryDecomposer {
         return qs;
     }
 
+    /**
+     * Apply a boost to a query
+     * @param q the query
+     * @param boost the boost
+     * @return the boosted query
+     */
     public static Query boost(Query q, float boost) {
         q.setBoost(boost * q.getBoost());
         return q;
     }
 
+    /**
+     * Decompose a {@link org.apache.lucene.search.BooleanQuery}
+     * @param q the boolean query
+     * @return a collection of subqueries
+     */
     public Collection<Query> decomposeBoolean(BooleanQuery q) {
         if (q.getMinimumNumberShouldMatch() > 1)
             return listOf(q);

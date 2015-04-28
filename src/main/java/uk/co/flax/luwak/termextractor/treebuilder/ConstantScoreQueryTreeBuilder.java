@@ -5,7 +5,7 @@ import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class ConstantScoreQueryTreeBuilder extends QueryTreeBuilder<ConstantScoreQuery> {
 
     public ConstantScoreQueryTreeBuilder() {

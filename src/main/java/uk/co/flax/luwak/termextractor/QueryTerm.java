@@ -35,7 +35,14 @@ public class QueryTerm {
     /** The payload */
     public final String payload;
 
-    /** Construct a new QueryTerm */
+    /**
+     * Construct a new QueryTerm
+     *
+     * @param field the field
+     * @param term  the term
+     * @param type  the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type}
+     * @param payload extra information
+     */
     public QueryTerm(String field, String term, Type type, String payload) {
         this.field = field;
         this.term = term;
@@ -43,10 +50,20 @@ public class QueryTerm {
         this.payload = payload;
     }
 
+    /**
+     * Construct a new QueryTerm
+     * @param field the field
+     * @param term  the term
+     * @param type  the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type}
+     */
     public QueryTerm(String field, String term, Type type) {
         this(field, term, type, null);
     }
 
+    /**
+     * Construct a new QueryTerm from a {@link Term}
+     * @param term the term
+     */
     public QueryTerm(Term term) {
         this(term.field(), term.text(), Type.EXACT);
     }

@@ -45,6 +45,7 @@ public class MonitorQuery {
      * @param id the ID
      * @param query the query to store
      * @param highlightQuery an optional query to use for highlighting.  May be null.
+     * @param metadata metadata passed to {@link Presearcher#indexQuery(org.apache.lucene.search.Query,java.util.Map)}
      */
     public MonitorQuery(String id, String query, String highlightQuery, Map<String, String> metadata) {
         this.id = id;
@@ -55,11 +56,20 @@ public class MonitorQuery {
 
     /**
      * Creates a new MonitorQuery with no highlight query
+     * @param id the ID
+     * @param query the query to store
+     * @param metadata metadata passed to {@link Presearcher#indexQuery(org.apache.lucene.search.Query,java.util.Map)}
      */
     public MonitorQuery(String id, String query, Map<String, String> metadata) {
         this(id, query, null, metadata);
     }
 
+    /**
+     * Creates a new MonitorQuery with empty metadata
+     * @param id the ID
+     * @param query the query
+     * @param highlight the highlight query
+     */
     public MonitorQuery(String id, String query, String highlight) {
         this(id, query, highlight, new HashMap<String, String>());
     }
@@ -73,6 +83,11 @@ public class MonitorQuery {
         this(id, query, null, new HashMap<String, String>());
     }
 
+    /**
+     * Deserialize a MonitorQuery from a stream of bytes
+     * @param bytes a BytesRef pointing to the serialized query
+     * @return the deserialized MonitorQuery
+     */
     public static MonitorQuery deserialize(BytesRef bytes)  {
 
         ByteArrayInputStream is = new ByteArrayInputStream(bytes.bytes);
@@ -93,6 +108,11 @@ public class MonitorQuery {
 
     }
 
+    /**
+     * Serialize a MonitorQuery into a BytesRef
+     * @param mq the MonitorQuery
+     * @return the serialized bytes
+     */
     public static BytesRef serialize(MonitorQuery mq) {
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();

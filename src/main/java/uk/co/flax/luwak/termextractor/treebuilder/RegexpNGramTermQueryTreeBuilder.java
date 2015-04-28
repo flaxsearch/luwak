@@ -7,7 +7,7 @@ import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,11 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
 
     private final String wildcardToken;
 
+    /**
+     * Creates a RegexpNGramTermQueryTreeBuilder
+     * @param ngramSuffix a string to identify terms as ngrams
+     * @param wildcardToken a string to identify terms as wildcards
+     */
     public RegexpNGramTermQueryTreeBuilder(String ngramSuffix, String wildcardToken) {
         super(RegexpQuery.class);
         this.ngramSuffix = ngramSuffix;
@@ -63,6 +68,8 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
 
     /**
      * Given a regular expression, parse out the longest static substring from it
+     * @param regexp the Regexp to parse
+     * @return the longest static substring
      */
     public static String selectLongestSubstring(String regexp) {
         String selected = "";

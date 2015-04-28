@@ -25,6 +25,10 @@ public abstract class WeightNorm {
 
     /**
      * Returns the value of a * e^(-k * x)
+     * @param a constant
+     * @param k exponent
+     * @param x variable
+     * @return a * e^(-k * x)
      */
     public static float exp(float a, float k, float x) {
         return (float) (a * Math.exp(-k * x));

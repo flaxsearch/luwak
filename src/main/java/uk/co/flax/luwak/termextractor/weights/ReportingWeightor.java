@@ -7,7 +7,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class ReportingWeightor extends TreeWeightor {
 
     private final Reporter reporter;

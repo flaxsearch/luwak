@@ -8,7 +8,7 @@ import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");

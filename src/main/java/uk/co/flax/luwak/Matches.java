@@ -2,7 +2,7 @@ package uk.co.flax.luwak;
 
 import java.util.*;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,11 @@ import java.util.*;
  * limitations under the License.
  */
 
+/**
+ * Class to hold a response from the Monitor
+ *
+ * @param <T> the type of QueryMatch returned
+ */
 public class Matches<T extends QueryMatch> implements Iterable<T> {
 
     private final String docId;
@@ -57,6 +62,7 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
     /**
      * Returns the QueryMatch for the given query, or null if it did not match
      * @param queryId the query id
+     * @return the QueryMatch for the given query, or null if it did not match
      */
     public T matches(String queryId) {
         return matches.get(queryId);

@@ -2,7 +2,7 @@ package uk.co.flax.luwak.matchers;
 
 import uk.co.flax.luwak.QueryMatch;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,7 @@ import uk.co.flax.luwak.QueryMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class WrappedMatch<T extends QueryMatch> extends QueryMatch {
 
     public final T wrappedMatch;

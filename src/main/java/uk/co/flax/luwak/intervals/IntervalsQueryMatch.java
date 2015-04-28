@@ -5,7 +5,7 @@ import java.util.*;
 import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ public class IntervalsQueryMatch extends QueryMatch {
      * Create a new QueryMatch object for a query
      *
      * @param queryId the ID of the query
+     * @param hits the hits recorded for this query
      */
     public IntervalsQueryMatch(String queryId, Map<String, List<Hit>> hits) {
         super(queryId);

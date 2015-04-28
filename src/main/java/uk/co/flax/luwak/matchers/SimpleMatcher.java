@@ -22,6 +22,7 @@ import uk.co.flax.luwak.QueryMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
 
     public SimpleMatcher(InputDocument doc) {

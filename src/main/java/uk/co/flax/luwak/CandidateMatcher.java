@@ -56,7 +56,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @param matchQuery the query to run
      * @param highlightQuery an optional query to use for highlighting.  May be null
      * @return a QueryMatch object if the query matched, otherwise null
-     * @throws IOException
+     * @throws IOException on IO errors
      * @return true if the query matches
      */
     public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
@@ -108,6 +108,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     /**
      * Returns the QueryMatch for the given query, or null if it did not match
      * @param queryId the query id
+     * @return the QueryMatch for the given query, or null if it did not match
      */
     protected T matches(String queryId) {
         return matches.get(queryId);

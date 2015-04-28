@@ -7,7 +7,7 @@ import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
