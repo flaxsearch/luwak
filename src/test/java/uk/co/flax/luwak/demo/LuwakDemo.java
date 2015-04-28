@@ -52,12 +52,13 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher());
-        addQueries(monitor, queriesFile);
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher())) {
+            addQueries(monitor, queriesFile);
 
-        for (InputDocument doc : buildDocs(inputDirectory)) {
-            Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
-            outputMatches(matches);
+            for (InputDocument doc : buildDocs(inputDirectory)) {
+                Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+                outputMatches(matches);
+            }
         }
 
     }
