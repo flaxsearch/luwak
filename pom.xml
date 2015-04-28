@@ -3,9 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>uk.co.flax</groupId>
-    <artifactId>luwak</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>luwak-parent</artifactId>
+    <packaging>pom</packaging>
     <version>1.1.0-rc4-SNAPSHOT</version>
+    <modules>
+        <module>benchmark</module>
+        <module>luwak</module>
+    </modules>
 
     <properties>
         <lucene.group>uk.co.flax.lucene-solr-intervals</lucene.group>
@@ -27,27 +31,6 @@
     </scm>
 
     <dependencies>
-
-        <dependency>
-            <groupId>${lucene.group}</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${lucene.group}</groupId>
-            <artifactId>lucene-memory</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${lucene.group}</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${lucene.group}</groupId>
-            <artifactId>lucene-queries</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
@@ -74,11 +57,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${lucene.group}</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.0.13</version>
@@ -94,8 +72,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>

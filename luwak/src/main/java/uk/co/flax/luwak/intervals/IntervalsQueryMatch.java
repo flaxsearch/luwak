@@ -80,6 +80,26 @@ public class IntervalsQueryMatch extends QueryMatch {
         return newMatch;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof IntervalsQueryMatch)) return false;
+        if (!super.equals(o)) return false;
+
+        IntervalsQueryMatch that = (IntervalsQueryMatch) o;
+
+        if (hits != null ? !hits.equals(that.hits) : that.hits != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (hits != null ? hits.hashCode() : 0);
+        return result;
+    }
+
     /**
      * Represents an individual hit
      */

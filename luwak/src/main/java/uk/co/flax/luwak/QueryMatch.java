@@ -1,4 +1,6 @@
-package uk.co.flax.luwak;/*
+package uk.co.flax.luwak;
+
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,5 +26,22 @@ public class QueryMatch {
 
     public String getQueryId() {
         return queryId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof QueryMatch)) return false;
+
+        QueryMatch that = (QueryMatch) o;
+
+        if (queryId != null ? !queryId.equals(that.queryId) : that.queryId != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return queryId != null ? queryId.hashCode() : 0;
     }
 }

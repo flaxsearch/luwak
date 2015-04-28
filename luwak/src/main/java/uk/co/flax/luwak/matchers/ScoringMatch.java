@@ -30,4 +30,24 @@ public class ScoringMatch extends QueryMatch {
     public float getScore() {
         return score;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ScoringMatch)) return false;
+        if (!super.equals(o)) return false;
+
+        ScoringMatch that = (ScoringMatch) o;
+
+        if (Float.compare(that.score, score) != 0) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (score != +0.0f ? Float.floatToIntBits(score) : 0);
+        return result;
+    }
 }
