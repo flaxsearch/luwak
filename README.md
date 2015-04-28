@@ -8,6 +8,9 @@ instructions.
 
 Once that's done, you can build and deploy Luwak by running mvn install.
 
+A version of luwak that uses Lucene 5.1 (and so lacking support for presearcher debugging
+and exact-match reporting) can be found here: https://github.com/flaxsearch/luwak/tree/master-5.1
+
 You can find out a bit more about how Flax use Luwak for media monitoring applications in 
 this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
 from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
