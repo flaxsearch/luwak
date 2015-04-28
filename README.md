@@ -28,32 +28,37 @@ Using the monitor
 Basic usage looks like this:
 
 ```java
-Monitor monitor = new Monitor(new LuceneQueryParser("field"), WildcardNGramPresearcher.DEFAULT);
+Monitor monitor = new Monitor(new LuceneQueryParser("field"), new TermFilteredPresearcher());
 
 MonitorQuery mq = new MonitorQuery("query1", "field:text");
 monitor.update(mq);
 
 InputDocument doc = InputDocument.builder("doc1")
-                        .addField(textfield, document, new StandardTokenizer(Version.LUCENE_50))
+                        .addField(textfield, document, new StandardAnalyzer())
                         .build();
-SimpleMatcher matches = monitor.match(doc, SimpleMatcher.FACTORY);
+Matches<SimpleMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
 ```
 
 Adding queries
 --------------
 
-The monitor is updated using MonitorQuery objects, which consist of an id, a query string and an
-optional highlight query string.  The monitor uses its provided MonitorQueryParser to parse the
-query strings and cache query objects.
+The monitor is updated using MonitorQuery objects, which consist of an id, a query string, and an
+optional highlight query string and metadata map.  The monitor uses its provided MonitorQueryParser
+to parse the query strings and cache query objects.
 
 Matching documents
 ------------------
 
 Queries selected by the monitor to run against an InputDocument are passed to a CandidateMatcher
-class.  Three implementations are provided:
+class.  Four basic implementations are provided:
 * SimpleMatcher - reports which queries matched the InputDocument
 * ScoringMatcher - reports which queries matched, with their scores
+* ExplainingMatcher - reports which queries matched, with an explanation for their scores
 * IntervalsMatcher - reports which queries matched, with the individual matches for each query
+
+In addition, luwak has two multithreaded matchers which wrap the simpler matchers:
+* ParallelMatcher - runs queries in multiple threads as they are collected from the Monitor
+* PartioningMatcher - collects queries, partitions them into groups, and then runs each group in its own thread
 
 Filtering out queries
 ---------------------
@@ -73,73 +78,90 @@ in the Monitor's internal index.  At match-time, the passed-in ```InputDocument`
 and converted to a disjunction query.  All queries that match this query in the monitor's index
 are then run against the document.
 
-Only whole terms are extracted from the ```InputDocument```, so any queries that use fuzzy or
-partial matching, such as RegexpQueries, are stored using a special ```AnyToken``` that matches
-all documents.
+### MultipassTermFilteredPresearcher
 
-### WildcardNGramPresearcher
+An extension of ```TermFilteredPresearcher``` that tries to improve filtering on phrase queries
+by indexing different combinations of terms.
 
-A specialization of ```TermFilteredPresearcher``` that also extracts ngrams from ```InputDocument```s,
-and matches them against exact substrings of fuzzy terms.  This presearcher trades longer document
-preparation times for more exact query filtering.  Whether it is more appropriate than
-```TermFilteredPresearcher``` will depend on the queries and documents being used.
+The TermFilteredPresearcher can be configured with different ```PresearcherComponent```
+implementations - for example, you can ignore certain fields with a ```FieldFilterPresearcherComponent```,
+or get accurate filtering on wildcard queries with an ```WildcardNGramPresearcherComponent```.
 
 Adding new query types
 ----------------------
 
-```TermFilteredPresearcher``` uses a set of ```Extractor<T extends Query>``` objects to extract terms
-from registered queries for indexing.  If a passed-in query does not have a specialised Extractor,
-the presearcher will fall back to using a ```GenericTermExtractor```, which just uses ```Query#extractTerms(Set)```.
+```TermFilteredPresearcher``` extracts terms from queries by using a ```QueryAnalyzer``` to build
+a tree representation of the query, and then selecting the best possible set of terms from that tree
+that uniquely identify the query.  The tree is built using a set of specialized ```QueryTreeBuilder```
+implementations, one for each lucene ```Query``` class.
 
-This will not be appropriate for all custom Query types.  You can create your own custom extractor by
-subclassing ```Extractor```, and then pass it to the ```TermFilteredPresearcher``` constructor.
+This will not be appropriate for all custom Query types.  You can create your own custom tree builder by
+subclassing ```QueryTreeBuilder```, and then pass it to the ```TermFilteredPresearcher``` in
+a ```PresearcherComponent```.
 
 ```java
-public class CustomQueryExtractor extends Extractor<CustomQuery> {
+public class CustomQueryTreeBuilder extends QueryTreeBuilder<CustomQuery> {
 
-    public CustomQueryExtractor() {
+    public CustomQueryTreeBuilder() {
         super(CustomQuery.class);
     }
 
     @Override
-    public void extract(CustomQuery query, List<QueryTerm> terms,
-                            List<Extractor<?>> extractors) {
-        terms.add(getYourTermsFromCustomQuery(query));
+    public QueryTree buildTree(QueryAnalyzer builder, CustomQuery query) {
+        return new TermNode(getYourTermFromCustomQuery(query));
     }
 
 }
 
-Presearcher presearcher = new TermFilteredPresearcher(new CustomQueryExtractor());
+...
+
+Presearcher presearcher = new TermFilteredPresearcher(new PresearcherComponent(new CustomerQueryTreeBuilder()));
 ```
 
 Customizing the existing presearchers
 -------------------------------------
 
 Not all terms extracted from a query need to be indexed, and the fewer terms indexed, the
-more performant the presearcher filter will be.  In general, if a BooleanQuery contains a
-single MUST clause, then only the contents of that clause need be indexed.  Which clause
-to index is decided by a ```TermWeightor```.
+more performant the presearcher filter will be.  For example, a BooleanQuery with many SHOULD
+clauses but only a single MUST clause only needs to index the terms extracted from the MUST
+clause.  Terms in a parsed query tree are given weights and the ```QueryAnalyzer``` uses these
+weights to decide which terms to extract and index.  The weighting is done by a ```TreeWeightor```.
 
-By default, the ```TermFilteredPresearcher``` and ```WildcardNGramPresearcher``` use a
-```CompoundRuleWeightor``` which selects clauses based on the number of terms they contain,
-how long those terms are, and whether any of them are ```ANYTOKEN``` terms.  You can also
-add extra rules to suppress certain terms, or certain fields, or create your own rules
-that implement ```WeightRule```.
+Weighting is configured by a ```WeightPolicy```, which will contain a set of ```WeightNorm```s and
+a ```CombinePolicy```.  A query term will be run through all the ```WeightNorm``` objects to determine
+its overall weighting, and a parent query will then calculate its weight with the ```CombinePolicy```,
+passing in all child weights.
+
+The following ```WeightNorm``` implementations are provided:
+* FieldWeightNorm - weight all terms in a given field
+* FieldSpecificTermWeightNorm - weight specific terms in specific fields
+* TermTypeNorm - weight terms according to their type (EXACT terms, ANY terms, CUSTOM terms)
+* TermWeightNorm - weight a specific set of terms with a given value
+* TokenLengthNorm - weight a term according to its length
+* TermFrequencyWeightNorm - weight a term by its term frequency
+
+A single ```CombinePolicy``` is provided:
+* MinWeightCombiner - a parent node's weight is set to the minimum weight of its children
+
+You can create your own rules, or combine existing ones
 
 ```java
-TermWeightor weightor = CompoundTermWeightor.newWeightor()
-                            .addRule(new FieldWeightRule("category", 0.01f))
-                            .addRule(new TermWeightRule(ImmutableMap.of("the", 0.3f)))
-                            .build();
-Presearcher presearcher = WildcardNGramPresearcher.builder().withWeightor(weightor).build();
+WeightPolicy weightPolicy = WeightPolicy.Default(new FieldWeightNorm("category", 0.01f));
+CombinePolicy combinePolicy = new MinWeightCombiner();
+
+TreeWeightor weightor = new TreeWeightor(weightPolicy, combinePolicy);
+Presearcher presearcher = new TermFilteredPresearcher(weightor);
 ```
+
+You can debug the output of any weightor by using a ```ReportingWeightor```.  ```QueryTreeViewer```
+is a convenience class that may help here.
 
 Creating an entirely new type of Presearcher
 --------------------------------------------
 
 You can implement your own query filtering code by subclassing ```Presearcher```.  You will need
 to implement ```buildQuery(InputDocument, PerFieldTokenFilter)``` which converts incoming documents into queries to
-be run against the Monitor's query index, and ```indexQuery(Query)``` which converts registered
+be run against the Monitor's query index, and ```indexQuery(Query, Map<String,String>)``` which converts registered
 queries into a form that can be indexed.
 
 Note that ```indexQuery(Query)``` may not create fields named '_id', '_query' or '_highlight', as these are reserved
