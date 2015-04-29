@@ -95,6 +95,11 @@ public class TestExtractors {
         public DocIdSet getDocIdSet(LeafReaderContext context, Bits acceptDocs) throws IOException {
             return null;
         }
+
+        @Override
+        public String toString(String s) {
+            return null;
+        }
     }
 
     private static class MyFilterTermQueryTreeBuilder extends QueryTreeBuilder<MyFilter> {

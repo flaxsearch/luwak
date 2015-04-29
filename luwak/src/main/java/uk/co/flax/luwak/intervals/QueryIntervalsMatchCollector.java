@@ -24,7 +24,6 @@ import java.util.Map;
 
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.intervals.Interval;
 import org.apache.lucene.search.intervals.IntervalCollector;
 import org.apache.lucene.search.intervals.IntervalIterator;
@@ -61,11 +60,6 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
     }
 
     @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return false;
-    }
-
-    @Override
     public void setScorer(Scorer scorer) throws IOException {
         try {
             positions = scorer.intervals(true);
@@ -73,11 +67,6 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
         catch (UnsupportedOperationException e) {
             // Query doesn't support positions, so we just say if it's a match or not
         }
-    }
-
-    @Override
-    public Weight.PostingFeatures postingFeatures() {
-        return Weight.PostingFeatures.OFFSETS;
     }
 
     @Override
@@ -89,6 +78,16 @@ public class QueryIntervalsMatchCollector extends SimpleCollector implements Int
     public void collectComposite(Scorer scorer, Interval interval,
                                  int docID) {
         //offsets.add(new Offset(interval.begin, interval.end, interval.offsetBegin, interval.offsetEnd));
+    }
+
+    @Override
+    public boolean needsScores() {
+        return true;
+    }
+
+    @Override
+    public boolean needsIntervals() {
+        return true;
     }
 
     private static class MatchBuilder {

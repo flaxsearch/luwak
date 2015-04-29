@@ -56,10 +56,6 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
         return coll.match;
     }
 
-    protected Weight.PostingFeatures getPostingFeatures() {
-        return Weight.PostingFeatures.DOCS_ONLY;
-    }
-
     /**
      * Called when a query matches the InputDocument
      * @param queryId the query ID
@@ -86,6 +82,16 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
             return new MatchLeafCollector();
         }
 
+        @Override
+        public boolean needsScores() {
+            return true;
+        }
+
+        @Override
+        public boolean needsIntervals() {
+            return true;
+        }
+
         public class MatchLeafCollector implements LeafCollector {
 
             @Override
@@ -96,16 +102,6 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
             @Override
             public void collect(int doc) throws IOException {
                 match = doMatch(queryId, scorer);
-            }
-
-            @Override
-            public boolean acceptsDocsOutOfOrder() {
-                return false;
-            }
-
-            @Override
-            public Weight.PostingFeatures postingFeatures() {
-                return getPostingFeatures();
             }
 
         }

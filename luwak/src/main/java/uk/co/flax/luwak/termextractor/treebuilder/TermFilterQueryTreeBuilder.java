@@ -1,9 +1,10 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
 import org.apache.lucene.queries.TermFilter;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.QueryTerm;
+import org.apache.lucene.search.TermQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
@@ -31,6 +32,6 @@ public class TermFilterQueryTreeBuilder extends QueryTreeBuilder<TermFilter> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermFilter query) {
-        return new TermNode(new QueryTerm(query.getTerm()));
+        return new TermNode(new QueryTerm(((TermQuery)query.getQuery()).getTerm()));
     }
 }

@@ -641,8 +641,8 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public boolean acceptsDocsOutOfOrder() {
-            return true;
+        public boolean needsScores() {
+            return false;
         }
 
         public int getQueryCount() {
@@ -687,13 +687,8 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public Weight.PostingFeatures postingFeatures() {
-            return Weight.PostingFeatures.OFFSETS;
-        }
-
-        @Override
-        public boolean acceptsDocsOutOfOrder() {
-            return false;
+        public boolean needsIntervals() {
+            return true;
         }
 
         @Override

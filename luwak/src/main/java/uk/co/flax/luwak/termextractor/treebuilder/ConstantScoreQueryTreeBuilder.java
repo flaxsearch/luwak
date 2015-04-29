@@ -29,8 +29,6 @@ public class ConstantScoreQueryTreeBuilder extends QueryTreeBuilder<ConstantScor
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, ConstantScoreQuery query) {
-        if (query.getQuery() != null)
-            return builder.buildTree(query.getQuery());
-        return builder.buildTree(query.getFilter());
+        return builder.buildTree(query.getQuery());
     }
 }

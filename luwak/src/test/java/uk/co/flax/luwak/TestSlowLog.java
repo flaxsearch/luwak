@@ -44,13 +44,13 @@ public class TestSlowLog {
             if (queryString.equals("slow")) {
                 return new MatchAllDocsQuery() {
                     @Override
-                    public Weight createWeight(IndexSearcher searcher) {
+                    public Weight createWeight(IndexSearcher searcher, boolean needsScores, int flags) {
                         try {
                             Thread.sleep(delay);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        return super.createWeight(searcher);
+                        return super.createWeight(searcher, needsScores, flags);
                     }
                 };
             }
