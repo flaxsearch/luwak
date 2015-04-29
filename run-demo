@@ -1,3 +1,4 @@
+cd luwak && 
 mvn -q -e exec:java \
 -Dexec.mainClass="uk.co.flax.luwak.demo.LuwakDemo" \
 -Dexec.classpathScope="test" -Dexec.args="$@"
