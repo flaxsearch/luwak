@@ -13,7 +13,7 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 
-import static uk.co.flax.luwak.util.TokenStreamAssert.assertThat;
+import static uk.co.flax.luwak.assertions.TokenStreamAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.

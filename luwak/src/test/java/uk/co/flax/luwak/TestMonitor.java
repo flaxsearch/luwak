@@ -16,7 +16,7 @@ import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.

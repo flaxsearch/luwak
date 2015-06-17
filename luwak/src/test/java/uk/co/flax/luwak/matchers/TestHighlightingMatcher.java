@@ -14,12 +14,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.matchers.HighlightingMatcher;
-import uk.co.flax.luwak.matchers.HighlightsMatch;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.util.IntervalMatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.IntervalMatchesAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
