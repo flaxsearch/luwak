@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.matchers;
 
 import java.util.*;
 
@@ -27,7 +27,7 @@ import uk.co.flax.luwak.QueryMatch;
  * a Filter), then no hits will be reported, but an IntervalsQueryMatch will still
  * be returned from an IntervalsMatcher to indicate a match.
  */
-public class IntervalsQueryMatch extends QueryMatch {
+public class HighlightsMatch extends QueryMatch {
 
     private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
 
@@ -39,12 +39,12 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @param queryId the ID of the query
      * @param hits the hits recorded for this query
      */
-    public IntervalsQueryMatch(String queryId, Map<String, List<Hit>> hits) {
+    public HighlightsMatch(String queryId, Map<String, List<Hit>> hits) {
         super(queryId);
         this.hits = new TreeMap<>(hits);
     }
 
-    public IntervalsQueryMatch(String queryId) {
+    public HighlightsMatch(String queryId) {
         super(queryId);
         this.hits = new TreeMap<>();
     }
@@ -74,9 +74,9 @@ public class IntervalsQueryMatch extends QueryMatch {
         return hits.size();
     }
 
-    public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
-        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId, EMPTYMAP);
-        for (IntervalsQueryMatch match : matches) {
+    public static HighlightsMatch merge(String queryId, HighlightsMatch... matches) {
+        HighlightsMatch newMatch = new HighlightsMatch(queryId, EMPTYMAP);
+        for (HighlightsMatch match : matches) {
             for (String field : match.getFields()) {
                 if (!newMatch.hits.containsKey(field))
                     newMatch.hits.put(field, new ArrayList<Hit>());
@@ -89,10 +89,10 @@ public class IntervalsQueryMatch extends QueryMatch {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof IntervalsQueryMatch)) return false;
+        if (!(o instanceof HighlightsMatch)) return false;
         if (!super.equals(o)) return false;
 
-        IntervalsQueryMatch that = (IntervalsQueryMatch) o;
+        HighlightsMatch that = (HighlightsMatch) o;
 
         if (hits != null ? !hits.equals(that.hits) : that.hits != null) return false;
 

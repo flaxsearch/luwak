@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.Map;
@@ -14,10 +14,12 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.matchers.HighlightingMatcher;
+import uk.co.flax.luwak.matchers.HighlightsMatch;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
+import static uk.co.flax.luwak.util.IntervalMatchesAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -34,7 +36,7 @@ import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class TestIntervalsMatches {
+public class TestHighlightingMatcher {
 
     static final String textfield = "textfield";
 
@@ -59,13 +61,13 @@ public class TestIntervalsMatches {
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
                 .matchesQuery("query1")
                     .inField(textfield)
-                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+                        .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
 
     }
 
@@ -79,15 +81,15 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("query1", "field1:test field2:test"));
 
-        Matches<IntervalsQueryMatch> matcher = monitor.match(doc, IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(doc, HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
                 .matchesQuery("query1")
                     .inField("field1")
-                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14))
+                        .withHit(new HighlightsMatch.Hit(3, 10, 3, 14))
                     .inField("field2")
-                        .withHit(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
+                        .withHit(new HighlightsMatch.Hit(5, 26, 5, 30));
 
     }
 
@@ -107,12 +109,12 @@ public class TestIntervalsMatches {
                 .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
         */
 
-        assertThat(monitor.match(docWithMatch, IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(docWithMatch, HighlightingMatcher.FACTORY))
                 .matchesQuery("1")
                 .inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(4, 15, 4, 23));
+                .withHit(new HighlightsMatch.Hit(4, 15, 4, 23));
 
-        assertThat(monitor.match(docWithNoMatch, IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(docWithNoMatch, HighlightingMatcher.FACTORY))
                 .doesNotMatchQuery("1");
 
 
@@ -124,9 +126,9 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", "test", "document"));
 
-        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY);
 
-        IntervalsQueryMatch match = Iterables.getFirst(matcher, null);
+        HighlightsMatch match = Iterables.getFirst(matcher, null);
         Assertions.assertThat(match).isNotNull();
         Assertions.assertThat(match.getHitCount()).isEqualTo(1);
     }
@@ -160,7 +162,7 @@ public class TestIntervalsMatches {
                        new MonitorQuery("3", "document"),
                        new MonitorQuery("4", "foo"));
 
-        assertThat(monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY))
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);
@@ -178,7 +180,7 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", ""));
 
-        Matches<IntervalsQueryMatch> matches = monitor.match(buildDoc("1", "hello world"), IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "hello world"), HighlightingMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(1)
                 .hasMatchCount(1);

@@ -1,9 +1,8 @@
-package uk.co.flax.luwak.intervals;
-
-import java.util.Collection;
+package uk.co.flax.luwak.util;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
+import uk.co.flax.luwak.matchers.HighlightsMatch;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -20,21 +19,23 @@ import org.assertj.core.api.Assertions;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class FieldMatchAssert extends AbstractAssert<FieldMatchAssert, Collection<IntervalsQueryMatch.Hit>> {
+public class IntervalsQueryMatchAssert extends AbstractAssert<IntervalsQueryMatchAssert, HighlightsMatch> {
 
-    private final IntervalsQueryMatchAssert parent;
-
-    public FieldMatchAssert(IntervalsQueryMatchAssert parent, Collection<IntervalsQueryMatch.Hit> actualHits) {
-        super(actualHits, FieldMatchAssert.class);
-        this.parent = parent;
+    protected IntervalsQueryMatchAssert(HighlightsMatch actual) {
+        super(actual, IntervalsQueryMatchAssert.class);
     }
 
-    public FieldMatchAssert withHit(IntervalsQueryMatch.Hit hit) {
-        Assertions.assertThat(actual).contains(hit);
+    public static IntervalsQueryMatchAssert assertThat(HighlightsMatch actual) {
+        return new IntervalsQueryMatchAssert(actual);
+    }
+
+    public IntervalsQueryMatchAssert withHitCount(int count) {
+        Assertions.assertThat(actual.getHitCount()).isEqualTo(count);
         return this;
     }
 
     public FieldMatchAssert inField(String fieldname) {
-        return parent.inField(fieldname);
+        Assertions.assertThat(actual.getHits(fieldname).size()).isGreaterThan(0);
+        return new FieldMatchAssert(this, actual.getHits(fieldname));
     }
 }

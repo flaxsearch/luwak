@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,42 +33,42 @@ import uk.co.flax.luwak.util.MultiSpans;
 /**
  * CandidateMatcher class that will return exact hit positions for all matching queries
  *
- * If a stored query does not support interval iterators, an IntervalsQueryMatch object
+ * If a stored query does not support interval iterators, a {@link HighlightsMatch} object
  * with no Hit positions will be returned.
  *
  * If a query is matched, it will be run a second time against the highlight query (if
  * not null) to get positions.
  */
 
-public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
+public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
-    public IntervalsMatcher(InputDocument doc) {
+    public HighlightingMatcher(InputDocument doc) {
         super(doc);
     }
 
     @Override
-    public IntervalsQueryMatch matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
-        IntervalsQueryMatch match = doMatch(queryId, matchQuery, highlightQuery);
+    public HighlightsMatch matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+        HighlightsMatch match = doMatch(queryId, matchQuery, highlightQuery);
         if (match != null)
             this.addMatch(queryId, match);
         return match;
     }
 
     @Override
-    protected void addMatch(String queryId, IntervalsQueryMatch match) {
-        IntervalsQueryMatch previousMatch = this.matches(queryId);
+    protected void addMatch(String queryId, HighlightsMatch match) {
+        HighlightsMatch previousMatch = this.matches(queryId);
         if (previousMatch == null) {
             super.addMatch(queryId, match);
             return;
         }
-        super.addMatch(queryId, IntervalsQueryMatch.merge(queryId, previousMatch, match));
+        super.addMatch(queryId, HighlightsMatch.merge(queryId, previousMatch, match));
     }
 
-    public IntervalsQueryMatch resolve(IntervalsQueryMatch match1, IntervalsQueryMatch match2) {
-        return IntervalsQueryMatch.merge(match1.getQueryId(), match1, match2);
+    public HighlightsMatch resolve(HighlightsMatch match1, HighlightsMatch match2) {
+        return HighlightsMatch.merge(match1.getQueryId(), match1, match2);
     }
 
-    private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    private HighlightsMatch doMatch(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
 
         if (doc.getSearcher().count(matchQuery) == 0)
             return null;
@@ -76,7 +76,7 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
         MultiSpans multiSpans = new MultiSpans(highlightQuery, doc.getSearcher());
         Spans spans = multiSpans.getSpans(doc.asAtomicReader().getContext());
 
-        IntervalsQueryMatch match = new IntervalsQueryMatch(queryId);
+        HighlightsMatch match = new HighlightsMatch(queryId);
         SpanOffsetsCollector collector = new SpanOffsetsCollector();
 
         spans.advance(0);
@@ -113,10 +113,10 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
         }
     }
 
-    public static final MatcherFactory<IntervalsQueryMatch> FACTORY = new MatcherFactory<IntervalsQueryMatch>() {
+    public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {
         @Override
-        public IntervalsMatcher createMatcher(InputDocument doc) {
-            return new IntervalsMatcher(doc);
+        public HighlightingMatcher createMatcher(InputDocument doc) {
+            return new HighlightingMatcher(doc);
         }
     };
 

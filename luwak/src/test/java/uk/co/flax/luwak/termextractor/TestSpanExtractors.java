@@ -7,7 +7,6 @@ import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.IntervalsPresearcherComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,8 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class TestSpanExtractors {
 
-    private static final QueryAnalyzer treeBuilder
-            = QueryAnalyzer.fromComponents(new IntervalsPresearcherComponent());
+    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer();
 
     @Test
     public void testOrderedNearExtractor() {

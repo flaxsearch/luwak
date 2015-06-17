@@ -1,8 +1,9 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.util;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 import uk.co.flax.luwak.Matches;
+import uk.co.flax.luwak.matchers.HighlightsMatch;
 
 import static org.assertj.core.api.Fail.fail;
 
@@ -23,22 +24,22 @@ import static org.assertj.core.api.Fail.fail;
  * limitations under the License.
  */
 
-public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, Matches<IntervalsQueryMatch>> {
+public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, Matches<HighlightsMatch>> {
 
-    protected IntervalMatchesAssert(Matches<IntervalsQueryMatch> actual) {
+    protected IntervalMatchesAssert(Matches<HighlightsMatch> actual) {
         super(actual, IntervalMatchesAssert.class);
     }
 
     public IntervalsQueryMatchAssert matchesQuery(String queryId) {
-        for (IntervalsQueryMatch match : actual) {
+        for (HighlightsMatch match : actual) {
             if (match.getQueryId().equals(queryId))
-                return new IntervalsQueryMatchAssert((IntervalsQueryMatch) match);
+                return new IntervalsQueryMatchAssert((HighlightsMatch) match);
         }
         fail("Document " + actual.docId() + " did not match query " + queryId);
         return null;
     }
 
-    public static IntervalMatchesAssert assertThat(Matches<IntervalsQueryMatch> actual) {
+    public static IntervalMatchesAssert assertThat(Matches<HighlightsMatch> actual) {
         return new IntervalMatchesAssert(actual);
     }
 
@@ -66,7 +67,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     }
 
     public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
-        for (IntervalsQueryMatch match : actual) {
+        for (HighlightsMatch match : actual) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
         return this;
