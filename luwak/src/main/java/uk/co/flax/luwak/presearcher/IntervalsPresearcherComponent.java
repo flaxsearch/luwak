@@ -3,8 +3,9 @@ package uk.co.flax.luwak.presearcher;
 import java.util.List;
 
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.treebuilder.IntervalFilterQueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.treebuilder.NonOverlappingQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.treebuilder.SpanNearQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.treebuilder.SpanNotQueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.treebuilder.SpanTermQueryTreeBuilder;
 import uk.co.flax.luwak.util.CollectionUtils;
 
 /*
@@ -30,8 +31,9 @@ import uk.co.flax.luwak.util.CollectionUtils;
 public class IntervalsPresearcherComponent extends PresearcherComponent {
 
     private static final List<? extends QueryTreeBuilder<?>> BUILDERS = CollectionUtils.makeUnmodifiableList(
-            new IntervalFilterQueryTreeBuilder(),
-            new NonOverlappingQueryTreeBuilder()
+            new SpanTermQueryTreeBuilder(),
+            new SpanNearQueryTreeBuilder(),
+            new SpanNotQueryTreeBuilder()
     );
 
     public IntervalsPresearcherComponent() {

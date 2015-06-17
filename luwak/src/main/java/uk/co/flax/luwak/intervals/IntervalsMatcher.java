@@ -1,11 +1,18 @@
 package uk.co.flax.luwak.intervals;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.Spans;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
+import uk.co.flax.luwak.util.MultiSpans;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -40,7 +47,7 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
     }
 
     @Override
-    public IntervalsQueryMatch matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public IntervalsQueryMatch matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         IntervalsQueryMatch match = doMatch(queryId, matchQuery, highlightQuery);
         if (match != null)
             this.addMatch(queryId, match);
@@ -61,26 +68,49 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
         return IntervalsQueryMatch.merge(match1.getQueryId(), match1, match2);
     }
 
-    private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    private IntervalsQueryMatch doMatch(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
 
-        QueryIntervalsMatchCollector collector = new QueryIntervalsMatchCollector(queryId);
-        doc.getSearcher().search(matchQuery, collector);
-        IntervalsQueryMatch hits = collector.getMatches();
-
-        if (hits == null)
+        if (doc.getSearcher().count(matchQuery) == 0)
             return null;
 
-        if (highlightQuery == null) {
-            return hits;
+        MultiSpans multiSpans = new MultiSpans(highlightQuery, doc.getSearcher());
+        Spans spans = multiSpans.getSpans(doc.asAtomicReader().getContext());
+
+        IntervalsQueryMatch match = new IntervalsQueryMatch(queryId);
+        SpanOffsetsCollector collector = new SpanOffsetsCollector();
+
+        spans.advance(0);
+        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
+            collector.reset();
+            spans.collect(collector);
+            match.addHit(collector.field, collector.startpos, collector.endpos, collector.startoffset, collector.endoffset);
         }
 
-        QueryIntervalsMatchCollector collector2 = new QueryIntervalsMatchCollector(queryId);
-        doc.getSearcher().search(highlightQuery, collector2);
-        IntervalsQueryMatch hlhits = collector2.getMatches();
-        if (hlhits != null)
-            return hlhits;
-        else
-            return hits;
+        return match;
+    }
+
+    private static class SpanOffsetsCollector implements SpanCollector {
+
+        int startpos = Integer.MAX_VALUE;
+        int startoffset = Integer.MAX_VALUE;
+        int endpos = -1;
+        int endoffset = -1;
+        String field;
+
+        @Override
+        public void collectLeaf(PostingsEnum postingsEnum, int pos, Term term) throws IOException {
+            startpos = Math.min(startpos, pos);
+            endpos = Math.max(endpos, pos);
+            startoffset = Math.min(postingsEnum.startOffset(), startoffset);
+            endoffset = Math.max(postingsEnum.endOffset(), endoffset);
+            field = term.field();
+        }
+
+        @Override
+        public void reset() {
+            startpos = startoffset = Integer.MAX_VALUE;
+            endpos = endoffset = -1;
+        }
     }
 
     public static final MatcherFactory<IntervalsQueryMatch> FACTORY = new MatcherFactory<IntervalsQueryMatch>() {

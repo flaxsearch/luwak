@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.*;
 
 /*
@@ -68,7 +69,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     }
 
     @Override
-    public T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         try {
             queue.put(new MatcherTask(queryId, matchQuery, highlightQuery));
         } catch (InterruptedException e) {
@@ -150,9 +151,9 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
         final String id;
         final Query matchQuery;
-        final Query highlightQuery;
+        final List<SpanQuery> highlightQuery;
 
-        private MatcherTask(String id, Query matchQuery, Query highlightQuery) {
+        private MatcherTask(String id, Query matchQuery, List<SpanQuery> highlightQuery) {
             this.id = id;
             this.matchQuery = matchQuery;
             this.highlightQuery = highlightQuery;

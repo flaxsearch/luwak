@@ -82,7 +82,7 @@ public class TermFilteredPresearcher extends Presearcher {
 
             for (String field : reader.fields()) {
 
-                TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator(null));
+                TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator());
                 for (PresearcherComponent component : components) {
                     ts = component.filterDocumentTokens(field, ts);
                 }

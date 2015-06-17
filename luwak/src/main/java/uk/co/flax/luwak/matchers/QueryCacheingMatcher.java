@@ -1,6 +1,9 @@
 package uk.co.flax.luwak.matchers;
 
+import java.util.List;
+
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.QueryMatch;
@@ -34,7 +37,7 @@ public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatche
     }
 
     @Override
-    protected QueryCacheingMatch<T> wrapMatch(T match, String queryId, Query matchQuery, Query highlightQuery) {
+    protected QueryCacheingMatch<T> wrapMatch(T match, String queryId, Query matchQuery, List<SpanQuery> highlightQuery) {
         return new QueryCacheingMatch<>(matchQuery, match);
     }
 

@@ -1,10 +1,14 @@
 package uk.co.flax.luwak;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -59,7 +63,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public abstract T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException;
 
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))

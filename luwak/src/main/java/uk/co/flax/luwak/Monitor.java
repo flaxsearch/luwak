@@ -14,9 +14,9 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.intervals.Interval;
-import org.apache.lucene.search.intervals.IntervalCollector;
-import org.apache.lucene.search.intervals.IntervalIterator;
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -24,6 +24,7 @@ import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
+import uk.co.flax.luwak.util.MultiSpans;
 
 /*
  * Copyright (c) 2015 Lemur Consulting Ltd.
@@ -50,6 +51,7 @@ public class Monitor implements Closeable {
     private final MonitorQueryParser queryParser;
     private final Presearcher presearcher;
     private final QueryDecomposer decomposer;
+    private final QuerySpanRewriter rewriter = new QuerySpanRewriter();
 
     private final Directory directory;
     private final IndexWriter writer;
@@ -163,13 +165,13 @@ public class Monitor implements Closeable {
     protected static class CacheEntry {
 
         public final Query matchQuery;
-        public final Query highlightQuery;
+        public final List<SpanQuery> highlightQueries;
         public final BytesRef hash;
 
-        public CacheEntry(BytesRef hash, Query matchQuery, Query highlightQuery) {
+        public CacheEntry(BytesRef hash, Query matchQuery, List<SpanQuery> highlightQueries) {
             this.hash = hash;
             this.matchQuery = matchQuery;
-            this.highlightQuery = highlightQuery;
+            this.highlightQueries = highlightQueries;
         }
     }
 
@@ -399,6 +401,7 @@ public class Monitor implements Closeable {
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
         Query hq = query.getHighlightQuery() == null
                 ? null : queryParser.parse(query.getHighlightQuery(), query.getMetadata());
+        List<SpanQuery> highlighterQueries = rewriter.rewrite(hq);
 
         BytesRef rootHash = query.hash();
 
@@ -408,7 +411,9 @@ public class Monitor implements Closeable {
             BytesRefBuilder subHash = new BytesRefBuilder();
             subHash.append(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, hq));
+            if (hq == null)
+                highlighterQueries = rewriter.rewrite(subquery);
+            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, highlighterQueries));
         }
 
         return cacheEntries;
@@ -565,11 +570,21 @@ public class Monitor implements Closeable {
      * @return a PresearcherMatches object
      * @throws IOException on IO errors
      */
-    public <T extends QueryMatch> PresearcherMatches<T>
-            debug(InputDocument doc, MatcherFactory<T> factory) throws IOException {
-        PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
-        match(doc, collector);
-        return collector.getMatches();
+    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory)
+            throws IOException {
+        Query presearcherQuery = buildQuery(doc);
+        IndexSearcher searcher = null;
+        try {
+            searcher = manager.acquire();
+            MultiSpans spans = new MultiSpans(rewriter.rewrite(presearcherQuery), searcher);
+            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc), spans);
+            collector.setQueryMap(queries);
+            searcher.search(presearcherQuery, collector);
+            return collector.getMatches();
+        }
+        finally {
+            manager.release(searcher);
+        }
     }
 
     protected Document buildIndexableQuery(String id, MonitorQuery mq, CacheEntry query) {
@@ -595,7 +610,7 @@ public class Monitor implements Closeable {
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
                 CacheEntry entry = queries.get(hash);
-                matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQuery);
+                matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQueries);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
@@ -651,17 +666,17 @@ public class Monitor implements Closeable {
 
     }
 
-    private static class PresearcherMatchCollector<T extends QueryMatch>
-            extends MatchingCollector<T> implements IntervalCollector {
+    private class PresearcherMatchCollector<T extends QueryMatch> extends MatchingCollector<T> {
 
-        private IntervalIterator positions;
-        private Document document;
+        private final MultiSpans composite;
         private String currentId;
+        private Spans spans;
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-        private PresearcherMatchCollector(CandidateMatcher<T> matcher) {
+        private PresearcherMatchCollector(CandidateMatcher<T> matcher, MultiSpans spans) {
             super(matcher);
+            this.composite = spans;
         }
 
         public PresearcherMatches<T> getMatches() {
@@ -669,43 +684,41 @@ public class Monitor implements Closeable {
         }
 
         @Override
+        public void doSetNextReader(LeafReaderContext context) throws IOException {
+            super.doSetNextReader(context);
+            this.spans = composite.getSpans(context);
+        }
+
+        @Override
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
 
             currentId = queryId;
-            document = reader.document(doc);
-            positions.scorerAdvanced(doc);
-            while (positions.next() != null) {
-                positions.collect(this);
+
+            SpanCollector collector = new SpanCollector() {
+                @Override
+                public void collectLeaf(PostingsEnum postingsEnum, int position, Term term) throws IOException {
+                    if (!matchingTerms.containsKey(currentId))
+                        matchingTerms.put(currentId, new StringBuilder());
+                    matchingTerms.get(currentId)
+                            .append(" ")
+                            .append(term.field())
+                            .append(":")
+                            .append(term.bytes().utf8ToString());
+                }
+
+                @Override
+                public void reset() {
+
+                }
+            };
+
+            if (spans.advance(doc) == doc) {
+                while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
+                    spans.collect(collector);
+                }
             }
 
             super.doMatch(doc, queryId, hash);
-        }
-
-        @Override
-        public void setScorer(Scorer scorer) throws IOException {
-            positions = scorer.intervals(true);
-        }
-
-        @Override
-        public boolean needsIntervals() {
-            return true;
-        }
-
-        @Override
-        public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
-            String terms = document.getField(interval.field).stringValue();
-            if (!matchingTerms.containsKey(currentId))
-                matchingTerms.put(currentId, new StringBuilder());
-            matchingTerms.get(currentId)
-                    .append(" ")
-                    .append(interval.field)
-                    .append(":")
-                    .append(terms.substring(interval.offsetBegin, interval.offsetEnd));
-        }
-
-        @Override
-        public void collectComposite(Scorer scorer, Interval interval, int docID) {
-
         }
 
     }

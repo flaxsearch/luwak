@@ -3,10 +3,9 @@ package uk.co.flax.luwak;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.*;
+import org.apache.lucene.util.Bits;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -42,15 +41,28 @@ public class TestSlowLog {
         @Override
         public Query parse(String queryString, Map<String, String> metadata) throws Exception {
             if (queryString.equals("slow")) {
-                return new MatchAllDocsQuery() {
+                return new Query() {
                     @Override
-                    public Weight createWeight(IndexSearcher searcher, boolean needsScores, int flags) {
+                    public String toString(String s) {
+                        return "";
+                    }
+
+                    @Override
+                    public Weight createWeight(IndexSearcher searcher, boolean needsScores) {
                         try {
                             Thread.sleep(delay);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        return super.createWeight(searcher, needsScores, flags);
+                        return new RandomAccessWeight(this) {
+                            protected Bits getMatchingDocs(LeafReaderContext context) throws IOException {
+                                return new Bits.MatchAllBits(context.reader().maxDoc());
+                            }
+
+                            public String toString() {
+                                return "weight(MatchAllDocs)";
+                            }
+                        };
                     }
                 };
             }

@@ -136,7 +136,7 @@ public class TestSuffixingNGramTokenizer {
 
             long time = System.currentTimeMillis();
 
-            TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator(null));
+            TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator());
             ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
             //ts = new DuplicateRemovalTokenFilter(ts);
             int tokencount = 0;

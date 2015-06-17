@@ -47,7 +47,7 @@ public class TermsEnumFilter implements PerFieldTokenFilter, Closeable {
         Terms terms = fields.terms(field);
         if (terms == null)
             return new EmptyTokenStream();
-        return new Filter(in, terms.iterator(null));
+        return new Filter(in, terms.iterator());
     }
 
     @Override

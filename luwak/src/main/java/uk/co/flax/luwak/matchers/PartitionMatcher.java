@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.util.CollectionUtils;
 
@@ -58,9 +59,9 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
         final String queryId;
         final Query matchQuery;
-        final Query highlightQuery;
+        final List<SpanQuery> highlightQuery;
 
-        private MatchTask(String queryId, Query matchQuery, Query highlightQuery) {
+        private MatchTask(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) {
             this.queryId = queryId;
             this.matchQuery = matchQuery;
             this.highlightQuery = highlightQuery;
@@ -78,7 +79,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    public T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
         return null;
     }

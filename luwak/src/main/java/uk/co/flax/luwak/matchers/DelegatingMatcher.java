@@ -1,8 +1,10 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
@@ -34,7 +36,7 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
     }
 
     @Override
-    public W matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public W matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         M match = matcher.matchQuery(queryId, matchQuery, highlightQuery);
         if (match == null)
             return wrapMiss(queryId, matchQuery, highlightQuery);
@@ -44,9 +46,9 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
         return wrapped;
     }
 
-    protected W wrapMiss(String queryId, Query matchQuery, Query highlightQuery) {
+    protected W wrapMiss(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) {
         return null;
     }
 
-    protected abstract W wrapMatch(M match, String queryId, Query matchQuery, Query highlightQuery);
+    protected abstract W wrapMatch(M match, String queryId, Query matchQuery, List<SpanQuery> highlightQuery);
 }

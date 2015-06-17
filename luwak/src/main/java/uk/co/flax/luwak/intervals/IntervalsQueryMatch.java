@@ -2,7 +2,6 @@ package uk.co.flax.luwak.intervals;
 
 import java.util.*;
 
-import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
 /*
@@ -45,6 +44,11 @@ public class IntervalsQueryMatch extends QueryMatch {
         this.hits = new TreeMap<>(hits);
     }
 
+    public IntervalsQueryMatch(String queryId) {
+        super(queryId);
+        this.hits = new TreeMap<>();
+    }
+
     /**
      * @return the fields in which matches have been found
      */
@@ -58,7 +62,9 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @return the Hits found in this field
      */
     public Collection<Hit> getHits(String field) {
-        return Collections.unmodifiableCollection(hits.get(field));
+        if (hits.containsKey(field))
+            return Collections.unmodifiableCollection(hits.get(field));
+        return new LinkedList<>();
     }
 
     /**
@@ -100,6 +106,12 @@ public class IntervalsQueryMatch extends QueryMatch {
         return result;
     }
 
+    void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
+        if (!hits.containsKey(field))
+            hits.put(field, new ArrayList<Hit>());
+        hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
+    }
+
     /**
      * Represents an individual hit
      */
@@ -122,10 +134,6 @@ public class IntervalsQueryMatch extends QueryMatch {
             this.startOffset = startOffset;
             this.endPosition = endPosition;
             this.endOffset = endOffset;
-        }
-
-        public Hit(Interval interval) {
-            this(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd);
         }
 
         @Override

@@ -78,7 +78,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         BooleanQuery bq = new BooleanQuery();
 
         BytesRef term;
-        TermsEnum te = terms.iterator(null);
+        TermsEnum te = terms.iterator();
         while ((term = te.next()) != null) {
             bq.add(new TermQuery(new Term(field, term.utf8ToString())), BooleanClause.Occur.SHOULD);
         }

@@ -1,9 +1,14 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Collector;
+import org.apache.lucene.search.LeafCollector;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.QueryMatch;
@@ -41,7 +46,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
     }
 
     @Override
-    public T matchQuery(final String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public T matchQuery(final String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
 
         MatchCollector coll = new MatchCollector(queryId);
 
@@ -84,11 +89,6 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
 
         @Override
         public boolean needsScores() {
-            return true;
-        }
-
-        @Override
-        public boolean needsIntervals() {
             return true;
         }
 

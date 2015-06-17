@@ -1,10 +1,8 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
-import java.lang.reflect.Field;
-
-import org.apache.lucene.search.intervals.IntervalFilterQuery;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import org.apache.lucene.search.spans.SpanNotQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /*
@@ -24,23 +22,16 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  */
 
 /**
- * Extract terms from an IntervalFilterQuery
+ * Extracts terms from a NonOverlappingQuery
  */
-public class IntervalFilterQueryTreeBuilder extends QueryTreeBuilder<IntervalFilterQuery> {
+public class SpanNotQueryTreeBuilder extends QueryTreeBuilder<SpanNotQuery> {
 
-    public IntervalFilterQueryTreeBuilder() {
-        super(IntervalFilterQuery.class);
+    public SpanNotQueryTreeBuilder() {
+        super(SpanNotQuery.class);
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, IntervalFilterQuery query) {
-        try {
-            Field field = IntervalFilterQuery.class.getDeclaredField("inner");
-            field.setAccessible(true);
-            return builder.buildTree(field.get(query));
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public QueryTree buildTree(QueryAnalyzer builder, SpanNotQuery query) {
+        return builder.buildTree(query.getInclude());
     }
 }
