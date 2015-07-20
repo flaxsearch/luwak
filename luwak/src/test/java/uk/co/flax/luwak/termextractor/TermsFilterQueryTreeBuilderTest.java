@@ -23,8 +23,8 @@ public class TermsFilterQueryTreeBuilderTest {
         List<QueryTerm> terms = treeBuilder.collectTerms(treeBuilder.buildTree(filter));
 
         Assert.assertEquals(1, terms.size());
-        Assert.assertEquals("someField", terms.get(0).field);
-        Assert.assertEquals("123", terms.get(0).term);
+        Assert.assertEquals("someField", terms.get(0).term.field());
+        Assert.assertEquals("123", terms.get(0).term.text());
     }
 
     @Test
