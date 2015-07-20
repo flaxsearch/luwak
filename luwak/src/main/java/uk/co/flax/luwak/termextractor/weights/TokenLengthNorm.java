@@ -44,6 +44,6 @@ public class TokenLengthNorm extends WeightNorm {
         if (term.type == QueryTerm.Type.ANY)
             return 1;
         else
-            return (4 - WeightNorm.exp(a, k, term.term.length()));
+            return (4 - WeightNorm.exp(a, k, term.term.text().length()));
     }
 }

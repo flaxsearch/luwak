@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.util.BytesRefHash;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
@@ -12,7 +13,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +28,7 @@ import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class TestTermPresearcher extends PresearcherTestBase {
 
     @Test
@@ -100,7 +102,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
         TermFilteredPresearcher presearcher = new TermFilteredPresearcher();
         QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery());
 
-        Map<String, StringBuilder> extractedTerms = presearcher.collectTerms(qt);
+        Map<String, BytesRefHash> extractedTerms = presearcher.collectTerms(qt);
 
         Assertions.assertThat(extractedTerms.size()).isEqualTo(1);
 

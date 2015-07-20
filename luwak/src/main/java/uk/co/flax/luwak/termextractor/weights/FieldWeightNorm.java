@@ -51,7 +51,7 @@ public class FieldWeightNorm extends WeightNorm {
 
     @Override
     public float norm(QueryTerm term) {
-        if (this.fields.contains(term.field))
+        if (this.fields.contains(term.term.field()))
             return k;
         return 1;
     }

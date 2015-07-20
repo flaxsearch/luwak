@@ -32,6 +32,9 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefHash;
+import org.apache.lucene.util.BytesRefIterator;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
@@ -132,7 +135,7 @@ public class TermFilteredPresearcher extends Presearcher {
 
     public static final FieldType QUERYFIELDTYPE;
     static {
-        QUERYFIELDTYPE = new FieldType(TextField.TYPE_STORED);
+        QUERYFIELDTYPE = new FieldType(TextField.TYPE_NOT_STORED);
         QUERYFIELDTYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         QUERYFIELDTYPE.freeze();
     }
@@ -151,37 +154,65 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     protected Document buildQueryDocument(QueryTree querytree) {
-        Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
+        Map<String, BytesRefHash> fieldTerms = collectTerms(querytree);
         Document doc = new Document();
-        for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
-            doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
+        for (Map.Entry<String, BytesRefHash> entry : fieldTerms.entrySet()) {
+            doc.add(new Field(entry.getKey(),
+                    new TermsEnumTokenStream(new BytesRefHashIterator(entry.getValue())), QUERYFIELDTYPE));
         }
         return doc;
     }
 
-    protected Map<String, StringBuilder> collectTerms(QueryTree tree) {
+    protected class BytesRefHashIterator implements BytesRefIterator {
 
-        Map<String, StringBuilder> fieldTerms = new HashMap<>();
+        final BytesRef scratch = new BytesRef();
+        final BytesRefHash terms;
+        final int[] sortedTerms;
+        int upto = -1;
+
+
+        public BytesRefHashIterator(BytesRefHash terms) {
+            this.terms = terms;
+            this.sortedTerms = terms.sort(BytesRef.getUTF8SortedAsUnicodeComparator());
+        }
+
+        @Override
+        public BytesRef next() throws IOException {
+            if (upto >= sortedTerms.length)
+                return null;
+            upto++;
+            if (sortedTerms[upto] == -1)
+                return null;
+            this.terms.get(sortedTerms[upto], scratch);
+            return scratch;
+        }
+    }
+
+    protected Map<String, BytesRefHash> collectTerms(QueryTree tree) {
+
+        Map<String, BytesRefHash> fieldTerms = new HashMap<>();
 
         for (QueryTerm queryTerm : extractor.collectTerms(tree)) {
             if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
-                if (!fieldTerms.containsKey(ANYTOKEN_FIELD))
-                    fieldTerms.put(ANYTOKEN_FIELD, new StringBuilder(ANYTOKEN));
+                if (!fieldTerms.containsKey(ANYTOKEN_FIELD)) {
+                    BytesRefHash hash = new BytesRefHash();
+                    hash.add(new BytesRef(ANYTOKEN));
+                    fieldTerms.put(ANYTOKEN_FIELD, hash);
+                }
             }
             else {
-                if (!fieldTerms.containsKey(queryTerm.field))
-                    fieldTerms.put(queryTerm.field, new StringBuilder());
+                if (!fieldTerms.containsKey(queryTerm.term.field()))
+                    fieldTerms.put(queryTerm.term.field(), new BytesRefHash());
 
-                //noinspection MismatchedQueryAndUpdateOfStringBuilder
-                StringBuilder termslist = fieldTerms.get(queryTerm.field);
+                BytesRefHash termslist = fieldTerms.get(queryTerm.term.field());
                 if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
-                    termslist.append(" ").append(queryTerm.term);
+                    termslist.add(queryTerm.term.bytes());
                 } else {
-                    termslist.append(" ").append(queryTerm.term);
+                    termslist.add(queryTerm.term.bytes());
                     for (PresearcherComponent component : components) {
-                        String extratoken = component.extraToken(queryTerm);
+                        BytesRef extratoken = component.extraToken(queryTerm);
                         if (extratoken != null)
-                            termslist.append(" ").append(extratoken);
+                            termslist.add(extratoken);
                     }
                 }
             }

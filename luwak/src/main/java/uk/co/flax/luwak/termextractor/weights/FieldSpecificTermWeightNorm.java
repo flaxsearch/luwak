@@ -52,7 +52,7 @@ public class FieldSpecificTermWeightNorm extends TermWeightNorm {
 
     @Override
     public float norm(QueryTerm term) {
-        if (term.field.equals(field))
+        if (term.term.field().equals(field))
             return super.norm(term);
         return 1;
     }

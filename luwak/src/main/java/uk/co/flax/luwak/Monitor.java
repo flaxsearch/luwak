@@ -662,7 +662,6 @@ public class Monitor implements Closeable {
             extends MatchingCollector<T> implements IntervalCollector {
 
         private IntervalIterator positions;
-        private Document document;
         private String currentId;
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
@@ -679,7 +678,6 @@ public class Monitor implements Closeable {
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
 
             currentId = queryId;
-            document = reader.document(doc);
             positions.scorerAdvanced(doc);
             while (positions.next() != null) {
                 positions.collect(this);
@@ -700,14 +698,12 @@ public class Monitor implements Closeable {
 
         @Override
         public void collectLeafPosition(Scorer scorer, Interval interval, int docID) {
-            String terms = document.getField(interval.field).stringValue();
-            if (!matchingTerms.containsKey(currentId))
-                matchingTerms.put(currentId, new StringBuilder());
-            matchingTerms.get(currentId)
-                    .append(" ")
-                    .append(interval.field)
-                    .append(":")
-                    .append(terms.substring(interval.offsetBegin, interval.offsetEnd));
+            Query query = scorer.getWeight().getQuery();
+            if (query instanceof TermQuery) {
+                if (!matchingTerms.containsKey(currentId))
+                    matchingTerms.put(currentId, new StringBuilder());
+                matchingTerms.get(currentId).append(" ").append(((TermQuery) query).getTerm());
+            }
         }
 
         @Override
