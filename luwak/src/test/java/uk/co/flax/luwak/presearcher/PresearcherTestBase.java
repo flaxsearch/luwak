@@ -129,15 +129,14 @@ public abstract class PresearcherTestBase {
     @Test
     public void testAnyTokenHandling() throws IOException {
 
-        Monitor monitor = new Monitor(new TestQueryParser(), presearcher);
-        monitor.update(new MonitorQuery("1", "testquery"));
+        try (Monitor monitor = new Monitor(new TestQueryParser(), presearcher))
+        {
+            monitor.update(new MonitorQuery("1", "testquery"));
 
-        InputDocument doc = buildDoc("1", "f", "wibble");
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+            InputDocument doc = buildDoc("1", "f", "wibble");
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);
-
-        monitor.close();
+        }
     }
-
 }

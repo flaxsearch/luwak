@@ -33,34 +33,33 @@ public class TestPresearcherMatchCollector {
     @Test
     public void testMatchCollectorShowMatches() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher());
-        monitor.update(new MonitorQuery("1", "test"));
-        monitor.update(new MonitorQuery("2", "foo bar -baz"));
-        monitor.update(new MonitorQuery("3", "foo -test"));
-        monitor.update(new MonitorQuery("4", "baz"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "test"));
+            monitor.update(new MonitorQuery("2", "foo bar -baz"));
+            monitor.update(new MonitorQuery("3", "foo -test"));
+            monitor.update(new MonitorQuery("4", "baz"));
 
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
-                .build();
+            InputDocument doc = InputDocument.builder("doc1")
+                    .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
+                    .build();
 
-        PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);
+            PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);
 
-        assertThat(matches.match("1")).isNotNull();
-        assertThat(matches.match("1").presearcherMatches).isEqualTo(" f:test");
-        assertThat(matches.match("1").queryMatch)
-                .isNotNull()
-                .isInstanceOf(QueryMatch.class);
+            assertThat(matches.match("1")).isNotNull();
+            assertThat(matches.match("1").presearcherMatches).isEqualTo(" f:test");
+            assertThat(matches.match("1").queryMatch)
+                    .isNotNull()
+                    .isInstanceOf(QueryMatch.class);
 
-        assertThat(matches.match("2")).isNotNull();
-        assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo");
+            assertThat(matches.match("2")).isNotNull();
+            assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo");
 
-        assertThat(matches.match("3")).isNotNull();
-        assertThat(matches.match("3").presearcherMatches).isEqualTo(" f:foo");
-        assertThat(matches.match("3").queryMatch).isNull();
+            assertThat(matches.match("3")).isNotNull();
+            assertThat(matches.match("3").presearcherMatches).isEqualTo(" f:foo");
+            assertThat(matches.match("3").queryMatch).isNull();
 
-        assertThat(matches.match("4")).isNull();
-
-        monitor.close();
+            assertThat(matches.match("4")).isNull();
+        }
     }
-
 }

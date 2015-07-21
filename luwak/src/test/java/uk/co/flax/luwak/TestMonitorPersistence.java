@@ -46,27 +46,26 @@ public class TestMonitorPersistence {
     @Test
     public void testCacheIsRepopulated() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
-                                        new MMapDirectory(indexDirectory));
-        monitor.update(new MonitorQuery("1", "test"),
-                       new MonitorQuery("2", "test", "test"),
-                       new MonitorQuery("3", "test", ImmutableMap.of("language", "en")),
-                       new MonitorQuery("4", "test", "test", ImmutableMap.of("language", "en", "wibble", "quack")));
-
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new KeywordAnalyzer()).build();
 
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
-                .hasMatchCount(4);
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+                                        new MMapDirectory(indexDirectory)))
+        {
+            monitor.update(new MonitorQuery("1", "test"),
+                new MonitorQuery("2", "test", "test"),
+                new MonitorQuery("3", "test", ImmutableMap.of("language", "en")),
+                new MonitorQuery("4", "test", "test", ImmutableMap.of("language", "en", "wibble", "quack")));
 
-        monitor.close();
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                    .hasMatchCount(4);
+        }
 
-        Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
-                                        new MMapDirectory(indexDirectory));
-
-        Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
-        assertThat(monitor2.match(doc, SimpleMatcher.FACTORY)).hasMatchCount(4);
-
-        monitor2.close();
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+            new MMapDirectory(indexDirectory)))
+        {
+            Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
+            assertThat(monitor2.match(doc, SimpleMatcher.FACTORY)).hasMatchCount(4);
+        }
     }
 
     @After

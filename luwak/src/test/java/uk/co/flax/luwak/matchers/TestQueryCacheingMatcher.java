@@ -36,23 +36,22 @@ public class TestQueryCacheingMatcher {
     @Test
     public void testQueryCacheingMatcher() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));
 
-        InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", ANALYZER).build();
+            InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", ANALYZER).build();
 
-        Matches<QueryCacheingMatch<QueryMatch>> match = monitor.match(doc1, QueryCacheingMatcher.factory(SimpleMatcher.FACTORY));
-        assertThat(match.matches("1")).isNotNull();
-        assertThat(match.matches("2")).isNull();
-        assertThat(match.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
+            Matches<QueryCacheingMatch<QueryMatch>> match = monitor.match(doc1, QueryCacheingMatcher.factory(SimpleMatcher.FACTORY));
+            assertThat(match.matches("1")).isNotNull();
+            assertThat(match.matches("2")).isNull();
+            assertThat(match.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
 
-        Matches<QueryCacheingMatch<ExplainingMatch>> match2 = monitor.match(doc1, QueryCacheingMatcher.factory(ExplainingMatcher.FACTORY));
-        assertThat(match2.matches("1")).isNotNull();
-        assertThat(match2.matches("2")).isNull();
-        assertThat(match2.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
-        assertThat(match2.matches("1").wrappedMatch.getExplanation().isMatch()).isTrue();
-
-        monitor.close();
+            Matches<QueryCacheingMatch<ExplainingMatch>> match2 = monitor.match(doc1, QueryCacheingMatcher.factory(ExplainingMatcher.FACTORY));
+            assertThat(match2.matches("1")).isNotNull();
+            assertThat(match2.matches("2")).isNull();
+            assertThat(match2.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
+            assertThat(match2.matches("1").wrappedMatch.getExplanation().isMatch()).isTrue();
+        }
     }
-
 }

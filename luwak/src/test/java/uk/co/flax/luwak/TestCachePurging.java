@@ -44,33 +44,33 @@ public class TestCachePurging {
     @Test
     public void testQueryCacheCanBePurged() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-        MonitorQuery[] queries = new MonitorQuery[] {
-                new MonitorQuery("1", "test1 test4"),
-                new MonitorQuery("2", "test2"),
-                new MonitorQuery("3", "test3")
-        };
-        monitor.update(queries);
-        assertThat(monitor.getQueryCount()).isEqualTo(3);
-        assertThat(monitor.getDisjunctCount()).isEqualTo(4);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
+        {
+            MonitorQuery[] queries = new MonitorQuery[] {
+                    new MonitorQuery("1", "test1 test4"),
+                    new MonitorQuery("2", "test2"),
+                    new MonitorQuery("3", "test3")
+            };
+            monitor.update(queries);
+            assertThat(monitor.getQueryCount()).isEqualTo(3);
+            assertThat(monitor.getDisjunctCount()).isEqualTo(4);
+            assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
 
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField("field", "test1 test2 test3", new WhitespaceAnalyzer()).build();
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(3);
+            InputDocument doc = InputDocument.builder("doc1")
+                    .addField("field", "test1 test2 test3", new WhitespaceAnalyzer()).build();
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(3);
 
-        monitor.deleteById("1");
-        assertThat(monitor.getQueryCount()).isEqualTo(2);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(2);
+            monitor.deleteById("1");
+            assertThat(monitor.getQueryCount()).isEqualTo(2);
+            assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(2);
 
-        monitor.purgeCache();
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
+            monitor.purgeCache();
+            assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
 
-        Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
-        assertThat(result.getMatchCount()).isEqualTo(2);
-
-        monitor.close();
+            Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
+            assertThat(result.getMatchCount()).isEqualTo(2);
+        }
     }
 
     @Test
@@ -86,55 +86,54 @@ public class TestCachePurging {
         final CountDownLatch startUpdating = new CountDownLatch(1);
         final CountDownLatch finishUpdating = new CountDownLatch(1);
 
-        final Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-
-        Runnable updaterThread = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    startUpdating.await();
-                    for (int i = 200; i < 400; i++) {
-                        logger.info("Updating with query {}", i);
-                        monitor.update(newMonitorQuery(i));
+        try (final Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
+        {
+            Runnable updaterThread = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        startUpdating.await();
+                        for (int i = 200; i < 400; i++) {
+                            logger.info("Updating with query {}", i);
+                            monitor.update(newMonitorQuery(i));
+                        }
+                        finishUpdating.countDown();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                    finishUpdating.countDown();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
+            };
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+            try {
+                executor.submit(updaterThread);
+
+                for (int i = 0; i < 200; i++) {
+                    monitor.update(newMonitorQuery(i));
+                }
+                for (int i = 20; i < 80; i++) {
+                    monitor.deleteById(Integer.toString(i));
+                }
+
+                assertThat(monitor.getStats().cachedQueries).isEqualTo(200);
+
+                logger.info("Starting cache purge");
+                startUpdating.countDown();
+                monitor.purgeCache();
+                logger.info("Finished cache purge");
+                finishUpdating.await();
+
+                assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
+                InputDocument doc = InputDocument.builder("doc1")
+                        .addField("field", "test", new WhitespaceAnalyzer()).build();
+                Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+                assertThat(matcher.getErrors()).isEmpty();
+                assertThat(matcher.getMatchCount()).isEqualTo(340);
             }
-        };
-
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        try {
-            executor.submit(updaterThread);
-
-            for (int i = 0; i < 200; i++) {
-                monitor.update(newMonitorQuery(i));
+            finally {
+                executor.shutdownNow();
             }
-            for (int i = 20; i < 80; i++) {
-                monitor.deleteById(Integer.toString(i));
-            }
-
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(200);
-
-            logger.info("Starting cache purge");
-            startUpdating.countDown();
-            monitor.purgeCache();
-            logger.info("Finished cache purge");
-            finishUpdating.await();
-
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
-            InputDocument doc = InputDocument.builder("doc1")
-                    .addField("field", "test", new WhitespaceAnalyzer()).build();
-            Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
-            assertThat(matcher.getErrors()).isEmpty();
-            assertThat(matcher.getMatchCount()).isEqualTo(340);
         }
-        finally {
-            executor.shutdownNow();
-        }
-        monitor.close();
-
     }
 
     private static MonitorQuery newMonitorQuery(int id) {
@@ -144,28 +143,25 @@ public class TestCachePurging {
     @Test
     public void testBackgroundPurges() throws IOException, InterruptedException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()) {
             @Override
             protected long configurePurgeFrequency() {
                 return 2;
             }
-        };
+        }) {
+            assertThat(monitor.getStats().lastPurged).isEqualTo(-1);
 
-        assertThat(monitor.getStats().lastPurged).isEqualTo(-1);
+            for (int i = 0; i < 100; i++) {
+                monitor.update(newMonitorQuery(i));
+            }
+            monitor.deleteById("5");
+            assertThat(monitor.getStats().queries).isEqualTo(99);
+            assertThat(monitor.getStats().cachedQueries).isEqualTo(100);
 
-        for (int i = 0; i < 100; i++) {
-            monitor.update(newMonitorQuery(i));
+            TimeUnit.SECONDS.sleep(3);
+            assertThat(monitor.getStats().queries).isEqualTo(99);
+            assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
+            assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
         }
-        monitor.deleteById("5");
-        assertThat(monitor.getStats().queries).isEqualTo(99);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(100);
-
-        TimeUnit.SECONDS.sleep(3);
-        assertThat(monitor.getStats().queries).isEqualTo(99);
-        assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
-        assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
-
-        monitor.close();
     }
-
 }
