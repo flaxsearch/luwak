@@ -53,6 +53,8 @@ public class Monitor implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager manager;
 
+    private final boolean storeMonitorQueries;
+
     // package-private for testing
     final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
 
@@ -91,19 +93,26 @@ public class Monitor implements Closeable {
      * @param presearcher the presearcher to use
      * @param indexWriter an indexWriter for the query index
      * @param decomposer the QueryDecomposer to use
+     * @param storeMonitorQueries whether or not to index the MonitorQuery's as BinaryDocValues
      * @throws IOException on IO errors
+     * @throws IOException
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher,
-                   IndexWriter indexWriter, QueryDecomposer decomposer) throws IOException {
+                   IndexWriter indexWriter, QueryDecomposer decomposer,
+                   boolean storeMonitorQueries) throws IOException {
 
         this.queryParser = queryParser;
         this.presearcher = presearcher;
         this.decomposer = decomposer;
         this.writer = indexWriter;
+        this.storeMonitorQueries = storeMonitorQueries;
 
         this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
 
-        loadCache();
+        if (storeMonitorQueries)
+            loadCache();
+        else
+            clear();
 
         long purgeFrequency = configurePurgeFrequency();
         this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -127,7 +136,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new QueryDecomposer(), true);
     }
 
     /**
@@ -138,7 +147,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(directory), new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(directory), new QueryDecomposer(), true);
     }
 
     /**
@@ -149,7 +158,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, IndexWriter indexWriter) throws IOException {
-        this(queryParser, presearcher, indexWriter, new QueryDecomposer());
+        this(queryParser, presearcher, indexWriter, new QueryDecomposer(), true);
     }
 
     private static IndexWriter defaultIndexWriter(Directory directory) throws IOException {
@@ -227,6 +236,9 @@ public class Monitor implements Closeable {
 
     private void loadCache() throws IOException {
         final List<Exception> parseErrors = new LinkedList<>();
+
+        if (storeMonitorQueries == false)
+            throw new IOException("MonitorQuery storage is disabled.");
 
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
@@ -526,6 +538,9 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public MonitorQuery getQuery(String queryId) throws IOException {
+        if (storeMonitorQueries == false)
+            throw new UnsupportedOperationException("MonitorQuery storage is disabled.");
+
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override
@@ -600,7 +615,8 @@ public class Monitor implements Closeable {
         doc.add(new StringField(FIELDS.del, id, Field.Store.NO));
         doc.add(new SortedDocValuesField(FIELDS.id, new BytesRef(id)));
         doc.add(new BinaryDocValuesField(FIELDS.hash, query.hash));
-        doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
+        if (storeMonitorQueries)
+            doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
         return doc;
     }
 
