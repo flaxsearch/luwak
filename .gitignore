@@ -1,3 +1,9 @@
+# Intellij config
 .idea/
 target/
 *.iml
+# Eclipse config
+bin/
+.project
+.classpath
+.settings/
