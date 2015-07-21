@@ -83,7 +83,6 @@ public class TestSlowLog {
         assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
                 .isEmpty();
 
+        monitor.close();
     }
-
-
 }

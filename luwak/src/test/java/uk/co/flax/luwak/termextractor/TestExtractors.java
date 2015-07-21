@@ -38,7 +38,7 @@ public class TestExtractors {
     private static final QueryAnalyzer treeBuilder
             = QueryAnalyzer.fromComponents(new FilterQueryPresearcherComponent());
 
-    private static QueryAnalyzer getBuilder(QueryTreeBuilder... queryTreeBuilder) {
+    private static QueryAnalyzer getBuilder(QueryTreeBuilder<?>... queryTreeBuilder) {
         return new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilder);
     }
 

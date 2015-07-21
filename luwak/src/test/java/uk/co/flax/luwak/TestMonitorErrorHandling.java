@@ -75,11 +75,13 @@ public class TestMonitorErrorHandling {
         assertThat(errors).hasSize(1);
 
         InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
-        Matches matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
 
         assertThat(matcher.getErrors()).hasSize(1);
         assertThat(matcher.getMatchCount()).isEqualTo(1);
         assertThat(matcher.getQueriesRun()).isEqualTo(2);
+
+        monitor.close();
     }
 
     @Test
@@ -99,6 +101,7 @@ public class TestMonitorErrorHandling {
         assertThat(errors.get(0).id).isEqualTo("2");
         assertThat(monitor.getQueryCount()).isEqualTo(2);
 
+        monitor.close();
     }
 
 }

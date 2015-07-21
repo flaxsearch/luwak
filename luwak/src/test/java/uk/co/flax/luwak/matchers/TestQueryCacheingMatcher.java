@@ -52,6 +52,7 @@ public class TestQueryCacheingMatcher {
         assertThat(match2.matches("1").query).isEqualTo(new TermQuery(new Term("field", "test")));
         assertThat(match2.matches("1").wrappedMatch.getExplanation().isMatch()).isTrue();
 
+        monitor.close();
     }
 
 }

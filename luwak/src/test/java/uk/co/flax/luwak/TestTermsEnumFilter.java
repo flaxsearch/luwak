@@ -47,6 +47,7 @@ public class TestTermsEnumFilter {
         assertThat(query.clauses()).hasSize(2);     // text:world __anytokenfield:__ANYTOKEN__
         assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(1);
 
+        monitor.close();
     }
 
 }
