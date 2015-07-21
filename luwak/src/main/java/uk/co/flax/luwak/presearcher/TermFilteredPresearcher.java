@@ -136,7 +136,7 @@ public class TermFilteredPresearcher extends Presearcher {
     public static final FieldType QUERYFIELDTYPE;
     static {
         QUERYFIELDTYPE = new FieldType(TextField.TYPE_NOT_STORED);
-        QUERYFIELDTYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        QUERYFIELDTYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         QUERYFIELDTYPE.freeze();
     }
 
