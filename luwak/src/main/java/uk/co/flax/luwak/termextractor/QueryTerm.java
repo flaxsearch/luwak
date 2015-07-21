@@ -16,6 +16,8 @@ package uk.co.flax.luwak.termextractor;
  * limitations under the License.
  */
 
+import java.util.Objects;
+
 import org.apache.lucene.index.Term;
 
 /**
@@ -23,11 +25,7 @@ import org.apache.lucene.index.Term;
  */
 public class QueryTerm {
 
-    /** The field of this term */
-    public final String field;
-
-    /** The term value */
-    public final String term;
+    public final Term term;
 
     /** The term type */
     public final Type type;
@@ -38,16 +36,25 @@ public class QueryTerm {
     /**
      * Construct a new QueryTerm
      *
+     * @param term  the term (must not be null)
+     * @param type  the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type} (must not be null)
+     * @param payload extra information
+     */
+    public QueryTerm(Term term, Type type, String payload) {
+        this.term = Objects.requireNonNull(term);
+        this.type = Objects.requireNonNull(type);
+        this.payload = payload;
+    }
+
+    /**
+     * Construct a new QueryTerm
      * @param field the field
-     * @param term  the term
-     * @param type  the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type}
+     * @param term the term
+     * @param type the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type}
      * @param payload extra information
      */
     public QueryTerm(String field, String term, Type type, String payload) {
-        this.field = field;
-        this.term = term;
-        this.type = type;
-        this.payload = payload;
+        this(new Term(field, term), type, payload);
     }
 
     /**
@@ -57,7 +64,7 @@ public class QueryTerm {
      * @param type  the {@link uk.co.flax.luwak.termextractor.QueryTerm.Type}
      */
     public QueryTerm(String field, String term, Type type) {
-        this(field, term, type, null);
+        this(new Term(field, term), type, null);
     }
 
     /**
@@ -77,7 +84,6 @@ public class QueryTerm {
 
         QueryTerm queryTerm = (QueryTerm) o;
 
-        if (field != null ? !field.equals(queryTerm.field) : queryTerm.field != null) return false;
         if (term != null ? !term.equals(queryTerm.term) : queryTerm.term != null) return false;
         if (type != null ? !type.equals(queryTerm.type) : queryTerm.type != null) return false;
         if (payload != null ? !payload.equals(queryTerm.payload) : queryTerm.payload != null) return false;
@@ -87,8 +93,7 @@ public class QueryTerm {
 
     @Override
     public int hashCode() {
-        int result = field != null ? field.hashCode() : 0;
-        result = 31 * result + (term != null ? term.hashCode() : 0);
+        int result = (term != null ? term.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         result = 31 * result + (payload != null ? payload.hashCode() : 0);
         return result;
@@ -96,6 +101,6 @@ public class QueryTerm {
 
     @Override
     public String toString() {
-        return type + " " + field + ":[" + term + (payload == null ? "]" : "]{" + payload + "}");
+        return type + " " + term.toString() + (payload == null ? "" : "{" + payload + "}");
     }
 }

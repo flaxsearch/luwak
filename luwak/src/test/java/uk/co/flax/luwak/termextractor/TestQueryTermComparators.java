@@ -155,8 +155,6 @@ public class TestQueryTermComparators {
                                                 new TermTypeNorm(QueryTerm.Type.CUSTOM, 0.2f),
                                                 new TermTypeNorm(QueryTerm.Type.CUSTOM, "wildcard", 0.1f)));
 
-        //weight = new ReportingWeightor(weight);
-
         QueryTree node1 = new TermNode(new QueryTerm("field", "foo", QueryTerm.Type.EXACT));
         QueryTree node2 = new TermNode(new QueryTerm("field", "fooXX", QueryTerm.Type.CUSTOM, "wildcard"));
         QueryTree node3 = new TermNode(new QueryTerm("field", "wibble", QueryTerm.Type.CUSTOM));
@@ -167,6 +165,8 @@ public class TestQueryTermComparators {
 
         assertThat(weight.select(Sets.newSet(node2, node3)))
                 .isSameAs(node3);
+
+        //weight = new ReportingWeightor(weight);
 
         assertThat(weight.select(Sets.newSet(node2, node4)))
                 .isSameAs(node2);

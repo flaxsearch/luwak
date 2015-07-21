@@ -9,8 +9,11 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefHash;
+import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /*
@@ -118,7 +121,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         }
 
         @Override
-        public void addTerm(String field, String term) {
+        public void addTerm(String field, BytesRef term) {
             for (int i = 0; i < passes; i++) {
                 queries[i].add(new TermQuery(new Term(field(field, i), term)), BooleanClause.Occur.SHOULD);
             }
@@ -140,13 +143,15 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         Document doc = new Document();
 
         for (int i = 0; i < passes; i++) {
-            Map<String, StringBuilder> fieldTerms = collectTerms(querytree);
+            Map<String, BytesRefHash> fieldTerms = collectTerms(querytree);
             debug(querytree, fieldTerms);
-            for (Map.Entry<String, StringBuilder> entry : fieldTerms.entrySet()) {
+            for (Map.Entry<String, BytesRefHash> entry : fieldTerms.entrySet()) {
                 // we add the index terms once under a suffixed field for the multipass query, and
                 // once under the plan field name for the TermsEnumTokenFilter
-                doc.add(new Field(field(entry.getKey(), i), entry.getValue().toString(), QUERYFIELDTYPE));
-                doc.add(new Field(entry.getKey(), entry.getValue().toString(), QUERYFIELDTYPE));
+                doc.add(new Field(field(entry.getKey(), i),
+                        new TermsEnumTokenStream(new BytesRefHashIterator(entry.getValue())), QUERYFIELDTYPE));
+                doc.add(new Field(entry.getKey(),
+                        new TermsEnumTokenStream(new BytesRefHashIterator(entry.getValue())), QUERYFIELDTYPE));
             }
             extractor.advancePhase(querytree, advancer);
         }
@@ -159,5 +164,5 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
      * @param tree the current QueryTree
      * @param terms the terms collected from it
      */
-    protected void debug(QueryTree tree, Map<String, StringBuilder> terms) {}
+    protected void debug(QueryTree tree, Map<String, BytesRefHash> terms) {}
 }
