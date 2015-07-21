@@ -66,6 +66,7 @@ public class TestMonitorPersistence {
         Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
         assertThat(monitor2.match(doc, SimpleMatcher.FACTORY)).hasMatchCount(4);
 
+        monitor2.close();
     }
 
     @After

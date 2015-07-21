@@ -55,6 +55,7 @@ public abstract class ConcurrentMatcherTestBase {
 
         assertThat(matches.getMatchCount()).isEqualTo(1000);
 
+        monitor.close();
     }
 
     @Test
@@ -88,6 +89,7 @@ public abstract class ConcurrentMatcherTestBase {
             assertThat(match.getScore()).isEqualTo(0.2169777f);
         }
 
+        monitor.close();
     }
 
     @Test
