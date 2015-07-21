@@ -60,6 +60,7 @@ public class TestPresearcherMatchCollector {
 
         assertThat(matches.match("4")).isNull();
 
+        monitor.close();
     }
 
 }

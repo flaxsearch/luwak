@@ -68,6 +68,7 @@ public class TestTermsEnumTokenFilter {
             // by TermsEnumTokenStream.  See issue #46
         }
 
+        ts.close();
     }
 
 }

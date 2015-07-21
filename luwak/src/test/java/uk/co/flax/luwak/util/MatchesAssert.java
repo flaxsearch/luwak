@@ -20,13 +20,13 @@ import uk.co.flax.luwak.Matches;
  * limitations under the License.
  */
 
-public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches> {
+public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches<?>> {
 
-    protected MatchesAssert(Matches actual) {
+    protected MatchesAssert(Matches<?> actual) {
         super(actual, MatchesAssert.class);
     }
 
-    public static MatchesAssert assertThat(Matches matches) {
+    public static MatchesAssert assertThat(Matches<?> matches) {
         return new MatchesAssert(matches);
     }
 

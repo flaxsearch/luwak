@@ -45,5 +45,7 @@ public class TestExplainingMatcher {
         Matches<ExplainingMatch> matches = monitor.match(doc1, ExplainingMatcher.FACTORY);
         assertThat(matches.matches("1")).isNotNull();
         assertThat(matches.matches("1").getExplanation()).isNotNull();
+
+        monitor.close();
     }
 }

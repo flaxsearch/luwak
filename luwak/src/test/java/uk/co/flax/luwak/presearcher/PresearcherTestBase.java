@@ -137,7 +137,7 @@ public abstract class PresearcherTestBase {
                 .hasMatchCount(1)
                 .hasQueriesRunCount(1);
 
-
+        monitor.close();
     }
 
 }

@@ -145,6 +145,8 @@ public class TestSuffixingNGramTokenizer {
                 tokencount++;
             }
 
+            ts.close();
+
             System.out.println(tokencount + " tokens in " + (System.currentTimeMillis() - time) + " ms");
         }
 

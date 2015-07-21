@@ -69,6 +69,8 @@ public class TestCachePurging {
 
         Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(result.getMatchCount()).isEqualTo(2);
+
+        monitor.close();
     }
 
     @Test
@@ -127,12 +129,11 @@ public class TestCachePurging {
             Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
             assertThat(matcher.getErrors()).isEmpty();
             assertThat(matcher.getMatchCount()).isEqualTo(340);
-
-
         }
         finally {
             executor.shutdownNow();
         }
+        monitor.close();
 
     }
 
@@ -164,6 +165,7 @@ public class TestCachePurging {
         assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
         assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
 
+        monitor.close();
     }
 
 }
