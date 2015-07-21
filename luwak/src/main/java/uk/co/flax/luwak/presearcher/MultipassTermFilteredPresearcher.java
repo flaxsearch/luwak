@@ -9,6 +9,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
@@ -120,7 +121,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         }
 
         @Override
-        public void addTerm(String field, String term) {
+        public void addTerm(String field, BytesRef term) {
             for (int i = 0; i < passes; i++) {
                 queries[i].add(new TermQuery(new Term(field(field, i), term)), BooleanClause.Occur.SHOULD);
             }

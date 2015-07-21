@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -91,9 +91,10 @@ public class TermFilteredPresearcher extends Presearcher {
                 }
                 ts = filter.filter(field, ts);
 
-                CharTermAttribute termAtt = ts.addAttribute(CharTermAttribute.class);
+                TermToBytesRefAttribute termAtt = ts.addAttribute(TermToBytesRefAttribute.class);
                 while (ts.incrementToken()) {
-                    queryBuilder.addTerm(field, termAtt.toString());
+                    termAtt.fillBytesRef();
+                    queryBuilder.addTerm(field, BytesRef.deepCopyOf(termAtt.getBytesRef()));
                 }
 
             }
@@ -122,7 +123,7 @@ public class TermFilteredPresearcher extends Presearcher {
             BooleanQuery bq = new BooleanQuery();
 
             @Override
-            public void addTerm(String field, String term) {
+            public void addTerm(String field, BytesRef term) {
                 bq.add(new TermQuery(new Term(field, term)), BooleanClause.Occur.SHOULD);
             }
 
