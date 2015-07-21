@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.presearcher;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -20,7 +21,7 @@ import org.apache.lucene.search.Query;
 
 public interface DocumentQueryBuilder {
 
-    void addTerm(String field, String term);
+    void addTerm(String field, BytesRef term);
 
     Query build();
 
