@@ -8,7 +8,6 @@ import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.search.BooleanClause;
 import org.junit.Test;
 import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
