@@ -37,13 +37,15 @@ public class TestExplainingMatcher {
     @Test
     public void testExplainingMatcher() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));
 
-        InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", ANALYZER).build();
+            InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", ANALYZER).build();
 
-        Matches<ExplainingMatch> matches = monitor.match(doc1, ExplainingMatcher.FACTORY);
-        assertThat(matches.matches("1")).isNotNull();
-        assertThat(matches.matches("1").getExplanation()).isNotNull();
+            Matches<ExplainingMatch> matches = monitor.match(doc1, ExplainingMatcher.FACTORY);
+            assertThat(matches.matches("1")).isNotNull();
+            assertThat(matches.matches("1").getExplanation()).isNotNull();
+        }
     }
 }

@@ -34,19 +34,20 @@ public class TestTermsEnumFilter {
     @Test
     public void testOnlyExistingTermsAreUsedInQuery() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher());
-        monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "f:should"), new MonitorQuery("2", "+text:hello +text:world"));
 
-        InputDocument doc = InputDocument.builder("doc")
-                .addField("text", "this is a document about the world saying hello", ANALYZER)
-                .addField("title", "but this text should be ignored", ANALYZER)
-                .build();
+            InputDocument doc = InputDocument.builder("doc")
+                    .addField("text", "this is a document about the world saying hello", ANALYZER)
+                    .addField("title", "but this text should be ignored", ANALYZER)
+                    .build();
 
-        BooleanQuery query = (BooleanQuery) monitor.buildQuery(doc);
+            BooleanQuery query = (BooleanQuery) monitor.buildQuery(doc);
 
-        assertThat(query.clauses()).hasSize(2);     // text:world __anytokenfield:__ANYTOKEN__
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(1);
-
+            assertThat(query.clauses()).hasSize(2);     // text:world __anytokenfield:__ANYTOKEN__
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(1);
+        }
     }
 
 }

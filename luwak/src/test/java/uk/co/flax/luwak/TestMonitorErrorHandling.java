@@ -66,20 +66,22 @@ public class TestMonitorErrorHandling {
     @Test
     public void testMonitorErrors() throws Exception {
 
-        Monitor monitor = new Monitor(createMockCache(), new MatchAllPresearcher());
-        List<QueryError> errors = monitor.update(
+        try (Monitor monitor = new Monitor(createMockCache(), new MatchAllPresearcher()))
+        {
+            List<QueryError> errors = monitor.update(
                 new MonitorQuery("1", "unparseable"),
                 new MonitorQuery("2", "test"),
                 new MonitorQuery("3", "error"));
 
-        assertThat(errors).hasSize(1);
+            assertThat(errors).hasSize(1);
 
-        InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
-        Matches matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+            InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
+            Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
 
-        assertThat(matcher.getErrors()).hasSize(1);
-        assertThat(matcher.getMatchCount()).isEqualTo(1);
-        assertThat(matcher.getQueriesRun()).isEqualTo(2);
+            assertThat(matcher.getErrors()).hasSize(1);
+            assertThat(matcher.getMatchCount()).isEqualTo(1);
+            assertThat(matcher.getQueriesRun()).isEqualTo(2);
+        }
     }
 
     @Test
@@ -91,14 +93,15 @@ public class TestMonitorErrorHandling {
                 .thenThrow(new UnsupportedOperationException("Oops"))
                 .thenReturn(new Document());
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher);
-        List<QueryError> errors
-                = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher))
+        {
+            List<QueryError> errors
+            = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
 
-        assertThat(errors).hasSize(1);
-        assertThat(errors.get(0).id).isEqualTo("2");
-        assertThat(monitor.getQueryCount()).isEqualTo(2);
-
+            assertThat(errors).hasSize(1);
+            assertThat(errors.get(0).id).isEqualTo("2");
+            assertThat(monitor.getQueryCount()).isEqualTo(2);
+        }
     }
 
 }
