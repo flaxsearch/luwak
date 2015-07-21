@@ -91,4 +91,39 @@ public abstract class ConcurrentMatcherTestBase {
             }
         }
     }
+
+    @Test
+    public void testParallelSlowLog() throws IOException {
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+
+        try (Monitor monitor = new Monitor(new TestSlowLog.SlowQueryParser(250), new MatchAllPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
+
+            InputDocument doc1 = InputDocument.builder("doc1").build();
+
+            MatcherFactory<QueryMatch> factory
+            = matcherFactory(executor, SimpleMatcher.FACTORY, 10);
+
+            Matches<QueryMatch> matches = monitor.match(doc1, factory);
+            assertThat(matches.getMatchCount())
+                    .isEqualTo(3);
+            System.out.println(matches.getSlowLog());
+            assertThat(matches.getSlowLog())
+                .contains("1:")
+                .contains("3:")
+                .doesNotContain("2:");
+
+            monitor.setSlowLogLimit(1);
+            assertThat(monitor.match(doc1, factory).getSlowLog())
+                .contains("1:")
+                .contains("2:")
+                .contains("3:");
+
+            monitor.setSlowLogLimit(2000000000000l);
+            assertThat(monitor.match(doc1, factory).getSlowLog())
+                .isEmpty();
+        }
+    }
 }
