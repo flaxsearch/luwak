@@ -3,8 +3,14 @@ package uk.co.flax.luwak.presearcher;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.lucene.analysis.NumericTokenStream;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.BytesRefHash;
+import org.apache.lucene.util.NumericUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
