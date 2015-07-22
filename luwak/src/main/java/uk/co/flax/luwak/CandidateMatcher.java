@@ -33,6 +33,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     private final List<MatchError> errors = new ArrayList<>();
     private final Map<String, T> matches = new HashMap<>();
+    private final Set<String> presearcherHits = new HashSet<>();
 
     private long queryBuildTime = -1;
     private long searchTime = System.nanoTime();
@@ -59,7 +60,12 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public abstract T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    public final T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+        presearcherHits.add(queryId);
+        return doMatchQuery(queryId, matchQuery, highlightQuery);
+    }
+
+    protected abstract T doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
 
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))
@@ -115,6 +121,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     public Matches<T> getMatches() {
-        return new Matches<>(doc.getId(), matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
+        return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
     }
 }

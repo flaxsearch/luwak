@@ -78,7 +78,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    public T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
         return null;
     }

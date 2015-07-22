@@ -36,7 +36,8 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 = new MonitorQuery("1", "furble");
         MonitorQuery query2
                 = new MonitorQuery("2", "document");
-        monitor.update(query1, query2);
+        MonitorQuery query3 = new MonitorQuery("3", "\"a document\"");  // will be selected but not match
+        monitor.update(query1, query2, query3);
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
@@ -45,7 +46,9 @@ public class TestTermPresearcher extends PresearcherTestBase {
         Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(matcher)
                 .hasMatchCount(1)
-                .hasQueriesRunCount(1);
+                .selectedQueries("2", "3")
+                .matchesQuery("2")
+                .hasQueriesRunCount(2);
 
     }
 

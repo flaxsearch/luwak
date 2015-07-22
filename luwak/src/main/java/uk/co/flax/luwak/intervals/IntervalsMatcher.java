@@ -40,7 +40,7 @@ public class IntervalsMatcher extends CandidateMatcher<IntervalsQueryMatch> {
     }
 
     @Override
-    public IntervalsQueryMatch matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    protected IntervalsQueryMatch doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
         IntervalsQueryMatch match = doMatch(queryId, matchQuery, highlightQuery);
         if (match != null)
             this.addMatch(queryId, match);
