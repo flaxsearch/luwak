@@ -29,7 +29,6 @@ import org.apache.lucene.search.Query;
 public abstract class CandidateMatcher<T extends QueryMatch> {
 
     protected final InputDocument doc;
-    protected long slowLogLimit;
 
     private final List<MatchError> errors = new ArrayList<>();
     private final Map<String, T> matches = new HashMap<>();
@@ -39,7 +38,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     private long searchTime = System.nanoTime();
     private int queriesRun = -1;
 
-    protected final StringBuilder slowlog = new StringBuilder();
+    protected final SlowLog slowlog = new SlowLog();
 
     /**
      * Creates a new CandidateMatcher for the supplied InputDocument
@@ -108,7 +107,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * Called by the Monitor
      */
     public void setSlowLogLimit(long t) {
-        this.slowLogLimit = t;
+        this.slowlog.setLimit(t);
     }
 
     /**
@@ -121,6 +120,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     public Matches<T> getMatches() {
-        return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
+        return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog);
     }
 }
