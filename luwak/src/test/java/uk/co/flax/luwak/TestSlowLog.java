@@ -61,29 +61,27 @@ public class TestSlowLog {
     @Test
     public void testSlowLog() throws IOException {
 
-        Monitor monitor = new Monitor(new SlowQueryParser(250), new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
+        try (Monitor monitor = new Monitor(new SlowQueryParser(250), new MatchAllPresearcher())) {
+            monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
 
-        InputDocument doc1 = InputDocument.builder("doc1").build();
+            InputDocument doc1 = InputDocument.builder("doc1").build();
 
-        Matches<QueryMatch> matches = monitor.match(doc1, SimpleMatcher.FACTORY);
-        System.out.println(matches.getSlowLog());
-        assertThat(matches.getSlowLog())
+            Matches<QueryMatch> matches = monitor.match(doc1, SimpleMatcher.FACTORY);
+            System.out.println(matches.getSlowLog());
+            assertThat(matches.getSlowLog())
                 .contains("1:")
                 .contains("3:")
                 .doesNotContain("2:");
 
-        monitor.setSlowLogLimit(1);
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
+            monitor.setSlowLogLimit(1);
+            assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
                 .contains("1:")
                 .contains("2:")
                 .contains("3:");
 
-        monitor.setSlowLogLimit(2000000000000l);
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
+            monitor.setSlowLogLimit(2000000000000l);
+            assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
                 .isEmpty();
-
+        }
     }
-
-
 }

@@ -136,16 +136,22 @@ public class TestSuffixingNGramTokenizer {
 
             long time = System.currentTimeMillis();
 
+            // Cannot use try-with-resources here as we assign to ts in the block. 
             TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator(null));
-            ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
-            //ts = new DuplicateRemovalTokenFilter(ts);
-            int tokencount = 0;
-            ts.reset();
-            while (ts.incrementToken()) {
-                tokencount++;
-            }
+            try {
+                ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
+                //ts = new DuplicateRemovalTokenFilter(ts);
+                int tokencount = 0;
+                ts.reset();
+                while (ts.incrementToken()) {
+                    tokencount++;
+                }
 
-            System.out.println(tokencount + " tokens in " + (System.currentTimeMillis() - time) + " ms");
+                System.out.println(tokencount + " tokens in " + (System.currentTimeMillis() - time) + " ms");
+            }
+            finally {
+                ts.close();
+            }
         }
 
     }
