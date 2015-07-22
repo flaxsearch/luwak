@@ -8,11 +8,13 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.junit.Test;
+
+import uk.co.flax.luwak.matchers.ScoringMatch;
 import uk.co.flax.luwak.matchers.ScoringMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -32,32 +34,33 @@ import static org.fest.assertions.api.Assertions.assertThat;
 
 public class TestSimilarities {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer(Constants.VERSION);
+    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     @Test
     public void testNonStandardSimilarity() throws IOException {
 
-        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", "test"));
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
+        {
+            monitor.update(new MonitorQuery("1", "test"));
 
-        Similarity similarity = new DefaultSimilarity() {
-            @Override
-            public float tf(float freq) {
-                return 1000f;
-            }
-        };
+            Similarity similarity = new DefaultSimilarity() {
+                @Override
+                public float tf(float freq) {
+                    return 1000f;
+                }
+            };
 
-        InputDocument doc = InputDocument.builder("doc")
-                .addField("field", "this is a test", ANALYZER).build();
-        InputDocument docWithSim = InputDocument.builder("docWithSim")
-                .addField("field", "this is a test", ANALYZER)
-                .setSimilarity(similarity).build();
+            InputDocument doc = InputDocument.builder("doc")
+                    .addField("field", "this is a test", ANALYZER).build();
+            InputDocument docWithSim = InputDocument.builder("docWithSim")
+                    .addField("field", "this is a test", ANALYZER)
+                    .setSimilarity(similarity).build();
 
-        ScoringMatcher standard = monitor.match(doc, ScoringMatcher.FACTORY);
-        ScoringMatcher withSim = monitor.match(docWithSim, ScoringMatcher.FACTORY);
+            Matches<ScoringMatch> standard = monitor.match(doc, ScoringMatcher.FACTORY);
+            Matches<ScoringMatch> withSim = monitor.match(docWithSim, ScoringMatcher.FACTORY);
 
-        assertThat(Iterables.getFirst(standard, null).getScore())
-                .isEqualTo(Iterables.getFirst(withSim, null).getScore() / 1000);
+            assertThat(Iterables.getFirst(standard, null).getScore())
+                    .isEqualTo(Iterables.getFirst(withSim, null).getScore() / 1000);
+        }
     }
-
 }
