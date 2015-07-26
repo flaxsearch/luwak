@@ -62,10 +62,12 @@ public class TestCachePurging {
             monitor.deleteById("1");
             assertThat(monitor.getQueryCount()).isEqualTo(2);
             assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
+            assertThat(monitor.getIndexStats().segmentString).isNotEmpty();
             assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(2);
 
             monitor.purgeCache();
             assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
+            assertThat(monitor.getIndexStats().segmentString).isNotEmpty();
 
             Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
             assertThat(result.getMatchCount()).isEqualTo(2);
@@ -122,11 +124,13 @@ public class TestCachePurging {
                 finishUpdating.await();
 
                 assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
+                assertThat(monitor.getIndexStats().segmentString).isNotEmpty();
                 InputDocument doc = InputDocument.builder("doc1")
                         .addField("field", "test", new WhitespaceAnalyzer()).build();
                 Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
                 assertThat(matcher.getErrors()).isEmpty();
                 assertThat(matcher.getMatchCount()).isEqualTo(340);
+                assertThat(monitor.getIndexStats().segmentString).isNotEmpty();
             }
             finally {
                 executor.shutdownNow();
@@ -161,6 +165,7 @@ public class TestCachePurging {
             assertThat(monitor.getStats().queries).isEqualTo(99);
             assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
             assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
+            assertThat(monitor.getIndexStats().segmentString).isNotEmpty();
         }
     }
 }

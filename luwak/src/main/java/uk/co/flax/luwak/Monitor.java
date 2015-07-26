@@ -147,7 +147,7 @@ public class Monitor implements Closeable {
         /** Total number of queries in the query index */
         public final int queries;
 
-        /** Total number of queries int the query cache */
+        /** Total number of queries in the query cache */
         public final int cachedQueries;
 
         /** Time the query cache was last purged */
@@ -157,6 +157,31 @@ public class Monitor implements Closeable {
             this.queries = queries;
             this.cachedQueries = cachedQueries;
             this.lastPurged = lastPurged;
+        }
+    }
+
+    /**
+     * Statistics for the query index
+     */
+    public static class IndexStats {
+
+        /** Number of documents in RAM waiting to be committed */
+        public final int ramDocs;
+
+        /** Total number of bytes used in memory */
+        public final long ramBytes;
+
+        /** Segment info as a string */
+        public final String segmentString;
+
+        /** Directory of the index (for caller to calculate size) */
+        public final Directory indexDirectory;
+
+        public IndexStats(int ramDocs, long ramBytes, String segmentString, Directory indexDirectory) {
+            this.ramDocs = ramDocs;
+            this.ramBytes = ramBytes;
+            this.segmentString = segmentString;
+            this.indexDirectory = indexDirectory;
         }
     }
 
@@ -199,6 +224,13 @@ public class Monitor implements Closeable {
      */
     public CacheStats getStats() {
         return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
+    }
+
+    /**
+     * @return Statistics for the internal query index
+     */
+    public IndexStats getIndexStats() {
+        return new IndexStats(this.writer.numRamDocs(), this.writer.ramBytesUsed(), this.writer.segString(), this.writer.getDirectory());
     }
 
     private void commit(List<CacheEntry> updates) throws IOException {
