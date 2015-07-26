@@ -546,6 +546,13 @@ public class Monitor implements Closeable {
      * @throws java.io.IOException on IO errors
      */
     public int getQueryCount() throws IOException {
+        return getQueryIds().size();
+    }
+
+    /**
+     * @return the set of query ids of the queries stored in this Monitor
+     */
+    public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
@@ -553,7 +560,7 @@ public class Monitor implements Closeable {
                 ids.add(queryId);
             }
         });
-        return ids.size();
+        return ids;
     }
 
     /**
