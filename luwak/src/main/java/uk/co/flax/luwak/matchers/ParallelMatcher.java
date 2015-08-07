@@ -69,7 +69,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     }
 
     @Override
-    public T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         try {
             queue.put(new MatcherTask(queryId, matchQuery, highlightQuery));
         } catch (InterruptedException e) {
@@ -106,7 +106,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
                 for (MatchError error : matches.getErrors()) {
                     this.reportError(error);
                 }
-                this.slowlog.append(matches.getSlowLog());
+                this.slowlog.addAll(matches.getSlowLog());
             }
 
         } catch (InterruptedException | ExecutionException e) {
@@ -121,7 +121,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
         private MatcherWorker(MatcherFactory<T> matcherFactory) {
             this.matcher = matcherFactory.createMatcher(doc);
-            this.matcher.setSlowLogLimit(slowLogLimit);
+            this.matcher.setSlowLogLimit(slowlog.getLimit());
         }
 
         @Override

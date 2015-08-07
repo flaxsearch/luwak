@@ -28,17 +28,19 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
     private final String docId;
 
     private final Map<String, T> matches;
+    private final Set<String> presearcherHits;
     private final List<MatchError> errors;
 
     private final long queryBuildTime;
     private final long searchTime;
     private final int queriesRun;
 
-    protected final String slowlog;
+    private final SlowLog slowlog;
 
-    public Matches(String docId, Map<String, T> matches, List<MatchError> errors,
-                   long queryBuildTime, long searchTime, int queriesRun, String slowlog) {
+    public Matches(String docId, Set<String> presearcherHits, Map<String, T> matches, List<MatchError> errors,
+                   long queryBuildTime, long searchTime, int queriesRun, SlowLog slowlog) {
         this.docId = docId;
+        this.presearcherHits = Collections.unmodifiableSet(presearcherHits);
         this.matches = Collections.unmodifiableMap(matches);
         this.errors = Collections.unmodifiableList(errors);
         this.queryBuildTime = queryBuildTime;
@@ -73,6 +75,13 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
      */
     public Collection<T> getMatches() {
         return matches.values();
+    }
+
+    /**
+     * @return ids of all queries selected by the presearcher
+     */
+    public Set<String> getPresearcherHits() {
+        return presearcherHits;
     }
 
     /**
@@ -118,7 +127,7 @@ public class Matches<T extends QueryMatch> implements Iterable<T> {
      *
      * @return the slow log
      */
-    public String getSlowLog() {
+    public SlowLog getSlowLog() {
         return slowlog;
     }
 

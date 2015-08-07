@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.util.BytesRefHash;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
@@ -12,7 +13,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
-/**
+/*
  * Copyright (c) 2013 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +28,7 @@ import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 public class TestTermPresearcher extends PresearcherTestBase {
 
     @Test
@@ -36,7 +38,8 @@ public class TestTermPresearcher extends PresearcherTestBase {
                 = new MonitorQuery("1", "furble");
         MonitorQuery query2
                 = new MonitorQuery("2", "document");
-        monitor.update(query1, query2);
+        MonitorQuery query3 = new MonitorQuery("3", "\"a document\"");  // will be selected but not match
+        monitor.update(query1, query2, query3);
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField(TEXTFIELD, "this is a test document", WHITESPACE)
@@ -45,7 +48,9 @@ public class TestTermPresearcher extends PresearcherTestBase {
         Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
         assertThat(matcher)
                 .hasMatchCount(1)
-                .hasQueriesRunCount(1);
+                .selectedQueries("2", "3")
+                .matchesQuery("2")
+                .hasQueriesRunCount(2);
 
     }
 
@@ -97,7 +102,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
         TermFilteredPresearcher presearcher = new TermFilteredPresearcher();
         QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery());
 
-        Map<String, StringBuilder> extractedTerms = presearcher.collectTerms(qt);
+        Map<String, BytesRefHash> extractedTerms = presearcher.collectTerms(qt);
 
         Assertions.assertThat(extractedTerms.size()).isEqualTo(1);
 

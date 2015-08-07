@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
@@ -53,7 +53,6 @@ public class Monitor implements Closeable {
     private final QueryDecomposer decomposer;
     private final QuerySpanRewriter rewriter = new QuerySpanRewriter();
 
-    private final Directory directory;
     private final IndexWriter writer;
     private final SearcherManager manager;
 
@@ -83,23 +82,24 @@ public class Monitor implements Closeable {
     private long lastPurged = -1;
 
     /**
-     * Create a new Monitor instance, using a passed in Directory for its queryindex
+     * Create a new Monitor instance, using a passed in IndexWriter for its queryindex
+     *
+     * Note that when the Monitor is closed, both the IndexWriter and its underlying
+     * Directory will also be closed.
+     *
      * @param queryParser the query parser to use
      * @param presearcher the presearcher to use
-     * @param directory the directory where the queryindex is stored
+     * @param indexWriter an indexWriter for the query index
      * @param decomposer the QueryDecomposer to use
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher,
-                   Directory directory, QueryDecomposer decomposer) throws IOException {
+                   IndexWriter indexWriter, QueryDecomposer decomposer) throws IOException {
 
         this.queryParser = queryParser;
         this.presearcher = presearcher;
-        this.directory = directory;
         this.decomposer = decomposer;
-
-        IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
-        this.writer = new IndexWriter(directory, configureIndexWriterConfig(iwc));
+        this.writer = indexWriter;
 
         this.manager = new SearcherManager(writer, true, new SearcherFactory());
 
@@ -127,18 +127,41 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
-        this(queryParser, presearcher, new RAMDirectory(), new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new QueryDecomposer());
     }
 
     /**
-     * Create a new Monitor instance, using the default QueryDecomposer
+     * Create a new Monitor instance, using the default QueryDecomposer and IndexWriter configuration
      * @param queryParser the query parser to use
      * @param presearcher the presearcher to use
      * @param directory the directory where the queryindex is stored
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
-        this(queryParser, presearcher, directory, new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(directory), new QueryDecomposer());
+    }
+
+    /**
+     * Create a new Monitor instance, using the default QueryDecomposer
+     * @param queryParser the query parser to use
+     * @param presearcher the presearcher to use
+     * @param indexWriter a {@link IndexWriter} for the Monitor's query index
+     * @throws IOException on IO errors
+     */
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, IndexWriter indexWriter) throws IOException {
+        this(queryParser, presearcher, indexWriter, new QueryDecomposer());
+    }
+
+    private static IndexWriter defaultIndexWriter(Directory directory) throws IOException {
+
+        IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
+        TieredMergePolicy mergePolicy = new TieredMergePolicy();
+        mergePolicy.setSegmentsPerTier(4);
+        iwc.setMergePolicy(mergePolicy);
+        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+
+        return new IndexWriter(directory, iwc);
+
     }
 
     /**
@@ -277,19 +300,6 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Configure the IndexWriterConfig for the internal query cache
-     * @param iwc the default IndexWriterConfig
-     * @return the IndexWriterConfig to use
-     */
-    protected IndexWriterConfig configureIndexWriterConfig(IndexWriterConfig iwc) {
-        TieredMergePolicy mergePolicy = new TieredMergePolicy();
-        mergePolicy.setSegmentsPerTier(4);
-        iwc.setMergePolicy(mergePolicy);
-        iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        return iwc;
-    }
-
-    /**
      * Configure the frequency with which the query cache will be purged.
      *
      * Default = 5 minutes
@@ -317,7 +327,7 @@ public class Monitor implements Closeable {
     @Override
     public void close() throws IOException {
         purgeExecutor.shutdown();
-        IOUtils.closeWhileHandlingException(manager, writer, directory);
+        IOUtils.closeWhileHandlingException(manager, writer, writer.getDirectory());
     }
 
     /**
@@ -551,6 +561,13 @@ public class Monitor implements Closeable {
      * @throws java.io.IOException on IO errors
      */
     public int getQueryCount() throws IOException {
+        return getQueryIds().size();
+    }
+
+    /**
+     * @return the set of query ids of the queries stored in this Monitor
+     */
+    public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
@@ -558,7 +575,7 @@ public class Monitor implements Closeable {
                 ids.add(queryId);
             }
         });
-        return ids.size();
+        return ids;
     }
 
     /**

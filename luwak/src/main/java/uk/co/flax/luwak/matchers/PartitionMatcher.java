@@ -79,7 +79,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    public T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
         return null;
     }
@@ -95,7 +95,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         List<Callable<Matches<T>>> workers = new ArrayList<>(threads);
         for (List<MatchTask> taskset : CollectionUtils.partition(tasks, threads)) {
             CandidateMatcher<T> matcher = matcherFactory.createMatcher(doc);
-            matcher.setSlowLogLimit(this.slowLogLimit);
+            matcher.setSlowLogLimit(this.slowlog.getLimit());
             workers.add(new MatcherWorker(taskset, matcher));
         }
 
@@ -105,7 +105,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
                 for (T match : matches) {
                     addMatch(match.getQueryId(), match);
                 }
-                this.slowlog.append(matches.getSlowLog());
+                this.slowlog.addAll(matches.getSlowLog());
             }
 
         } catch (InterruptedException | ExecutionException e) {

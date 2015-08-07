@@ -40,7 +40,7 @@ public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
     }
 
     @Override
-    public ExplainingMatch matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected ExplainingMatch doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         Explanation explanation = doc.getSearcher().explain(matchQuery, 0);
         if (!explanation.isMatch())
             return null;

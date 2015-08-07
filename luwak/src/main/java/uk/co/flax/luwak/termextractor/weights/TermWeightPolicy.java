@@ -30,8 +30,8 @@ public class TermWeightPolicy extends WeightPolicy {
 
     @Override
     public float weighTerm(QueryTerm term) {
-        if (this.terms.containsKey(term.term))
-            return this.terms.get(term.term);
+        if (this.terms.containsKey(term.term.text()))
+            return this.terms.get(term.term.text());
         return 1;
     }
 

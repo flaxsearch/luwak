@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.analysis.SuffixingNGramTokenFilter;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
@@ -83,9 +84,9 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
     }
 
     @Override
-    public String extraToken(QueryTerm term) {
+    public BytesRef extraToken(QueryTerm term) {
         if (term.type == QueryTerm.Type.CUSTOM && wildcardToken.equals(term.payload))
-            return wildcardToken;
+            return new BytesRef(wildcardToken);
         return null;
     }
 }

@@ -24,15 +24,27 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.MonitorQueryParser;
 
+/**
+ * A query parser that uses the default Lucene parser
+ */
 public class LuceneQueryParser implements MonitorQueryParser {
 
     private final QueryParser parser;
 
+    /**
+     * Creates a parser with a given default field and analyzer
+     * @param defaultField the default field
+     * @param analyzer an analyzer to use to analyzer query terms
+     */
     public LuceneQueryParser(String defaultField, Analyzer analyzer) {
         super();
         this.parser = new QueryParser(defaultField, analyzer);
     }
 
+    /**
+     * Creates a parser using a lucene {@link StandardAnalyzer}
+     * @param defaultField the default field
+     */
     public LuceneQueryParser(String defaultField) {
         this(defaultField,  new StandardAnalyzer());
     }

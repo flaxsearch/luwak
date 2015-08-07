@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
@@ -79,7 +80,7 @@ public class PresearcherComponent {
      *
      * @return a token to index, or null if no extra token is required
      */
-    public String extraToken(QueryTerm term) {
+    public BytesRef extraToken(QueryTerm term) {
         return null;
     }
 

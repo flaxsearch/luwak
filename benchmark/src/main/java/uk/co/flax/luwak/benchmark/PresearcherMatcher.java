@@ -36,7 +36,7 @@ public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
     }
 
     @Override
-    public PresearcherMatch matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected PresearcherMatch doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         return new PresearcherMatch(queryId);
     }
 

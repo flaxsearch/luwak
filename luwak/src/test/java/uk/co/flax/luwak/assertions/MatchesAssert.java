@@ -1,5 +1,6 @@
 package uk.co.flax.luwak.assertions;
 
+import com.google.common.collect.Lists;
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
 import uk.co.flax.luwak.Matches;
@@ -20,13 +21,13 @@ import uk.co.flax.luwak.Matches;
  * limitations under the License.
  */
 
-public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches> {
+public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches<?>> {
 
-    protected MatchesAssert(Matches actual) {
+    protected MatchesAssert(Matches<?> actual) {
         super(actual, MatchesAssert.class);
     }
 
-    public static MatchesAssert assertThat(Matches matches) {
+    public static MatchesAssert assertThat(Matches<?> matches) {
         return new MatchesAssert(matches);
     }
 
@@ -52,6 +53,16 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches> {
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
                         count, actual.getQueriesRun())
                 .isEqualTo(count);
+        return this;
+    }
+
+    public MatchesAssert selectedQuery(String queryId) {
+        Assertions.assertThat(actual.getPresearcherHits().contains(queryId));
+        return this;
+    }
+
+    public MatchesAssert selectedQueries(String queryId, String... queryIds) {
+        Assertions.assertThat(actual.getPresearcherHits().containsAll(Lists.asList(queryId, queryIds)));
         return this;
     }
 

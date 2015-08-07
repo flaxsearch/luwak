@@ -1,10 +1,7 @@
 package uk.co.flax.luwak;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.search.Query;
@@ -33,16 +30,16 @@ import org.apache.lucene.search.spans.SpanQuery;
 public abstract class CandidateMatcher<T extends QueryMatch> {
 
     protected final InputDocument doc;
-    protected long slowLogLimit;
 
     private final List<MatchError> errors = new ArrayList<>();
     private final Map<String, T> matches = new HashMap<>();
+    private final Set<String> presearcherHits = new HashSet<>();
 
     private long queryBuildTime = -1;
     private long searchTime = System.nanoTime();
     private int queriesRun = -1;
 
-    protected final StringBuilder slowlog = new StringBuilder();
+    protected final SlowLog slowlog = new SlowLog();
 
     /**
      * Creates a new CandidateMatcher for the supplied InputDocument
@@ -63,7 +60,12 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public abstract T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException;
+    public final T matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+        presearcherHits.add(queryId);
+        return doMatchQuery(queryId, matchQuery, highlightQuery);
+    }
+
+    protected abstract T doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException;
 
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))
@@ -106,7 +108,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * Called by the Monitor
      */
     public void setSlowLogLimit(long t) {
-        this.slowLogLimit = t;
+        this.slowlog.setLimit(t);
     }
 
     /**
@@ -119,6 +121,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     public Matches<T> getMatches() {
-        return new Matches<>(doc.getId(), matches, errors, queryBuildTime, searchTime, queriesRun, slowlog.toString());
+        return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog);
     }
 }

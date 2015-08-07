@@ -36,7 +36,7 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
     }
 
     @Override
-    public W matchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected W doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
         M match = matcher.matchQuery(queryId, matchQuery, highlightQuery);
         if (match == null)
             return wrapMiss(queryId, matchQuery, highlightQuery);
