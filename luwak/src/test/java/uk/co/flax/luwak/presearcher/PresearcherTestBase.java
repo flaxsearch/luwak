@@ -161,11 +161,6 @@ public abstract class PresearcherTestBase {
     static class BytesRefAttribute extends AttributeImpl implements TermToBytesRefAttribute {
 
         @Override
-        public void fillBytesRef() {
-
-        }
-
-        @Override
         public BytesRef getBytesRef() {
             return NON_STRING_TERM;
         }

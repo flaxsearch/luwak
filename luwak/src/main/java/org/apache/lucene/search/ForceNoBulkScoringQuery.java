@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.util.Bits;
 
 public class ForceNoBulkScoringQuery extends Query {
 
@@ -57,8 +56,8 @@ public class ForceNoBulkScoringQuery extends Query {
             }
 
             @Override
-            public Scorer scorer(LeafReaderContext leafReaderContext, Bits bits) throws IOException {
-                return innerWeight.scorer(leafReaderContext, bits);
+            public Scorer scorer(LeafReaderContext leafReaderContext) throws IOException {
+                return innerWeight.scorer(leafReaderContext);
             }
         };
     }
