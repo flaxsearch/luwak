@@ -19,7 +19,7 @@ import org.apache.lucene.search.*;
 
 public class SpanRewriter {
 
-    public static Query rewrite(Query in) {
+    public Query rewrite(Query in) {
         if (in instanceof SpanQuery)
             return in;
         if (in instanceof TermQuery)
@@ -29,14 +29,14 @@ public class SpanRewriter {
         if (in instanceof MultiTermQuery)
             return rewriteMultiTermQuery((MultiTermQuery)in);
 
-        throw new IllegalArgumentException("Don't know how to rewrite " + in.getClass());
+        return rewriteUnknown(in);
     }
 
-    public static Query rewriteTermQuery(TermQuery tq) {
+    protected Query rewriteTermQuery(TermQuery tq) {
         return new SpanTermQuery(tq.getTerm());
     }
 
-    public static Query rewriteBoolean(BooleanQuery bq) {
+    protected Query rewriteBoolean(BooleanQuery bq) {
         BooleanQuery newbq = new BooleanQuery();
         for (BooleanClause clause : bq) {
             newbq.add(rewrite(clause.getQuery()), clause.getOccur());
@@ -44,8 +44,12 @@ public class SpanRewriter {
         return newbq;
     }
 
-    public static Query rewriteMultiTermQuery(MultiTermQuery mtq) {
+    protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {
         return new SpanMultiTermQueryWrapper<>(mtq);
+    }
+
+    protected Query rewriteUnknown(Query query) {
+        throw new IllegalArgumentException("Don't know how to rewrite " + query.getClass());
     }
 
 }

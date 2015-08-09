@@ -9,8 +9,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.search.spans.SpanRewriter;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -50,21 +48,9 @@ public class TestHighlightingMatcher {
                 .build();
     }
 
-    public static class SpanRewriterParser extends LuceneQueryParser {
-
-        public SpanRewriterParser(String defaultField) {
-            super(defaultField);
-        }
-
-        @Override
-        public Query parse(String query, Map<String, String> metadata) throws Exception {
-            return SpanRewriter.rewrite(super.parse(query, metadata));
-        }
-    }
-
     @Before
     public void setUp() throws IOException {
-        monitor = new Monitor(new SpanRewriterParser(textfield), new MatchAllPresearcher());
+        monitor = new Monitor(new LuceneQueryParser(textfield), new MatchAllPresearcher());
     }
 
     @Test
@@ -169,7 +155,7 @@ public class TestHighlightingMatcher {
         monitor = new Monitor(new MonitorQueryParser() {
             @Override
             public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term(textfield, "he.*")));
+                return new RegexpQuery(new Term(textfield, "he.*"));
             }
         }, new MatchAllPresearcher());
 

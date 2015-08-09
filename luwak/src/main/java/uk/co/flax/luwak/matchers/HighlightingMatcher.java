@@ -7,8 +7,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanExtractor;
+import org.apache.lucene.search.spans.SpanRewriter;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
@@ -41,8 +42,11 @@ import uk.co.flax.luwak.MatcherFactory;
 
 public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
-    public HighlightingMatcher(InputDocument doc) {
+    private final SpanRewriter rewriter;
+
+    public HighlightingMatcher(InputDocument doc, SpanRewriter rewriter) {
         super(doc);
+        this.rewriter = rewriter;
     }
 
     @Override
@@ -85,7 +89,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
             }
         };
 
-        doc.getSearcher().search(query, new SimpleCollector() {
+        doc.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
 
             Scorer scorer;
 
@@ -116,8 +120,17 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {
         @Override
         public HighlightingMatcher createMatcher(InputDocument doc) {
-            return new HighlightingMatcher(doc);
+            return new HighlightingMatcher(doc, new SpanRewriter());
         }
     };
+
+    public static MatcherFactory<HighlightsMatch> factory(final SpanRewriter rewriter) {
+        return new MatcherFactory<HighlightsMatch>() {
+            @Override
+            public CandidateMatcher<HighlightsMatch> createMatcher(InputDocument doc) {
+                return new HighlightingMatcher(doc, rewriter);
+            }
+        };
+    }
 
 }
