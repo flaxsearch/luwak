@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
+
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
 
@@ -21,7 +23,7 @@ import org.apache.lucene.util.BytesRef;
 
 public interface DocumentQueryBuilder {
 
-    void addTerm(String field, BytesRef term);
+    void addTerm(String field, BytesRef term) throws IOException;
 
     Query build();
 

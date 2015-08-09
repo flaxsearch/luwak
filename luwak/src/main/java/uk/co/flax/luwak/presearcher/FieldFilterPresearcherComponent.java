@@ -63,10 +63,10 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         if (filterClause == null)
             return presearcherQuery;
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(presearcherQuery, BooleanClause.Occur.MUST);
         bq.add(filterClause, BooleanClause.Occur.MUST);
-        return bq;
+        return bq.build();
     }
 
     private Query buildFilterClause(InputDocument doc) throws IOException {

@@ -1,10 +1,13 @@
 package uk.co.flax.luwak.presearcher;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -102,8 +105,8 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     }
 
     @Override
-    protected DocumentQueryBuilder getQueryBuilder() {
-        return new MultipassDocumentQueryBuilder();
+    protected DocumentQueryBuilder getQueryBuilder(IndexReaderContext ctx) {
+        return new MultipassDocumentQueryBuilder(ctx);
     }
 
     static String field(String field, int pass) {
@@ -112,28 +115,33 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private class MultipassDocumentQueryBuilder implements DocumentQueryBuilder {
 
-        BooleanQuery[] queries = new BooleanQuery[passes];
+        BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
+        final IndexReaderContext ctx;
 
-        public MultipassDocumentQueryBuilder() {
+        public MultipassDocumentQueryBuilder(IndexReaderContext ctx) {
+            this.ctx = ctx;
             for (int i = 0; i < queries.length; i++) {
-                queries[i] = new BooleanQuery();
+                queries[i] = new BooleanQuery.Builder();
             }
         }
 
         @Override
-        public void addTerm(String field, BytesRef term) {
+        public void addTerm(String field, BytesRef term) throws IOException {
             for (int i = 0; i < passes; i++) {
-                queries[i].add(new SpanTermQuery(new Term(field(field, i), term)), BooleanClause.Occur.SHOULD);
+                Term t = new Term(field(field, i), term);
+                TermContext tc = TermContext.build(ctx, t);
+                if (tc.docFreq() > 0)
+                    queries[i].add(new SpanTermQuery(t, tc), BooleanClause.Occur.SHOULD);
             }
         }
 
         @Override
         public Query build() {
-            BooleanQuery parent = new BooleanQuery();
-            for (BooleanQuery child : queries) {
-                parent.add(child, BooleanClause.Occur.MUST);
+            BooleanQuery.Builder parent = new BooleanQuery.Builder();
+            for (BooleanQuery.Builder child : queries) {
+                parent.add(child.build(), BooleanClause.Occur.MUST);
             }
-            return parent;
+            return parent.build();
         }
     }
 

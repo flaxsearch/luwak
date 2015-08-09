@@ -10,8 +10,8 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.assertions.TokenStreamAssert;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -124,4 +124,5 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
                 .nextEquals("__wibble__")
                 .isExhausted();
     }
+
 }

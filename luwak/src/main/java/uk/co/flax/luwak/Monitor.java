@@ -14,15 +14,14 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
-import uk.co.flax.luwak.presearcher.TermsEnumFilter;
 
 /*
  * Copyright (c) 2015 Lemur Consulting Ltd.
@@ -471,12 +470,6 @@ public class Monitor implements Closeable {
         commit(null);
     }
 
-    Query buildQuery(InputDocument doc) throws IOException {
-        try (TermsEnumFilter filter = new TermsEnumFilter(writer)) {
-            return presearcher.buildQuery(doc, filter);
-        }
-    }
-
     /**
      * Match an {@link InputDocument} against the queryindex, calling a {@link CandidateMatcher} produced by the
      * supplied {@link MatcherFactory} for each matching query.
@@ -493,18 +486,21 @@ public class Monitor implements Closeable {
         return matcher.getMatches();
     }
 
-    private void match(InputDocument doc, MonitorQueryCollector collector) throws IOException {
-        match(buildQuery(doc), collector);
-    }
-
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
 
         long buildTime = System.nanoTime();
-        Query query = buildQuery(matcher.getDocument());
-        buildTime = (System.nanoTime() - buildTime) / 1000000;
-
         MatchingCollector<T> collector = new MatchingCollector<>(matcher);
-        match(query, collector);
+        IndexSearcher searcher = null;
+        try {
+            searcher = manager.acquire();
+            Query query = presearcher.buildQuery(matcher.getDocument(), searcher.getTopReaderContext());
+            buildTime = (System.nanoTime() - buildTime) / 1000000;
+            collector.setQueryMap(this.queries);
+            searcher.search(query, collector);
+        }
+        finally {
+            manager.release(searcher);
+        }
         matcher.finish(buildTime, collector.getQueryCount());
 
     }
@@ -579,12 +575,12 @@ public class Monitor implements Closeable {
      */
     public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory)
             throws IOException {
-        Query presearcherQuery = new ForceNoBulkScoringQuery(buildQuery(doc));
         IndexSearcher searcher = null;
         try {
             searcher = manager.acquire();
             PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
             collector.setQueryMap(queries);
+            Query presearcherQuery = new ForceNoBulkScoringQuery(presearcher.buildQuery(doc, searcher.getTopReaderContext()));
             searcher.search(presearcherQuery, collector);
             return collector.getMatches();
         }
