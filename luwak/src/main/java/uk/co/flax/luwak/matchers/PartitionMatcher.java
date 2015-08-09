@@ -9,7 +9,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.util.CollectionUtils;
 
@@ -59,12 +58,10 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
         final String queryId;
         final Query matchQuery;
-        final List<SpanQuery> highlightQuery;
 
-        private MatchTask(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) {
+        private MatchTask(String queryId, Query matchQuery) {
             this.queryId = queryId;
             this.matchQuery = matchQuery;
-            this.highlightQuery = highlightQuery;
         }
     }
 
@@ -79,8 +76,8 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
-        tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
+    protected T doMatchQuery(String queryId, Query matchQuery) throws IOException {
+        tasks.add(new MatchTask(queryId, matchQuery));
         return null;
     }
 
@@ -129,7 +126,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         public Matches<T> call() {
             for (MatchTask task : tasks) {
                 try {
-                    matcher.matchQuery(task.queryId, task.matchQuery, task.highlightQuery);
+                    matcher.matchQuery(task.queryId, task.matchQuery);
                 } catch (IOException e) {
                     PartitionMatcher.this.reportError(new MatchError(task.queryId, e));
                 }

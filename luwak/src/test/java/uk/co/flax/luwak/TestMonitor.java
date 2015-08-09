@@ -92,12 +92,6 @@ public class TestMonitor {
     }
 
     @Test
-    public void canAddEmptyHighlightQueries() throws IOException {
-        monitor.update(new MonitorQuery("1", "query", ""));
-        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(1);
-    }
-
-    @Test
     public void canDeleteById() throws IOException {
 
         monitor.update(new MonitorQuery("query1", "this"));
@@ -117,12 +111,12 @@ public class TestMonitor {
     @Test
     public void canRetrieveQuery() throws IOException {
 
-        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that", "hl"));
+        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that"));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
         Assertions.assertThat(monitor.getQueryIds()).contains("query1", "query2");
 
         MonitorQuery mq = monitor.getQuery("query2");
-        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that", "hl"));
+        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that"));
 
     }
 

@@ -46,7 +46,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
     }
 
     @Override
-    protected T doMatchQuery(final String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    protected T doMatchQuery(final String queryId, Query matchQuery) throws IOException {
 
         MatchCollector coll = new MatchCollector(queryId);
 

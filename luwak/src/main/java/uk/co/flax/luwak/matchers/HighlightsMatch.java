@@ -32,6 +32,7 @@ public class HighlightsMatch extends QueryMatch {
     private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
 
     private final Map<String, List<Hit>> hits;
+    public String error;
 
     /**
      * Create a new QueryMatch object for a query

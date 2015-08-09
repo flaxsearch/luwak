@@ -1,18 +1,17 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MatcherFactory;
-import uk.co.flax.luwak.util.MultiSpans;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -47,8 +46,8 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     @Override
-    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
-        HighlightsMatch match = doMatch(queryId, matchQuery, highlightQuery);
+    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery) throws IOException {
+        HighlightsMatch match = doMatch(queryId, matchQuery);
         if (match != null)
             this.addMatch(queryId, match);
         return match;
@@ -68,49 +67,50 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
         return HighlightsMatch.merge(match1.getQueryId(), match1, match2);
     }
 
-    private HighlightsMatch doMatch(String queryId, Query matchQuery, List<SpanQuery> highlightQuery) throws IOException {
+    private HighlightsMatch doMatch(String queryId, Query query) throws IOException {
 
-        if (doc.getSearcher().count(matchQuery) == 0)
+        if (doc.getSearcher().count(query) == 0)
             return null;
 
-        MultiSpans multiSpans = new MultiSpans(highlightQuery, doc.getSearcher());
-        Spans spans = multiSpans.getSpans(doc.asAtomicReader().getContext());
+        final HighlightsMatch match = new HighlightsMatch(queryId);
+        final SpanCollector collector = new SpanCollector() {
+            @Override
+            public void collectLeaf(PostingsEnum postingsEnum, int pos, Term term) throws IOException {
+                match.addHit(term.field(), pos, pos, postingsEnum.startOffset(), postingsEnum.endOffset());
+            }
 
-        HighlightsMatch match = new HighlightsMatch(queryId);
-        SpanOffsetsCollector collector = new SpanOffsetsCollector();
+            @Override
+            public void reset() {
 
-        spans.advance(0);
-        while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-            collector.reset();
-            spans.collect(collector);
-            match.addHit(collector.field, collector.startpos, collector.endpos, collector.startoffset, collector.endoffset);
-        }
+            }
+        };
+
+        doc.getSearcher().search(query, new SimpleCollector() {
+
+            Scorer scorer;
+
+            @Override
+            public void collect(int i) throws IOException {
+                try {
+                    SpanExtractor.collect(scorer, collector, true);
+                }
+                catch (Exception e) {
+                    match.error = e.getMessage();
+                }
+            }
+
+            @Override
+            public void setScorer(Scorer scorer) throws IOException {
+                this.scorer = scorer;
+            }
+
+            @Override
+            public boolean needsScores() {
+                return false;
+            }
+        });
 
         return match;
-    }
-
-    private static class SpanOffsetsCollector implements SpanCollector {
-
-        int startpos = Integer.MAX_VALUE;
-        int startoffset = Integer.MAX_VALUE;
-        int endpos = -1;
-        int endoffset = -1;
-        String field;
-
-        @Override
-        public void collectLeaf(PostingsEnum postingsEnum, int pos, Term term) throws IOException {
-            startpos = Math.min(startpos, pos);
-            endpos = Math.max(endpos, pos);
-            startoffset = Math.min(postingsEnum.startOffset(), startoffset);
-            endoffset = Math.max(postingsEnum.endOffset(), endoffset);
-            field = term.field();
-        }
-
-        @Override
-        public void reset() {
-            startpos = startoffset = Integer.MAX_VALUE;
-            endpos = endoffset = -1;
-        }
     }
 
     public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {

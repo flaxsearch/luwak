@@ -37,7 +37,7 @@ public class QueryCacheingMatcher<T extends QueryMatch> extends DelegatingMatche
     }
 
     @Override
-    protected QueryCacheingMatch<T> wrapMatch(T match, String queryId, Query matchQuery, List<SpanQuery> highlightQuery) {
+    protected QueryCacheingMatch<T> wrapMatch(T match, String queryId, Query matchQuery) {
         return new QueryCacheingMatch<>(matchQuery, match);
     }
 

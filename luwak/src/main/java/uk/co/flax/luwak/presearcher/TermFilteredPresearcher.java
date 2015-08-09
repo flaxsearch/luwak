@@ -32,6 +32,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import org.apache.lucene.util.BytesRefIterator;
@@ -124,7 +125,7 @@ public class TermFilteredPresearcher extends Presearcher {
 
             @Override
             public void addTerm(String field, BytesRef term) {
-                bq.add(new TermQuery(new Term(field, term)), BooleanClause.Occur.SHOULD);
+                bq.add(new SpanTermQuery(new Term(field, term)), BooleanClause.Occur.SHOULD);
             }
 
             @Override

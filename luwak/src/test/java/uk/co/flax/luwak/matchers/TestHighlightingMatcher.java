@@ -3,15 +3,17 @@ package uk.co.flax.luwak.matchers;
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.search.spans.SpanRewriter;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -48,9 +50,21 @@ public class TestHighlightingMatcher {
                 .build();
     }
 
+    public static class SpanRewriterParser extends LuceneQueryParser {
+
+        public SpanRewriterParser(String defaultField) {
+            super(defaultField);
+        }
+
+        @Override
+        public Query parse(String query, Map<String, String> metadata) throws Exception {
+            return SpanRewriter.rewrite(super.parse(query, metadata));
+        }
+    }
+
     @Before
     public void setUp() throws IOException {
-        monitor = new Monitor(new LuceneQueryParser(textfield), new MatchAllPresearcher());
+        monitor = new Monitor(new SpanRewriterParser(textfield), new MatchAllPresearcher());
     }
 
     @Test
@@ -92,20 +106,19 @@ public class TestHighlightingMatcher {
     }
 
     @Test
+    @Ignore("TODO: Separate highlighter queries")
     public void testHighlighterQuery() throws IOException {
 
         InputDocument docWithMatch = buildDoc("1", "this is a test document");
         InputDocument docWithNoMatch = buildDoc("2", "this is a document");
         InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
 
-        monitor.update(new MonitorQuery("1", "test", "document"));
+        monitor.update(new MonitorQuery("1", "test"));
 
-        /*
-        TODO: Highlight on standard query if no match on highlight query
-        assertThat(monitor.match(docWithNoHighlighterMatch, IntervalsMatcher.FACTORY))
+        // TODO: Highlight on standard query if no match on highlight query
+        assertThat(monitor.match(docWithNoHighlighterMatch, HighlightingMatcher.FACTORY))
                 .matchesQuery("1").inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
-        */
+                .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
 
         assertThat(monitor.match(docWithMatch, HighlightingMatcher.FACTORY))
                 .matchesQuery("1")
@@ -114,23 +127,7 @@ public class TestHighlightingMatcher {
 
         assertThat(monitor.match(docWithNoMatch, HighlightingMatcher.FACTORY))
                 .doesNotMatchQuery("1");
-
-
-
     }
-
-    @Test
-    public void testHighlighterQueryOnlyReturnsHitsFromHighlighter() throws IOException {
-
-        monitor.update(new MonitorQuery("1", "test", "document"));
-
-        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY);
-
-        HighlightsMatch match = Iterables.getFirst(matcher, null);
-        Assertions.assertThat(match).isNotNull();
-        Assertions.assertThat(match.getHitCount()).isEqualTo(1);
-    }
-
 
     @Test
     public void testQueryErrors() throws IOException {
@@ -172,7 +169,7 @@ public class TestHighlightingMatcher {
         monitor = new Monitor(new MonitorQueryParser() {
             @Override
             public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return new RegexpQuery(new Term(textfield, "he.*"));
+                return new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term(textfield, "he.*")));
             }
         }, new MatchAllPresearcher());
 

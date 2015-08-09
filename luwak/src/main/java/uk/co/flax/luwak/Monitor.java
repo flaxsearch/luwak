@@ -14,9 +14,8 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -24,7 +23,6 @@ import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 import uk.co.flax.luwak.presearcher.TermsEnumFilter;
-import uk.co.flax.luwak.util.MultiSpans;
 
 /*
  * Copyright (c) 2015 Lemur Consulting Ltd.
@@ -51,7 +49,6 @@ public class Monitor implements Closeable {
     private final MonitorQueryParser queryParser;
     private final Presearcher presearcher;
     private final QueryDecomposer decomposer;
-    private final QuerySpanRewriter rewriter = new QuerySpanRewriter();
 
     private final IndexWriter writer;
     private final SearcherManager manager;
@@ -188,13 +185,11 @@ public class Monitor implements Closeable {
     protected static class CacheEntry {
 
         public final Query matchQuery;
-        public final List<SpanQuery> highlightQueries;
         public final BytesRef hash;
 
-        public CacheEntry(BytesRef hash, Query matchQuery, List<SpanQuery> highlightQueries) {
+        public CacheEntry(BytesRef hash, Query matchQuery) {
             this.hash = hash;
             this.matchQuery = matchQuery;
-            this.highlightQueries = highlightQueries;
         }
     }
 
@@ -409,9 +404,6 @@ public class Monitor implements Closeable {
     private Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
 
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
-        Query hq = query.getHighlightQuery() == null
-                ? null : queryParser.parse(query.getHighlightQuery(), query.getMetadata());
-        List<SpanQuery> highlighterQueries = rewriter.rewrite(hq);
 
         BytesRef rootHash = query.hash();
 
@@ -421,9 +413,7 @@ public class Monitor implements Closeable {
             BytesRefBuilder subHash = new BytesRefBuilder();
             subHash.append(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            if (hq == null)
-                highlighterQueries = rewriter.rewrite(subquery);
-            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, highlighterQueries));
+            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery));
         }
 
         return cacheEntries;
@@ -589,12 +579,11 @@ public class Monitor implements Closeable {
      */
     public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory)
             throws IOException {
-        Query presearcherQuery = buildQuery(doc);
+        Query presearcherQuery = new ForceNoBulkScoringQuery(buildQuery(doc));
         IndexSearcher searcher = null;
         try {
             searcher = manager.acquire();
-            MultiSpans spans = new MultiSpans(rewriter.rewrite(presearcherQuery), searcher);
-            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc), spans);
+            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
             collector.setQueryMap(queries);
             searcher.search(presearcherQuery, collector);
             return collector.getMatches();
@@ -627,7 +616,7 @@ public class Monitor implements Closeable {
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
                 CacheEntry entry = queries.get(hash);
-                matcher.matchQuery(queryId, entry.matchQuery, entry.highlightQueries);
+                matcher.matchQuery(queryId, entry.matchQuery);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
@@ -685,15 +674,13 @@ public class Monitor implements Closeable {
 
     private class PresearcherMatchCollector<T extends QueryMatch> extends MatchingCollector<T> {
 
-        private final MultiSpans composite;
         private String currentId;
-        private Spans spans;
+        private Scorer scorer;
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-        private PresearcherMatchCollector(CandidateMatcher<T> matcher, MultiSpans spans) {
+        private PresearcherMatchCollector(CandidateMatcher<T> matcher) {
             super(matcher);
-            this.composite = spans;
         }
 
         public PresearcherMatches<T> getMatches() {
@@ -701,9 +688,8 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public void doSetNextReader(LeafReaderContext context) throws IOException {
-            super.doSetNextReader(context);
-            this.spans = composite.getSpans(context);
+        public void setScorer(Scorer scorer) throws IOException {
+            this.scorer = scorer;
         }
 
         @Override
@@ -729,11 +715,7 @@ public class Monitor implements Closeable {
                 }
             };
 
-            if (spans.advance(doc) == doc) {
-                while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-                    spans.collect(collector);
-                }
-            }
+            SpanExtractor.collect(scorer, collector, false);
 
             super.doMatch(doc, queryId, hash);
         }

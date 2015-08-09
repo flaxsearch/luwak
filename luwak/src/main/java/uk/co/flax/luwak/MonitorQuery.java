@@ -37,50 +37,27 @@ public class MonitorQuery {
 
     private final String id;
     private final String query;
-    private final String highlightQuery;
     private final Map<String, String> metadata;
 
     /**
      * Creates a new MonitorQuery
      * @param id the ID
      * @param query the query to store
-     * @param highlightQuery an optional query to use for highlighting.  May be null.
-     * @param metadata metadata passed to {@link Presearcher#indexQuery(org.apache.lucene.search.Query,java.util.Map)}
-     */
-    public MonitorQuery(String id, String query, String highlightQuery, Map<String, String> metadata) {
-        this.id = id;
-        this.query = query;
-        this.highlightQuery = (highlightQuery == null || highlightQuery.isEmpty()) ? null : highlightQuery;
-        this.metadata = new TreeMap<>(metadata);
-    }
-
-    /**
-     * Creates a new MonitorQuery with no highlight query
-     * @param id the ID
-     * @param query the query to store
      * @param metadata metadata passed to {@link Presearcher#indexQuery(org.apache.lucene.search.Query,java.util.Map)}
      */
     public MonitorQuery(String id, String query, Map<String, String> metadata) {
-        this(id, query, null, metadata);
+        this.id = id;
+        this.query = query;
+        this.metadata = new TreeMap<>(metadata);
     }
 
     /**
      * Creates a new MonitorQuery with empty metadata
      * @param id the ID
      * @param query the query
-     * @param highlight the highlight query
-     */
-    public MonitorQuery(String id, String query, String highlight) {
-        this(id, query, highlight, new HashMap<String, String>());
-    }
-
-    /**
-     * Creates a new MonitorQuery, with no highlight query and no metadata
-     * @param id the ID
-     * @param query the query to store
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, null, new HashMap<String, String>());
+        this(id, query, new HashMap<String, String>());
     }
 
     /**
@@ -95,12 +72,11 @@ public class MonitorQuery {
 
             String id = data.readString();
             String query = data.readString();
-            String hl = data.readInt() == 1 ? data.readString() : null;
             Map<String, String> metadata = new HashMap<>();
             for (int i = data.readInt(); i > 0; i--) {
                 metadata.put(data.readString(), data.readString());
             }
-            return new MonitorQuery(id, query, hl, metadata);
+            return new MonitorQuery(id, query, metadata);
 
         } catch (IOException e) {
             throw new RuntimeException(e);  // shouldn't happen, we're reading from a bytearray!
@@ -120,13 +96,6 @@ public class MonitorQuery {
 
             data.writeString(mq.getId());
             data.writeString(mq.getQuery());
-            if (mq.getHighlightQuery() != null) {
-                data.writeInt(1);
-                data.writeString(mq.getHighlightQuery());
-            }
-            else {
-                data.writeInt(0);
-            }
             data.writeInt(mq.getMetadata().size());
             for (Map.Entry<String, String> entry : mq.getMetadata().entrySet()) {
                 data.writeString(entry.getKey());
@@ -155,12 +124,8 @@ public class MonitorQuery {
     }
 
     /**
-     * @return this MonitorQuery's highlight query.  May be null.
+     * @return this MonitorQuery's metadata
      */
-    public String getHighlightQuery() {
-        return highlightQuery;
-    }
-
     public Map<String, String> getMetadata() {
         return metadata;
     }
@@ -172,8 +137,6 @@ public class MonitorQuery {
 
         MonitorQuery that = (MonitorQuery) o;
 
-        if (highlightQuery != null ? !highlightQuery.equals(that.highlightQuery) : that.highlightQuery != null)
-            return false;
         if (id != null ? !id.equals(that.id) : that.id != null) return false;
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
 
@@ -184,7 +147,6 @@ public class MonitorQuery {
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (query != null ? query.hashCode() : 0);
-        result = 31 * result + (highlightQuery != null ? highlightQuery.hashCode() : 0);
         return result;
     }
 
@@ -192,8 +154,6 @@ public class MonitorQuery {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(query.getBytes(StandardCharsets.UTF_8));
-            if (highlightQuery != null)
-                md5.update(highlightQuery.getBytes(StandardCharsets.UTF_8));
             for (Map.Entry<String, String> entry : metadata.entrySet()) {
                 md5.update(entry.getKey().getBytes(StandardCharsets.UTF_8));
                 md5.update(entry.getValue().getBytes(StandardCharsets.UTF_8));
@@ -208,13 +168,8 @@ public class MonitorQuery {
     public String toString() {
         StringBuilder sb = new StringBuilder(id);
         sb.append(": ").append(query);
-        if (highlightQuery != null || metadata.size() != 0) {
+        if (metadata.size() != 0) {
             sb.append(" { ");
-            if (highlightQuery != null) {
-                sb.append("hl: ").append(highlightQuery);
-                if (metadata.size() != 0)
-                    sb.append(", ");
-            }
             int n = metadata.size();
             for (Map.Entry<String, String> entry : metadata.entrySet()) {
                 n--;

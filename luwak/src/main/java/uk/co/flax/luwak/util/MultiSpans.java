@@ -31,11 +31,9 @@ public class MultiSpans {
 
     List<SpanWeight> weights = new ArrayList<>();
 
-    public MultiSpans(List<SpanQuery> spanQueries, IndexSearcher searcher) throws IOException {
-        for (SpanQuery q : spanQueries) {
-            q = (SpanQuery) q.rewrite(searcher.getIndexReader());
-            weights.add(q.createWeight(searcher, false));
-        }
+    public MultiSpans(SpanQuery q, IndexSearcher searcher) throws IOException {
+        q = (SpanQuery) q.rewrite(searcher.getIndexReader());
+        weights.add(q.createWeight(searcher, false));
     }
 
     public Spans getSpans(LeafReaderContext context) throws IOException {
