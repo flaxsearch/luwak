@@ -16,6 +16,7 @@ import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanExtractor;
+import org.apache.lucene.search.spans.SpanRewriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -580,7 +581,9 @@ public class Monitor implements Closeable {
             searcher = manager.acquire();
             PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
             collector.setQueryMap(queries);
-            Query presearcherQuery = new ForceNoBulkScoringQuery(presearcher.buildQuery(doc, searcher.getTopReaderContext()));
+            Query presearcherQuery = new ForceNoBulkScoringQuery(
+                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(doc, searcher.getTopReaderContext()))
+            );
             searcher.search(presearcherQuery, collector);
             return collector.getMatches();
         }

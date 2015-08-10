@@ -30,7 +30,6 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import org.apache.lucene.util.BytesRefIterator;
@@ -124,7 +123,7 @@ public class TermFilteredPresearcher extends Presearcher {
                 Term t = new Term(field, term);
                 TermContext tc = TermContext.build(ctx, t);
                 if (tc.docFreq() > 0)
-                    bq.add(new SpanTermQuery(t, tc), BooleanClause.Occur.SHOULD);
+                    bq.add(new TermQuery(t, tc), BooleanClause.Occur.SHOULD);
             }
 
             @Override

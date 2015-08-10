@@ -11,7 +11,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
@@ -131,7 +131,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
                 Term t = new Term(field(field, i), term);
                 TermContext tc = TermContext.build(ctx, t);
                 if (tc.docFreq() > 0)
-                    queries[i].add(new SpanTermQuery(t, tc), BooleanClause.Occur.SHOULD);
+                    queries[i].add(new TermQuery(t, tc), BooleanClause.Occur.SHOULD);
             }
         }
 

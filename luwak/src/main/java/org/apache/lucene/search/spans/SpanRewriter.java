@@ -19,6 +19,8 @@ import org.apache.lucene.search.*;
 
 public class SpanRewriter {
 
+    public static final SpanRewriter INSTANCE = new SpanRewriter();
+
     public Query rewrite(Query in) {
         if (in instanceof SpanQuery)
             return in;
