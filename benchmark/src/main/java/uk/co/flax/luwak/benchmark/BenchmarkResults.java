@@ -46,10 +46,6 @@ public class BenchmarkResults<T extends QueryMatch> {
             output.printf(locale, "Benchmark Results%n");
             output.printf(locale, "             count = %d%n", timer.getCount());
             output.printf(locale, "         mean rate = %2.2f calls/%s%n", timer.getMeanRate(), "s");
-            output.printf(locale, "     1-minute rate = %2.2f calls/%s%n", timer.getOneMinuteRate(), "s");
-            output.printf(locale, "     5-minute rate = %2.2f calls/%s%n", timer.getFiveMinuteRate(), "s");
-            output.printf(locale, "    15-minute rate = %2.2f calls/%s%n", timer.getFifteenMinuteRate(), "s");
-
             output.printf(locale, "               min = %d %s%n", TimeUnit.NANOSECONDS.toMillis(snapshot.getMin()), "ms");
             output.printf(locale, "               max = %d %s%n", TimeUnit.NANOSECONDS.toMillis(snapshot.getMax()), "ms");
             output.printf(locale, "              mean = %2.2f %s%n", snapshot.getMean() / 1000000, "ms");
@@ -57,8 +53,6 @@ public class BenchmarkResults<T extends QueryMatch> {
             output.printf(locale, "            median = %2.2f %s%n", snapshot.getMedian() / 1000000, "ms");
             output.printf(locale, "              75%% <= %2.2f %s%n", snapshot.get75thPercentile() / 1000000, "ms");
             output.printf(locale, "              95%% <= %2.2f %s%n", snapshot.get95thPercentile() / 1000000, "ms");
-            output.printf(locale, "              98%% <= %2.2f %s%n", snapshot.get98thPercentile() / 1000000, "ms");
-            output.printf(locale, "              99%% <= %2.2f %s%n", snapshot.get99thPercentile() / 1000000, "ms");
             output.printf(locale, "            99.9%% <= %2.2f %s%n", snapshot.get999thPercentile() / 1000000, "ms");
 
         }
