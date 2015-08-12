@@ -23,8 +23,18 @@ import java.util.List;
 
 import org.apache.lucene.search.Scorer;
 
+/**
+ * Utility methods for extracting and collecting Spans from query trees
+ */
 public class SpanExtractor {
 
+    /**
+     * Get a list of all Spans made available from the passed-in Scorer
+     * @param scorer the scorer to extract spans from
+     * @param errorOnNoSpans if true, throw an error if no Spans can be extracted
+     *                       from the Scorer or any of its children
+     * @return a List of Spans
+     */
     public static List<Spans> getSpans(Scorer scorer, boolean errorOnNoSpans) {
 
         List<Spans> spans = new ArrayList<>();
@@ -45,6 +55,14 @@ public class SpanExtractor {
         return spans;
     }
 
+    /**
+     * Collect all Spans extracted from a Scorer using a SpanCollector
+     * @param scorer the scorer to extract Spans from
+     * @param collector the SpanCollector
+     * @param errorOnNoSpans if true, throw an error if no Spans can be extracted
+     *                       from the Scorer or any of its children
+     * @throws IOException on error
+     */
     public static void collect(Scorer scorer, SpanCollector collector, boolean errorOnNoSpans) throws IOException {
 
         List<Spans> allSpans = getSpans(scorer, errorOnNoSpans);
@@ -52,6 +70,8 @@ public class SpanExtractor {
 
         for (Spans spans : allSpans) {
             int spanDoc = spans.docID();
+            // if the Scorer advances lazily, then not all of its subspans may be on
+            // the correct document
             if (spanDoc == doc || (spanDoc < doc && spans.advance(doc) == doc)) {
                 while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
                     spans.collect(collector);

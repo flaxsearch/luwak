@@ -21,6 +21,10 @@ import java.util.Set;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 
+/**
+ * Query wrapper that forces its wrapped Query to use the default doc-by-doc
+ * BulkScorer.
+ */
 public class ForceNoBulkScoringQuery extends Query {
 
     private final Query inner;
