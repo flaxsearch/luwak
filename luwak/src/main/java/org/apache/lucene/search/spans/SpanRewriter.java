@@ -39,11 +39,11 @@ public class SpanRewriter {
     }
 
     protected Query rewriteBoolean(BooleanQuery bq) {
-        BooleanQuery newbq = new BooleanQuery();
+        BooleanQuery.Builder newbq = new BooleanQuery.Builder();
         for (BooleanClause clause : bq) {
             newbq.add(rewrite(clause.getQuery()), clause.getOccur());
         }
-        return newbq;
+        return newbq.build();
     }
 
     protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {
