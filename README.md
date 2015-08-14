@@ -17,6 +17,9 @@ You can find out a bit more about how Flax use Luwak for media monitoring applic
 this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
 from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
 
+Here's some tests we did to compare Luwak to Elasticsearch Percolator:
+http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
+
 Running the demo
 ----------------
 
