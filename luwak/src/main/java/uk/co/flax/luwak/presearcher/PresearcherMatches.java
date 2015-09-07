@@ -38,6 +38,10 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
         return null;
     }
 
+    public int getPresearcherMatchCount() {
+        return matcher.getPresearcherHits().size();
+    }
+
     @Override
     public Iterator<PresearcherMatch<T>> iterator() {
         final Iterator<String> ids = matchingTerms.keySet().iterator();
