@@ -18,6 +18,7 @@ package org.apache.lucene.search;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 
@@ -31,6 +32,14 @@ public class ForceNoBulkScoringQuery extends Query {
 
     public ForceNoBulkScoringQuery(Query inner) {
         this.inner = inner;
+    }
+
+    @Override
+    public Query rewrite(IndexReader reader) throws IOException {
+        Query rewritten = inner.rewrite(reader);
+        if (rewritten != inner)
+            return new ForceNoBulkScoringQuery(rewritten);
+        return super.rewrite(reader);
     }
 
     @Override

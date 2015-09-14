@@ -110,7 +110,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
             @Override
             public boolean needsScores() {
-                return false;
+                return true;
             }
         });
 

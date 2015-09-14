@@ -72,7 +72,11 @@ public class HighlightsMatch extends QueryMatch {
      * @return the total number of hits for the query
      */
     public int getHitCount() {
-        return hits.size();
+        int c = 0;
+        for (List<Hit> fieldhits : hits.values()) {
+            c += fieldhits.size();
+        }
+        return c;
     }
 
     public static HighlightsMatch merge(String queryId, HighlightsMatch... matches) {

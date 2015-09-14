@@ -7,8 +7,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.*;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -139,9 +138,9 @@ public class TestHighlightingMatcher {
         }, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", "test"),
-                       new MonitorQuery("2", "error!"),
-                       new MonitorQuery("3", "document"),
-                       new MonitorQuery("4", "foo"));
+                new MonitorQuery("2", "error!"),
+                new MonitorQuery("3", "document"),
+                new MonitorQuery("4", "foo"));
 
         assertThat(monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY))
                 .hasQueriesRunCount(4)
@@ -167,6 +166,30 @@ public class TestHighlightingMatcher {
                 .hasMatchCount(1);
 
         Assertions.assertThat(matches.matches("1").getHitCount()).isEqualTo(1);
+
+    }
+
+    @Test
+    public void testWildcardCombinations() throws Exception {
+
+        final BooleanQuery bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "term1")), BooleanClause.Occur.MUST)
+                .add(new PrefixQuery(new Term(textfield, "term2")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "term3")), BooleanClause.Occur.MUST_NOT)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return bq;
+            }
+        }, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term22 term4"), HighlightingMatcher.FACTORY);
+        assertThat(matches)
+                .matchesQuery("1")
+                .withHitCount(2);
 
     }
 

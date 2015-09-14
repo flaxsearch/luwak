@@ -43,7 +43,7 @@ public class SpanRewriter {
         for (BooleanClause clause : bq) {
             newbq.add(rewrite(clause.getQuery()), clause.getOccur());
         }
-        return newbq.build();
+        return new ForceNoBulkScoringQuery(newbq.build());
     }
 
     protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {

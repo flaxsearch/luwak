@@ -33,7 +33,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
     public IntervalsQueryMatchAssert matchesQuery(String queryId) {
         for (HighlightsMatch match : actual) {
             if (match.getQueryId().equals(queryId))
-                return new IntervalsQueryMatchAssert((HighlightsMatch) match);
+                return new IntervalsQueryMatchAssert(match);
         }
         fail("Document " + actual.docId() + " did not match query " + queryId);
         return null;
