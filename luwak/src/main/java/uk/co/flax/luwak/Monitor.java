@@ -222,6 +222,7 @@ public class Monitor implements Closeable {
     }
 
     private void commit(List<CacheEntry> updates) throws IOException {
+        beforeCommit(updates);
         purgeLock.readLock().lock();
         try {
             if (updates != null) {
@@ -237,7 +238,20 @@ public class Monitor implements Closeable {
         finally {
             purgeLock.readLock().unlock();
         }
+        afterCommit(updates);
     }
+
+    /**
+     * Called before a commit
+     * @param updates the list of updates that will be committed (null for deletes)
+     */
+    protected void beforeCommit(List<CacheEntry> updates) {}
+
+    /**
+     * Called after a commit
+     * @param updates the list of updates that have been committed (null for deletes)
+     */
+    protected void afterCommit(List<CacheEntry> updates) {}
 
     /**
      * Remove unused queries from the query cache.
@@ -328,11 +342,10 @@ public class Monitor implements Closeable {
     /**
      * Add new queries to the monitor
      * @param queries the MonitorQueries to add
-     * @param reporter an UpdateReporter to keep track of progress
      * @return a list of exceptions for queries that could not be added
      * @throws IOException on IO errors
      */
-    public List<QueryError> update(Iterable<MonitorQuery> queries, UpdateReporter reporter) throws IOException {
+    public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
 
         List<QueryError> errors = new ArrayList<>();
         List<CacheEntry> updates = new ArrayList<>();
@@ -351,54 +364,12 @@ public class Monitor implements Closeable {
             }
             if (updates.size() > commitBatchSize) {
                 commit(updates);
-                reporter.progress(count, updates.size());
                 updates.clear();
             }
         }
 
         commit(updates);
-        reporter.finish(count, updates.size());
         return errors;
-    }
-
-    /**
-     * Add new queries to the monitor
-     * @param queries the MonitorQueries to add
-     * @return a list of exceptions for queries that could not be added
-     * @throws IOException on IO errors
-     */
-    public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
-        return update(queries, new UpdateReporter() {
-            @Override
-            public void progress(int total, int batchsize) {
-
-            }
-
-            @Override
-            public void finish(int total, int finalbatchsize) {
-
-            }
-        });
-    }
-
-    /**
-     * Interface for callback reporters that keep track of the progress of an update
-     */
-    public static interface UpdateReporter {
-
-        /**
-         * Called when a batch has been added
-         * @param total the total number of queries added so far
-         * @param batchsize the number of queries in this batch (including disjuncts)
-         */
-        void progress(int total, int batchsize);
-
-        /**
-         * Called when the final batch has been added
-         * @param total the total number of queries added
-         * @param finalbatchsize the size of the final batch (including disjuncts)
-         */
-        void finish(int total, int finalbatchsize);
     }
 
     private Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
