@@ -33,11 +33,8 @@ import uk.co.flax.luwak.MatcherFactory;
 /**
  * CandidateMatcher class that will return exact hit positions for all matching queries
  *
- * If a stored query does not support interval iterators, a {@link HighlightsMatch} object
+ * If a stored query cannot be rewritten so as to extract Spans, a {@link HighlightsMatch} object
  * with no Hit positions will be returned.
- *
- * If a query is matched, it will be run a second time against the highlight query (if
- * not null) to get positions.
  */
 
 public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
