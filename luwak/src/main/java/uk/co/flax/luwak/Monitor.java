@@ -46,16 +46,16 @@ import uk.co.flax.luwak.presearcher.PresearcherMatches;
  */
 public class Monitor implements Closeable {
 
-    private final MonitorQueryParser queryParser;
-    private final Presearcher presearcher;
-    private final QueryDecomposer decomposer;
+    protected final MonitorQueryParser queryParser;
+    protected final Presearcher presearcher;
+    protected final QueryDecomposer decomposer;
 
     private final IndexWriter writer;
     private final SearcherManager manager;
 
-    private long slowLogLimit = 2000000;
+    protected long slowLogLimit = 2000000;
 
-    private long commitBatchSize = 5000;
+    protected long commitBatchSize = 5000;
 
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
@@ -350,9 +350,7 @@ public class Monitor implements Closeable {
         List<QueryError> errors = new ArrayList<>();
         List<CacheEntry> updates = new ArrayList<>();
 
-        int count = 0;
         for (MonitorQuery query : queries) {
-            count++;
             try {
                 writer.deleteDocuments(new Term(FIELDS.del, query.getId()));
                 for (CacheEntry cacheEntry : decomposeQuery(query)) {
