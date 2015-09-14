@@ -68,23 +68,28 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
         return HighlightsMatch.merge(match1.getQueryId(), match1, match2);
     }
 
-    private HighlightsMatch doMatch(String queryId, Query query) throws IOException {
+    protected static class HighlightCollector implements SpanCollector {
 
-        if (doc.getSearcher().count(query) == 0)
-            return null;
+        final HighlightsMatch match;
 
-        final HighlightsMatch match = new HighlightsMatch(queryId);
-        final SpanCollector collector = new SpanCollector() {
-            @Override
-            public void collectLeaf(PostingsEnum postingsEnum, int pos, Term term) throws IOException {
-                match.addHit(term.field(), pos, pos, postingsEnum.startOffset(), postingsEnum.endOffset());
-            }
+        public HighlightCollector(String queryId) {
+            match = new HighlightsMatch(queryId);
+        }
 
-            @Override
-            public void reset() {
+        @Override
+        public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
+            match.addHit(term.field(), position, position, postings.startOffset(), postings.endOffset());
+        }
 
-            }
-        };
+        @Override
+        public void reset() {
+
+        }
+    }
+
+    protected HighlightsMatch findHighlights(String queryId, Query query) throws IOException {
+
+        final HighlightCollector collector = new HighlightCollector(queryId);
 
         doc.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
 
@@ -96,7 +101,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
                     SpanExtractor.collect(scorer, collector, true);
                 }
                 catch (Exception e) {
-                    match.error = e.getMessage();
+                    collector.match.error = e.getMessage();
                 }
             }
 
@@ -111,7 +116,13 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
             }
         });
 
-        return match;
+        return collector.match;
+    }
+
+    protected HighlightsMatch doMatch(String queryId, Query query) throws IOException {
+        if (doc.getSearcher().count(query) == 0)
+            return null;
+        return findHighlights(queryId, query);
     }
 
     public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {
