@@ -16,7 +16,7 @@ import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.assertions.IntervalMatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.HighlightingMatchAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.

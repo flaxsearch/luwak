@@ -23,9 +23,9 @@ import uk.co.flax.luwak.matchers.HighlightsMatch;
  */
 public class FieldMatchAssert extends AbstractAssert<FieldMatchAssert, Collection<HighlightsMatch.Hit>> {
 
-    private final IntervalsQueryMatchAssert parent;
+    private final HighlightingMatchHitsAssert parent;
 
-    public FieldMatchAssert(IntervalsQueryMatchAssert parent, Collection<HighlightsMatch.Hit> actualHits) {
+    public FieldMatchAssert(HighlightingMatchHitsAssert parent, Collection<HighlightsMatch.Hit> actualHits) {
         super(actualHits, FieldMatchAssert.class);
         this.parent = parent;
     }

@@ -19,17 +19,17 @@ import uk.co.flax.luwak.matchers.HighlightsMatch;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class IntervalsQueryMatchAssert extends AbstractAssert<IntervalsQueryMatchAssert, HighlightsMatch> {
+public class HighlightingMatchHitsAssert extends AbstractAssert<HighlightingMatchHitsAssert, HighlightsMatch> {
 
-    protected IntervalsQueryMatchAssert(HighlightsMatch actual) {
-        super(actual, IntervalsQueryMatchAssert.class);
+    protected HighlightingMatchHitsAssert(HighlightsMatch actual) {
+        super(actual, HighlightingMatchHitsAssert.class);
     }
 
-    public static IntervalsQueryMatchAssert assertThat(HighlightsMatch actual) {
-        return new IntervalsQueryMatchAssert(actual);
+    public static HighlightingMatchHitsAssert assertThat(HighlightsMatch actual) {
+        return new HighlightingMatchHitsAssert(actual);
     }
 
-    public IntervalsQueryMatchAssert withHitCount(int count) {
+    public HighlightingMatchHitsAssert withHitCount(int count) {
         Assertions.assertThat(actual.getHitCount()).isEqualTo(count);
         return this;
     }

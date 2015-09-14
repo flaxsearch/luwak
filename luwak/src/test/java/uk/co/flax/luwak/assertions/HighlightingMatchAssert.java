@@ -24,41 +24,41 @@ import static org.assertj.core.api.Fail.fail;
  * limitations under the License.
  */
 
-public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert, Matches<HighlightsMatch>> {
+public class HighlightingMatchAssert extends AbstractAssert<HighlightingMatchAssert, Matches<HighlightsMatch>> {
 
-    protected IntervalMatchesAssert(Matches<HighlightsMatch> actual) {
-        super(actual, IntervalMatchesAssert.class);
+    protected HighlightingMatchAssert(Matches<HighlightsMatch> actual) {
+        super(actual, HighlightingMatchAssert.class);
     }
 
-    public IntervalsQueryMatchAssert matchesQuery(String queryId) {
+    public HighlightingMatchHitsAssert matchesQuery(String queryId) {
         for (HighlightsMatch match : actual) {
             if (match.getQueryId().equals(queryId))
-                return new IntervalsQueryMatchAssert(match);
+                return new HighlightingMatchHitsAssert(match);
         }
         fail("Document " + actual.docId() + " did not match query " + queryId);
         return null;
     }
 
-    public static IntervalMatchesAssert assertThat(Matches<HighlightsMatch> actual) {
-        return new IntervalMatchesAssert(actual);
+    public static HighlightingMatchAssert assertThat(Matches<HighlightsMatch> actual) {
+        return new HighlightingMatchAssert(actual);
     }
 
-    public IntervalMatchesAssert matches(String docid) {
+    public HighlightingMatchAssert matches(String docid) {
         Assertions.assertThat(actual.docId()).isEqualTo(docid);
         return this;
     }
 
-    public IntervalMatchesAssert hasMatchCount(int count) {
+    public HighlightingMatchAssert hasMatchCount(int count) {
         Assertions.assertThat(actual.getMatchCount()).isEqualTo(count);
         return this;
     }
 
-    public IntervalMatchesAssert hasErrorCount(int count) {
+    public HighlightingMatchAssert hasErrorCount(int count) {
         Assertions.assertThat(actual.getErrors()).hasSize(count);
         return this;
     }
 
-    public IntervalMatchesAssert hasQueriesRunCount(int count) {
+    public HighlightingMatchAssert hasQueriesRunCount(int count) {
         Assertions.assertThat(actual.getQueriesRun())
                 .overridingErrorMessage("Expecting %d queries to be run, but was %d",
                         count, actual.getQueriesRun())
@@ -66,7 +66,7 @@ public class IntervalMatchesAssert extends AbstractAssert<IntervalMatchesAssert,
         return this;
     }
 
-    public IntervalMatchesAssert doesNotMatchQuery(String queryId) {
+    public HighlightingMatchAssert doesNotMatchQuery(String queryId) {
         for (HighlightsMatch match : actual) {
             Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
         }
