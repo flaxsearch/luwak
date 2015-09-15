@@ -107,12 +107,12 @@ public class QueryDecomposer {
         // queries
         List<Query> rewrittenSubqueries = new ArrayList<>(subqueries.size());
         for (Query subquery : subqueries) {
-            BooleanQuery bq = new BooleanQuery();
+            BooleanQuery.Builder bq = new BooleanQuery.Builder();
             bq.add(subquery, BooleanClause.Occur.MUST);
             for (Query ex : exclusions) {
                 bq.add(ex, BooleanClause.Occur.MUST_NOT);
             }
-            rewrittenSubqueries.add(bq);
+            rewrittenSubqueries.add(bq.build());
         }
         return rewrittenSubqueries;
     }

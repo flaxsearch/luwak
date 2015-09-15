@@ -11,6 +11,7 @@ import uk.co.flax.luwak.presearcher.FilterQueryPresearcherComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("deprecation")
 public class TestBooleanFilterTermExtractor {
 
     private static final QueryAnalyzer treeBuilder

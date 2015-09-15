@@ -75,7 +75,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         if (terms == null)
             return null;
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
 
         BytesRef term;
         TermsEnum te = terms.iterator();
@@ -83,10 +83,12 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
             bq.add(new TermQuery(new Term(field, term.utf8ToString())), BooleanClause.Occur.SHOULD);
         }
 
-        if (bq.clauses().size() == 0)
+        BooleanQuery built = bq.build();
+
+        if (built.clauses().size() == 0)
             return null;
 
-        return bq;
+        return built;
     }
 
     @Override

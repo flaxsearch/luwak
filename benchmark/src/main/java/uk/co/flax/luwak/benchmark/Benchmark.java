@@ -40,7 +40,7 @@ public class Benchmark {
     public static <T extends QueryMatch> ValidatorResults<T> validate(Monitor monitor, Iterable<ValidatorDocument<T>> documents,
                                                                       MatcherFactory<T> matcherFactory) throws IOException {
         ValidatorResults<T> results = new ValidatorResults<>();
-        for (ValidatorDocument doc : documents) {
+        for (ValidatorDocument<T> doc : documents) {
             Matches<T> matches = monitor.match(doc.getDocument(), matcherFactory);
             results.add(matches, doc.getExpectedMatches());
         }
