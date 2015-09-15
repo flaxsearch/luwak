@@ -45,7 +45,7 @@ public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
         return match1;
     }
 
-    public static MatcherFactory<PresearcherMatch> FACTORY = new MatcherFactory<PresearcherMatch>() {
+    public static final MatcherFactory<PresearcherMatch> FACTORY = new MatcherFactory<PresearcherMatch>() {
         @Override
         public CandidateMatcher<PresearcherMatch> createMatcher(InputDocument doc) {
             return new PresearcherMatcher(doc);
