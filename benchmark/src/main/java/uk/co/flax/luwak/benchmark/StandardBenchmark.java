@@ -107,6 +107,11 @@ public class StandardBenchmark {
                             throw new RuntimeException(e);
                         }
                     }
+
+                    @Override
+                    public void remove() {
+                        
+                    }
                 };
             }
         };
