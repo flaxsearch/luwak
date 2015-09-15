@@ -110,7 +110,7 @@ public class StandardBenchmark {
 
                     @Override
                     public void remove() {
-                        
+
                     }
                 };
             }

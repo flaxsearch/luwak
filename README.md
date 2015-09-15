@@ -29,7 +29,7 @@ Adding queries
 --------------
 
 The monitor is updated using MonitorQuery objects, which consist of an id, a query string, and an
-optional highlight query string and metadata map.  The monitor uses its provided MonitorQueryParser
+optional metadata map.  The monitor uses its provided MonitorQueryParser
 to parse the query strings and cache query objects.
 
 Matching documents
