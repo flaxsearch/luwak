@@ -67,15 +67,16 @@ public class TestExtractors {
         assertThat(treeBuilder.collectTerms(nrq))
                 .containsExactly(new QueryTerm("field", "field:[0 TO 10]", QueryTerm.Type.ANY));
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(nrq, BooleanClause.Occur.MUST);
         bq.add(new TermQuery(new Term("field", "term")), BooleanClause.Occur.MUST);
 
-        assertThat(treeBuilder.collectTerms(bq))
+        assertThat(treeBuilder.collectTerms(bq.build()))
                 .containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testFilteredQueryTermExtractor() {
 
         Query q = new TermQuery(new Term("field", "term"));
@@ -123,6 +124,7 @@ public class TestExtractors {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testExtendedFilteredQueryExtractor() {
 
         QueryAnalyzer treeBuilder
@@ -140,15 +142,15 @@ public class TestExtractors {
     @Test
     public void testConstantScoreQueryExtractor() {
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(new TermQuery(new Term("f", "q1")), BooleanClause.Occur.MUST);
         bq.add(new TermQuery(new Term("f", "q2")), BooleanClause.Occur.SHOULD);
 
-        Query csqWithQuery = new ConstantScoreQuery(bq);
+        Query csqWithQuery = new ConstantScoreQuery(bq.build());
         assertThat(treeBuilder.collectTerms(csqWithQuery))
                 .containsExactly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT));
 
-
+        @SuppressWarnings("deprecation")
         TermsFilter tf = new TermsFilter(new Term("f", "q1"), new Term("f", "q22"));
 
         Query csqWithFilter = new ConstantScoreQuery(tf);
@@ -160,11 +162,11 @@ public class TestExtractors {
     @Test
     public void testPhraseQueryExtractor() {
 
-        PhraseQuery pq = new PhraseQuery();
+        PhraseQuery.Builder pq = new PhraseQuery.Builder();
         pq.add(new Term("f", "hello"));
         pq.add(new Term("f", "encyclopedia"));
 
-        assertThat(treeBuilder.collectTerms(pq))
+        assertThat(treeBuilder.collectTerms(pq.build()))
                 .containsOnly(new QueryTerm("f", "encyclopedia", QueryTerm.Type.EXACT));
 
     }

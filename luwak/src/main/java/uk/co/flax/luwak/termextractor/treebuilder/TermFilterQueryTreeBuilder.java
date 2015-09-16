@@ -24,6 +24,7 @@ import uk.co.flax.luwak.termextractor.querytree.TermNode;
  * limitations under the License.
  */
 
+@SuppressWarnings("deprecation")
 public class TermFilterQueryTreeBuilder extends QueryTreeBuilder<TermFilter> {
 
     public TermFilterQueryTreeBuilder() {

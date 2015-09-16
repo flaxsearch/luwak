@@ -3,8 +3,8 @@ package uk.co.flax.luwak;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.search.Query;
-import uk.co.flax.luwak.presearcher.PerFieldTokenFilter;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -39,11 +39,10 @@ public abstract class Presearcher {
     /**
      * Build a query for a Monitor's queryindex from an InputDocument.
      * @param inputDocument the document to query for
-     * @param filter a PerFieldTokenFilter passed in by the monitor, to aid
-     *               in removing unnecessary clauses
+     * @param queryIndexContext the IndexReaderContext of the Monitor's queryindex
      * @return a Query to run over a Monitor's queryindex
      */
-    public abstract Query buildQuery(InputDocument inputDocument, PerFieldTokenFilter filter);
+    public abstract Query buildQuery(InputDocument inputDocument, IndexReaderContext queryIndexContext);
 
     /**
      * Build a lucene Document to index the query in a Monitor's queryindex
@@ -52,14 +51,5 @@ public abstract class Presearcher {
      * @return a lucene Document to add to the queryindex
      */
     public abstract Document indexQuery(Query query, Map<String, String> metadata);
-
-    /**
-     * Build a lucene Document to index the query in a Monitor's queryindex
-     * @param query the Query to index
-     * @return a lucene Document to add to the queryindex
-     */
-    public final Document indexQuery(Query query) {
-        return this.indexQuery(query, null);
-    }
 
 }

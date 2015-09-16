@@ -2,11 +2,11 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.intervals.OrderedNearQuery;
-import org.apache.lucene.search.intervals.UnorderedNearQuery;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.IntervalsPresearcherComponent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,35 +25,27 @@ import static org.assertj.core.api.Assertions.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class TestIntervalExtractors {
+public class TestSpanExtractors {
 
-    private static final QueryAnalyzer treeBuilder
-            = QueryAnalyzer.fromComponents(new IntervalsPresearcherComponent());
+    private static final QueryAnalyzer treeBuilder = new QueryAnalyzer();
 
     @Test
     public void testOrderedNearExtractor() {
-        OrderedNearQuery q = new OrderedNearQuery(0,
-                new TermQuery(new Term("field1", "term1")),
-                new TermQuery(new Term("field1", "term")));
+        SpanNearQuery q = new SpanNearQuery(new SpanQuery[]{
+                new SpanTermQuery(new Term("field1", "term1")),
+                new SpanTermQuery(new Term("field1", "term"))
+        }, 0, true);
 
         assertThat(treeBuilder.collectTerms(q))
                 .containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
 
     @Test
-    public void testUnorderedNearExtractor() {
-        UnorderedNearQuery q = new UnorderedNearQuery(0,
-                new TermQuery(new Term("field1", "term1")),
-                new TermQuery(new Term("field1", "term")));
-
-        assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
-    }
-
-    @Test
     public void testOrderedNearWithWildcardExtractor() {
-        OrderedNearQuery q = new OrderedNearQuery(0,
-                new RegexpQuery(new Term("field", "super.*cali.*")),
-                new TermQuery(new Term("field", "is")));
+        SpanNearQuery q = new SpanNearQuery(new SpanQuery[]{
+                new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term("field", "super.*cali.*"))),
+                new SpanTermQuery(new Term("field", "is"))
+        }, 0, true);
 
         assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
     }

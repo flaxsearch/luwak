@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.assertions;
 
 import com.google.common.collect.Lists;
 import org.assertj.core.api.AbstractAssert;

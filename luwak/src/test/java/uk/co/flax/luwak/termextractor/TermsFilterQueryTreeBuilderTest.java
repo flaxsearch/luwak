@@ -17,6 +17,7 @@ public class TermsFilterQueryTreeBuilderTest {
             = new QueryAnalyzer(TreeWeightor.DEFAULT_WEIGHTOR, new TermsFilterQueryTreeBuilder());
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testExtractSingleTerm() {
         TermsFilter filter = new TermsFilter(new Term("someField", "123"));
 
@@ -28,6 +29,7 @@ public class TermsFilterQueryTreeBuilderTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testExtractMultipleTerms() {
 
         TermsFilter filter = new TermsFilter(new Term("field1", "foo"), new Term("field2", "bar"), new Term("field1", "baz"));

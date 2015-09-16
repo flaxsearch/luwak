@@ -28,7 +28,7 @@ import com.google.common.io.Resources;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.intervals.IntervalsMatcher;
+import uk.co.flax.luwak.matchers.HighlightingMatcher;
 import uk.co.flax.luwak.matchers.ScoringMatcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MultipassTermFilteredPresearcher;
@@ -49,7 +49,7 @@ public class StandardBenchmark {
             PresearcherMatcher.FACTORY,
             SimpleMatcher.FACTORY,
             ScoringMatcher.FACTORY,
-            IntervalsMatcher.FACTORY
+            HighlightingMatcher.FACTORY
     );
 
     public static final String FIELD = "text";
@@ -106,6 +106,11 @@ public class StandardBenchmark {
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
+                    }
+
+                    @Override
+                    public void remove() {
+
                     }
                 };
             }

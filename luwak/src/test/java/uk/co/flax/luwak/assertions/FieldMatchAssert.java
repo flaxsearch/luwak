@@ -1,9 +1,10 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.assertions;
 
 import java.util.Collection;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
+import uk.co.flax.luwak.matchers.HighlightsMatch;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -20,16 +21,16 @@ import org.assertj.core.api.Assertions;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class FieldMatchAssert extends AbstractAssert<FieldMatchAssert, Collection<IntervalsQueryMatch.Hit>> {
+public class FieldMatchAssert extends AbstractAssert<FieldMatchAssert, Collection<HighlightsMatch.Hit>> {
 
-    private final IntervalsQueryMatchAssert parent;
+    private final HighlightingMatchHitsAssert parent;
 
-    public FieldMatchAssert(IntervalsQueryMatchAssert parent, Collection<IntervalsQueryMatch.Hit> actualHits) {
+    public FieldMatchAssert(HighlightingMatchHitsAssert parent, Collection<HighlightsMatch.Hit> actualHits) {
         super(actualHits, FieldMatchAssert.class);
         this.parent = parent;
     }
 
-    public FieldMatchAssert withHit(IntervalsQueryMatch.Hit hit) {
+    public FieldMatchAssert withHit(HighlightsMatch.Hit hit) {
         Assertions.assertThat(actual).contains(hit);
         return this;
     }

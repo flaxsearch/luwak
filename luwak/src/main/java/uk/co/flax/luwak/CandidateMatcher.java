@@ -54,17 +54,16 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      *
      * @param queryId the query id
      * @param matchQuery the query to run
-     * @param highlightQuery an optional query to use for highlighting.  May be null
      * @return a QueryMatch object if the query matched, otherwise null
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public final T matchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    public final T matchQuery(String queryId, Query matchQuery) throws IOException {
         presearcherHits.add(queryId);
-        return doMatchQuery(queryId, matchQuery, highlightQuery);
+        return doMatchQuery(queryId, matchQuery);
     }
 
-    protected abstract T doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException;
+    protected abstract T doMatchQuery(String queryId, Query matchQuery) throws IOException;
 
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))

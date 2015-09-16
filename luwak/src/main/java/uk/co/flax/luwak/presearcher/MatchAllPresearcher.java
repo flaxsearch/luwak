@@ -19,6 +19,7 @@ package uk.co.flax.luwak.presearcher;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
@@ -35,7 +36,7 @@ public class MatchAllPresearcher extends Presearcher {
     }
 
     @Override
-    public Query buildQuery(InputDocument doc, PerFieldTokenFilter filter) {
+    public Query buildQuery(InputDocument doc, IndexReaderContext ctx) {
         return new MatchAllDocsQuery();
     }
 

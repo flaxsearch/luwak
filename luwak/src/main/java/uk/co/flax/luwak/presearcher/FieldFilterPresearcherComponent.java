@@ -63,10 +63,10 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         if (filterClause == null)
             return presearcherQuery;
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(presearcherQuery, BooleanClause.Occur.MUST);
         bq.add(filterClause, BooleanClause.Occur.MUST);
-        return bq;
+        return bq.build();
     }
 
     private Query buildFilterClause(InputDocument doc) throws IOException {
@@ -75,18 +75,20 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         if (terms == null)
             return null;
 
-        BooleanQuery bq = new BooleanQuery();
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
 
         BytesRef term;
-        TermsEnum te = terms.iterator(null);
+        TermsEnum te = terms.iterator();
         while ((term = te.next()) != null) {
             bq.add(new TermQuery(new Term(field, term.utf8ToString())), BooleanClause.Occur.SHOULD);
         }
 
-        if (bq.clauses().size() == 0)
+        BooleanQuery built = bq.build();
+
+        if (built.clauses().size() == 0)
             return null;
 
-        return bq;
+        return built;
     }
 
     @Override

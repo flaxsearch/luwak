@@ -25,6 +25,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  * limitations under the License.
  */
 
+@SuppressWarnings("deprecation")
 public class FilteredQueryTreeBuilder extends QueryTreeBuilder<FilteredQuery> {
 
     public FilteredQueryTreeBuilder() {

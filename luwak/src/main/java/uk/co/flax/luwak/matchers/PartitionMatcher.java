@@ -58,12 +58,10 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
         final String queryId;
         final Query matchQuery;
-        final Query highlightQuery;
 
-        private MatchTask(String queryId, Query matchQuery, Query highlightQuery) {
+        private MatchTask(String queryId, Query matchQuery) {
             this.queryId = queryId;
             this.matchQuery = matchQuery;
-            this.highlightQuery = highlightQuery;
         }
     }
 
@@ -78,8 +76,8 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        tasks.add(new MatchTask(queryId, matchQuery, highlightQuery));
+    protected T doMatchQuery(String queryId, Query matchQuery) throws IOException {
+        tasks.add(new MatchTask(queryId, matchQuery));
         return null;
     }
 
@@ -128,7 +126,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         public Matches<T> call() {
             for (MatchTask task : tasks) {
                 try {
-                    matcher.matchQuery(task.queryId, task.matchQuery, task.highlightQuery);
+                    matcher.matchQuery(task.queryId, task.matchQuery);
                 } catch (IOException e) {
                     PartitionMatcher.this.reportError(new MatchError(task.queryId, e));
                 }

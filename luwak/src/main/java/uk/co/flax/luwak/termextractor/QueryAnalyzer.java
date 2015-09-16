@@ -48,6 +48,9 @@ public class QueryAnalyzer {
             new TermRangeQueryTreeBuilder(),
             new RegexpAnyTermQueryTreeBuilder(),
             new SimpleTermQueryTreeBuilder(),
+            new SpanTermQueryTreeBuilder(),
+            new SpanNearQueryTreeBuilder(),
+            new SpanNotQueryTreeBuilder(),
             new GenericQueryTreeBuilder()
     );
 

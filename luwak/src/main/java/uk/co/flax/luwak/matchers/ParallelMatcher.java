@@ -68,9 +68,9 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery) throws IOException {
         try {
-            queue.put(new MatcherTask(queryId, matchQuery, highlightQuery));
+            queue.put(new MatcherTask(queryId, matchQuery));
         } catch (InterruptedException e) {
             throw new IOException("Interrupted during match", e);
         }
@@ -129,7 +129,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
             try {
                 while ((task = queue.take()) != END) {
                     try {
-                        matcher.matchQuery(task.id, task.matchQuery, task.highlightQuery);
+                        matcher.matchQuery(task.id, task.matchQuery);
                     } catch (IOException e) {
                         matcher.reportError(new MatchError(task.id, e));
                     }
@@ -150,18 +150,16 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
         final String id;
         final Query matchQuery;
-        final Query highlightQuery;
 
-        private MatcherTask(String id, Query matchQuery, Query highlightQuery) {
+        private MatcherTask(String id, Query matchQuery) {
             this.id = id;
             this.matchQuery = matchQuery;
-            this.highlightQuery = highlightQuery;
         }
     }
 
     /* Marker object placed on the queue after all matches are done, to indicate to the
        worker threads that they should finish */
-    private static final MatcherTask END = new MatcherTask("", null, null);
+    private static final MatcherTask END = new MatcherTask("", null);
 
     public static class ParallelMatcherFactory<T extends QueryMatch> implements MatcherFactory<T> {
 

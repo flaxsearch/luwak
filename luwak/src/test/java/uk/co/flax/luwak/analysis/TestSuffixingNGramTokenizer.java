@@ -13,7 +13,7 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 
-import static uk.co.flax.luwak.util.TokenStreamAssert.assertThat;
+import static uk.co.flax.luwak.assertions.TokenStreamAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -137,7 +137,7 @@ public class TestSuffixingNGramTokenizer {
             long time = System.currentTimeMillis();
 
             // Cannot use try-with-resources here as we assign to ts in the block. 
-            TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator(null));
+            TokenStream ts = new TermsEnumTokenStream(doc.asAtomicReader().fields().terms("f").iterator());
             try {
                 ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
                 //ts = new DuplicateRemovalTokenFilter(ts);

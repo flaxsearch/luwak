@@ -9,7 +9,7 @@ import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
-import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.

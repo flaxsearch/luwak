@@ -34,19 +34,19 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
     }
 
     @Override
-    protected W doMatchQuery(String queryId, Query matchQuery, Query highlightQuery) throws IOException {
-        M match = matcher.matchQuery(queryId, matchQuery, highlightQuery);
+    protected W doMatchQuery(String queryId, Query matchQuery) throws IOException {
+        M match = matcher.matchQuery(queryId, matchQuery);
         if (match == null)
-            return wrapMiss(queryId, matchQuery, highlightQuery);
+            return wrapMiss(queryId, matchQuery);
 
-        W wrapped = wrapMatch(match, queryId, matchQuery, highlightQuery);
+        W wrapped = wrapMatch(match, queryId, matchQuery);
         this.addMatch(queryId, wrapped);
         return wrapped;
     }
 
-    protected W wrapMiss(String queryId, Query matchQuery, Query highlightQuery) {
+    protected W wrapMiss(String queryId, Query matchQuery) {
         return null;
     }
 
-    protected abstract W wrapMatch(M match, String queryId, Query matchQuery, Query highlightQuery);
+    protected abstract W wrapMatch(M match, String queryId, Query matchQuery);
 }

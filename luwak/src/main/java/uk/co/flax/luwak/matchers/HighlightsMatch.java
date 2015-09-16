@@ -1,8 +1,7 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.matchers;
 
 import java.util.*;
 
-import org.apache.lucene.search.intervals.Interval;
 import uk.co.flax.luwak.QueryMatch;
 
 /*
@@ -28,11 +27,12 @@ import uk.co.flax.luwak.QueryMatch;
  * a Filter), then no hits will be reported, but an IntervalsQueryMatch will still
  * be returned from an IntervalsMatcher to indicate a match.
  */
-public class IntervalsQueryMatch extends QueryMatch {
+public class HighlightsMatch extends QueryMatch {
 
     private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
 
     private final Map<String, List<Hit>> hits;
+    public String error;
 
     /**
      * Create a new QueryMatch object for a query
@@ -40,9 +40,14 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @param queryId the ID of the query
      * @param hits the hits recorded for this query
      */
-    public IntervalsQueryMatch(String queryId, Map<String, List<Hit>> hits) {
+    public HighlightsMatch(String queryId, Map<String, List<Hit>> hits) {
         super(queryId);
         this.hits = new TreeMap<>(hits);
+    }
+
+    public HighlightsMatch(String queryId) {
+        super(queryId);
+        this.hits = new TreeMap<>();
     }
 
     /**
@@ -58,19 +63,25 @@ public class IntervalsQueryMatch extends QueryMatch {
      * @return the Hits found in this field
      */
     public Collection<Hit> getHits(String field) {
-        return Collections.unmodifiableCollection(hits.get(field));
+        if (hits.containsKey(field))
+            return Collections.unmodifiableCollection(hits.get(field));
+        return new LinkedList<>();
     }
 
     /**
      * @return the total number of hits for the query
      */
     public int getHitCount() {
-        return hits.size();
+        int c = 0;
+        for (List<Hit> fieldhits : hits.values()) {
+            c += fieldhits.size();
+        }
+        return c;
     }
 
-    public static IntervalsQueryMatch merge(String queryId, IntervalsQueryMatch... matches) {
-        IntervalsQueryMatch newMatch = new IntervalsQueryMatch(queryId, EMPTYMAP);
-        for (IntervalsQueryMatch match : matches) {
+    public static HighlightsMatch merge(String queryId, HighlightsMatch... matches) {
+        HighlightsMatch newMatch = new HighlightsMatch(queryId, EMPTYMAP);
+        for (HighlightsMatch match : matches) {
             for (String field : match.getFields()) {
                 if (!newMatch.hits.containsKey(field))
                     newMatch.hits.put(field, new ArrayList<Hit>());
@@ -83,10 +94,10 @@ public class IntervalsQueryMatch extends QueryMatch {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof IntervalsQueryMatch)) return false;
+        if (!(o instanceof HighlightsMatch)) return false;
         if (!super.equals(o)) return false;
 
-        IntervalsQueryMatch that = (IntervalsQueryMatch) o;
+        HighlightsMatch that = (HighlightsMatch) o;
 
         if (hits != null ? !hits.equals(that.hits) : that.hits != null) return false;
 
@@ -98,6 +109,12 @@ public class IntervalsQueryMatch extends QueryMatch {
         int result = super.hashCode();
         result = 31 * result + (hits != null ? hits.hashCode() : 0);
         return result;
+    }
+
+    void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
+        if (!hits.containsKey(field))
+            hits.put(field, new ArrayList<Hit>());
+        hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
     }
 
     /**
@@ -122,10 +139,6 @@ public class IntervalsQueryMatch extends QueryMatch {
             this.startOffset = startOffset;
             this.endPosition = endPosition;
             this.endOffset = endOffset;
-        }
-
-        public Hit(Interval interval) {
-            this(interval.begin, interval.offsetBegin, interval.end, interval.offsetEnd);
         }
 
         @Override

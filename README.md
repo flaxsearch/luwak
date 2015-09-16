@@ -1,17 +1,8 @@
 Luwak - stored query engine from Flax
 =====================================
 
-This project depends on the Flax lucene-solr-intervals fork of Lucene/Solr.
-Before building, download lucene-solr-intervals from
-https://github.com/flaxsearch/lucene-solr-intervals/tree/r1660184-intervals-1.3.2 and follow the maven build
-instructions.
-
-This version of luwak is built against the r1660184-intervals-1.3.2 tag.
-
-Once that's done, you can build and deploy Luwak by running mvn install.
-
-A version of luwak that uses Lucene 5.1 (and so lacking support for presearcher debugging
-and exact-match reporting) can be found here: https://github.com/flaxsearch/luwak/tree/master-5.1
+[![Build
+Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
 
 You can find out a bit more about how Flax use Luwak for media monitoring applications in 
 this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
@@ -19,16 +10,6 @@ from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upsi
 
 Here's some tests we did to compare Luwak to Elasticsearch Percolator:
 http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
-
-Running the demo
-----------------
-
-A small demo program is included in the distribution that will run queries provided
-in a text file over a small corpus of documents from project gutenberg (via nltk).
-
-```sh
-./run-demo
-```
 
 Using the monitor
 -----------------
@@ -44,14 +25,14 @@ monitor.update(mq);
 InputDocument doc = InputDocument.builder("doc1")
                         .addField(textfield, document, new StandardAnalyzer())
                         .build();
-Matches<SimpleMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
 ```
 
 Adding queries
 --------------
 
 The monitor is updated using MonitorQuery objects, which consist of an id, a query string, and an
-optional highlight query string and metadata map.  The monitor uses its provided MonitorQueryParser
+optional metadata map.  The monitor uses its provided MonitorQueryParser
 to parse the query strings and cache query objects.
 
 Matching documents
@@ -62,11 +43,21 @@ class.  Four basic implementations are provided:
 * SimpleMatcher - reports which queries matched the InputDocument
 * ScoringMatcher - reports which queries matched, with their scores
 * ExplainingMatcher - reports which queries matched, with an explanation for their scores
-* IntervalsMatcher - reports which queries matched, with the individual matches for each query
+* HighlightingMatcher - reports which queries matched, with the individual matches for each query
 
 In addition, luwak has two multithreaded matchers which wrap the simpler matchers:
 * ParallelMatcher - runs queries in multiple threads as they are collected from the Monitor
 * PartioningMatcher - collects queries, partitions them into groups, and then runs each group in its own thread
+
+Running the demo
+----------------
+
+A small demo program is included in the distribution that will run queries provided
+in a text file over a small corpus of documents from project gutenberg (via nltk).
+
+```sh
+./run-demo
+```
 
 Filtering out queries
 ---------------------
@@ -168,9 +159,9 @@ Creating an entirely new type of Presearcher
 --------------------------------------------
 
 You can implement your own query filtering code by subclassing ```Presearcher```.  You will need
-to implement ```buildQuery(InputDocument, PerFieldTokenFilter)``` which converts incoming documents into queries to
+to implement ```buildQuery(InputDocument)``` which converts incoming documents into queries to
 be run against the Monitor's query index, and ```indexQuery(Query, Map<String,String>)``` which converts registered
 queries into a form that can be indexed.
 
-Note that ```indexQuery(Query)``` may not create fields named '_id', '_query' or '_highlight', as these are reserved
+Note that ```indexQuery(Query)``` may not create fields named '_id' or '_query', as these are reserved
 by the Monitor's internal index.

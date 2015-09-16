@@ -92,7 +92,7 @@ public class TestCachePurging {
                     try {
                         startUpdating.await();
                         for (int i = 200; i < 400; i++) {
-                            logger.info("Updating with query {}", i);
+                            logger.trace("Updating with query {}", i);
                             monitor.update(newMonitorQuery(i));
                         }
                         finishUpdating.countDown();
@@ -115,10 +115,10 @@ public class TestCachePurging {
 
                 assertThat(monitor.getStats().cachedQueries).isEqualTo(200);
 
-                logger.info("Starting cache purge");
+                logger.trace("Starting cache purge");
                 startUpdating.countDown();
                 monitor.purgeCache();
-                logger.info("Finished cache purge");
+                logger.trace("Finished cache purge");
                 finishUpdating.await();
 
                 assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
@@ -144,7 +144,7 @@ public class TestCachePurging {
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()) {
             @Override
             protected long configurePurgeFrequency() {
-                return 2;
+                return 1;
             }
         }) {
 
@@ -157,7 +157,7 @@ public class TestCachePurging {
             assertThat(monitor.getStats().queries).isEqualTo(99);
             assertThat(monitor.getStats().cachedQueries).isEqualTo(100);
 
-            TimeUnit.SECONDS.sleep(3);
+            TimeUnit.SECONDS.sleep(2);
             assertThat(monitor.getStats().queries).isEqualTo(99);
             assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
             assertThat(monitor.getStats().lastPurged).isGreaterThan(0);

@@ -16,7 +16,7 @@ import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 import uk.co.flax.luwak.util.FileUtils;
 
-import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -51,9 +51,9 @@ public class TestMonitorPersistence {
         try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
                                         new MMapDirectory(indexDirectory))) {
             monitor.update(new MonitorQuery("1", "test"),
-                new MonitorQuery("2", "test", "test"),
+                new MonitorQuery("2", "test"),
                 new MonitorQuery("3", "test", ImmutableMap.of("language", "en")),
-                new MonitorQuery("4", "test", "test", ImmutableMap.of("language", "en", "wibble", "quack")));
+                new MonitorQuery("4", "test", ImmutableMap.of("language", "en", "wibble", "quack")));
 
             assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
                     .hasMatchCount(4);

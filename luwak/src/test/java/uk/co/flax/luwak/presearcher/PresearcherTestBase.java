@@ -23,7 +23,7 @@ import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -159,11 +159,6 @@ public abstract class PresearcherTestBase {
     }
 
     static class BytesRefAttribute extends AttributeImpl implements TermToBytesRefAttribute {
-
-        @Override
-        public void fillBytesRef() {
-
-        }
 
         @Override
         public BytesRef getBytesRef() {

@@ -1,19 +1,10 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.AnyNode;
-import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -32,10 +23,7 @@ import uk.co.flax.luwak.termextractor.querytree.TermNode;
  */
 
 /**
- * Builds a {@link ConjunctionNode} from a generic Query using terms extracted by
- * {@link Query#extractTerms(java.util.Set)}
- *
- * If the query does not support extractTerms, then we return an
+ * If we don't recognize the query type, then just return
  * {@link uk.co.flax.luwak.termextractor.querytree.AnyNode}
  */
 public class GenericQueryTreeBuilder extends QueryTreeBuilder<Query> {
@@ -46,22 +34,6 @@ public class GenericQueryTreeBuilder extends QueryTreeBuilder<Query> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, Query query) {
-        Set<Term> termSet = new HashSet<>();
-        try {
-            query.extractTerms(termSet);
-        }
-        catch (UnsupportedOperationException e) {
-            return new AnyNode("Can't extract terms from " + query.toString());
-        }
-
-        List<QueryTree> children = new ArrayList<>();
-        if (termSet.size() == 0)
-            return new AnyNode("Can't extract terms from " + query.toString());
-
-        for (Term term : termSet) {
-            children.add(new TermNode(new QueryTerm(term)));
-        }
-        return ConjunctionNode.build(children);
-
+        return new AnyNode("Can't extract terms from " + query.getClass().getName());
     }
 }

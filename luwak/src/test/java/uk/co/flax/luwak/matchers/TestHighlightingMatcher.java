@@ -1,23 +1,22 @@
-package uk.co.flax.luwak.intervals;
+package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.Map;
 
-import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.*;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.HighlightingMatchAssert.assertThat;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -34,7 +33,7 @@ import static uk.co.flax.luwak.intervals.IntervalMatchesAssert.assertThat;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class TestIntervalsMatches {
+public class TestHighlightingMatcher {
 
     static final String textfield = "textfield";
 
@@ -59,13 +58,13 @@ public class TestIntervalsMatches {
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
                 .matchesQuery("query1")
                     .inField(textfield)
-                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+                        .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
 
     }
 
@@ -79,55 +78,41 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("query1", "field1:test field2:test"));
 
-        Matches<IntervalsQueryMatch> matcher = monitor.match(doc, IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(doc, HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
                 .hasMatchCount(1)
                 .matchesQuery("query1")
                     .inField("field1")
-                        .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14))
+                        .withHit(new HighlightsMatch.Hit(3, 10, 3, 14))
                     .inField("field2")
-                        .withHit(new IntervalsQueryMatch.Hit(5, 26, 5, 30));
+                        .withHit(new HighlightsMatch.Hit(5, 26, 5, 30));
 
     }
 
     @Test
+    @Ignore("TODO: Separate highlighter queries")
     public void testHighlighterQuery() throws IOException {
 
         InputDocument docWithMatch = buildDoc("1", "this is a test document");
         InputDocument docWithNoMatch = buildDoc("2", "this is a document");
         InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
 
-        monitor.update(new MonitorQuery("1", "test", "document"));
+        monitor.update(new MonitorQuery("1", "test"));
 
-        assertThat(monitor.match(docWithNoHighlighterMatch, IntervalsMatcher.FACTORY))
+        // TODO: Highlight on standard query if no match on highlight query
+        assertThat(monitor.match(docWithNoHighlighterMatch, HighlightingMatcher.FACTORY))
                 .matchesQuery("1").inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(3, 10, 3, 14));
+                .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
 
-        assertThat(monitor.match(docWithMatch, IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(docWithMatch, HighlightingMatcher.FACTORY))
                 .matchesQuery("1")
                 .inField(textfield)
-                .withHit(new IntervalsQueryMatch.Hit(4, 15, 4, 23));
+                .withHit(new HighlightsMatch.Hit(4, 15, 4, 23));
 
-        assertThat(monitor.match(docWithNoMatch, IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(docWithNoMatch, HighlightingMatcher.FACTORY))
                 .doesNotMatchQuery("1");
-
-
-
     }
-
-    @Test
-    public void testHighlighterQueryOnlyReturnsHitsFromHighlighter() throws IOException {
-
-        monitor.update(new MonitorQuery("1", "test", "document"));
-
-        Matches<IntervalsQueryMatch> matcher = monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY);
-
-        IntervalsQueryMatch match = Iterables.getFirst(matcher, null);
-        Assertions.assertThat(match).isNotNull();
-        Assertions.assertThat(match.getHitCount()).isEqualTo(1);
-    }
-
 
     @Test
     public void testQueryErrors() throws IOException {
@@ -153,18 +138,18 @@ public class TestIntervalsMatches {
         }, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", "test"),
-                       new MonitorQuery("2", "error!"),
-                       new MonitorQuery("3", "document"),
-                       new MonitorQuery("4", "foo"));
+                new MonitorQuery("2", "error!"),
+                new MonitorQuery("3", "document"),
+                new MonitorQuery("4", "foo"));
 
-        assertThat(monitor.match(buildDoc("1", "this is a test document"), IntervalsMatcher.FACTORY))
+        assertThat(monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY))
                 .hasQueriesRunCount(4)
                 .hasMatchCount(2)
                 .hasErrorCount(1);
     }
 
     @Test
-    public void testFiltersAreHandledGracefully() throws IOException {
+    public void testWildcards() throws IOException {
 
         monitor = new Monitor(new MonitorQueryParser() {
             @Override
@@ -175,12 +160,36 @@ public class TestIntervalsMatches {
 
         monitor.update(new MonitorQuery("1", ""));
 
-        Matches<IntervalsQueryMatch> matches = monitor.match(buildDoc("1", "hello world"), IntervalsMatcher.FACTORY);
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "hello world"), HighlightingMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(1)
                 .hasMatchCount(1);
 
-        Assertions.assertThat(matches.matches("1").getHitCount()).isEqualTo(0);
+        Assertions.assertThat(matches.matches("1").getHitCount()).isEqualTo(1);
+
+    }
+
+    @Test
+    public void testWildcardCombinations() throws Exception {
+
+        final BooleanQuery bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "term1")), BooleanClause.Occur.MUST)
+                .add(new PrefixQuery(new Term(textfield, "term2")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "term3")), BooleanClause.Occur.MUST_NOT)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return bq;
+            }
+        }, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term22 term4"), HighlightingMatcher.FACTORY);
+        assertThat(matches)
+                .matchesQuery("1")
+                .withHitCount(2);
 
     }
 

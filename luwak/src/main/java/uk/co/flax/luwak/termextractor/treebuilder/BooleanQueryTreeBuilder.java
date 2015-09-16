@@ -104,7 +104,7 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
         @Override
         protected Clauses analyze(BooleanQuery query) {
             Clauses clauses = new Clauses();
-            for (BooleanClause clause : query.getClauses()) {
+            for (BooleanClause clause : query) {
                 if (clause.getQuery() instanceof MatchAllDocsQuery) {
                     continue;       // ignored for term extraction
                 }
@@ -122,6 +122,7 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public static class FilterBuilder extends BooleanQueryTreeBuilder<BooleanFilter> {
 
         public FilterBuilder() {

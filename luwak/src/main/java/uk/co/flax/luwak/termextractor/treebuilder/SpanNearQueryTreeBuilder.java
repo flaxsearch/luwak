@@ -1,10 +1,13 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.apache.lucene.search.intervals.NonOverlappingQuery;
-import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /*
@@ -24,23 +27,20 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  */
 
 /**
- * Extracts terms from a NonOverlappingQuery
+ * Extract terms from an IntervalFilterQuery
  */
-public class NonOverlappingQueryTreeBuilder extends QueryTreeBuilder<NonOverlappingQuery> {
+public class SpanNearQueryTreeBuilder extends QueryTreeBuilder<SpanNearQuery> {
 
-    public NonOverlappingQueryTreeBuilder() {
-        super(NonOverlappingQuery.class);
+    public SpanNearQueryTreeBuilder() {
+        super(SpanNearQuery.class);
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, NonOverlappingQuery query) {
-        try {
-            Field field = NonOverlappingQuery.class.getDeclaredField("minuend");
-            field.setAccessible(true);
-            return builder.buildTree(field.get(query));
+    public QueryTree buildTree(QueryAnalyzer builder, SpanNearQuery query) {
+        List<QueryTree> children = new ArrayList<>();
+        for (SpanQuery subq : query.getClauses()) {
+            children.add(builder.buildTree(subq));
         }
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return ConjunctionNode.build(children);
     }
 }

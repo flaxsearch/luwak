@@ -1,12 +1,24 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Weight;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.RAMDirectory;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
-import static uk.co.flax.luwak.util.MatchesAssert.assertThat;
+import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -68,6 +80,42 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
         InputDocument doc3 = buildDoc("doc3", "field", "bar badger foo");
         assertThat(monitor.match(doc3, SimpleMatcher.FACTORY))
                 .hasMatchCount(1);
+
+    }
+
+    @Test
+    public void testQueryBuilder() throws IOException {
+
+        IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
+        Presearcher presearcher = createPresearcher();
+
+        Directory dir = new RAMDirectory();
+        IndexWriter writer = new IndexWriter(dir, iwc);
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher, writer)) {
+
+            monitor.update(new MonitorQuery("1", "f:test"));
+
+            try (IndexReader reader = DirectoryReader.open(writer, false)) {
+
+                IndexReaderContext ctx = reader.getContext();
+                InputDocument doc = InputDocument.builder("doc1")
+                        .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
+
+                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, ctx);
+                IndexSearcher searcher = new IndexSearcher(ctx);
+                Weight w = searcher.createNormalizedWeight(q, true);
+
+                Set<Term> terms = new HashSet<>();
+                w.extractTerms(terms);
+
+                Assertions.assertThat(terms).containsOnly(
+                        new Term("f_1", "test"), new Term("f_2", "test"),
+                        new Term("f_3", "test"), new Term("f_0", "test"),
+                        new Term("__anytokenfield", "__ANYTOKEN__")
+                );
+            }
+
+        }
 
     }
 }

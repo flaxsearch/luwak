@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,10 @@ public class TestCollectionUtils {
     @Test
     public void testPartitions() {
 
-        List<String> terms = list("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+        List<String> terms = ImmutableList.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+
         assertThat(CollectionUtils.partition(terms, 2))
-                .containsExactly(list("1", "2", "3", "4", "5"), list("6", "7", "8", "9", "10"));
+                .containsExactly(ImmutableList.of("1", "2", "3", "4", "5"), ImmutableList.of("6", "7", "8", "9", "10"));
 
         assertThat(CollectionUtils.partition(terms, 3))
                 .containsExactly(list("1", "2", "3"), list("4", "5", "6"), list("7", "8", "9", "10"));

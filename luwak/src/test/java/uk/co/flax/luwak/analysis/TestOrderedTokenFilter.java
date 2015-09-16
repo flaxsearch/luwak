@@ -9,7 +9,7 @@ import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.KeywordRepeatFilter;
 import org.junit.Test;
 
-import static uk.co.flax.luwak.util.TokenStreamAssert.assertThat;
+import static uk.co.flax.luwak.assertions.TokenStreamAssert.assertThat;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
