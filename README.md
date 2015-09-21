@@ -4,6 +4,17 @@ Luwak - stored query engine from Flax
 [![Build
 Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
 
+Get the artifacts
+-----------------
+
+```
+<dependency>
+  <groupId>com.github.flaxsearch</groupId>
+  <artifactId>luwak</artifactId>
+  <version>1.2.0</version>
+</dependency>
+```
+
 You can find out a bit more about how Flax use Luwak for media monitoring applications in 
 this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
 from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
