@@ -60,7 +60,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      */
     public final T matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         presearcherHits.add(queryId);
-        return doMatchQuery(queryId, matchQuery, Collections.unmodifiableMap(metadata));
+        return doMatchQuery(queryId, matchQuery, metadata);
     }
 
     protected abstract T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;

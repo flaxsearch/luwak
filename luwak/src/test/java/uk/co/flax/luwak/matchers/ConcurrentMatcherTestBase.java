@@ -2,13 +2,18 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.search.Query;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
@@ -35,6 +40,45 @@ public abstract class ConcurrentMatcherTestBase {
 
     protected abstract <T extends QueryMatch>
         MatcherFactory<T> matcherFactory(ExecutorService executor, MatcherFactory<T> factory, int threads);
+
+    @Rule
+    public final ExpectedException exeception = ExpectedException.none();
+
+    @Test
+    public void testMatcherMetadata() throws IOException {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
+            HashMap<String, String> metadataMap = new HashMap<>();
+            metadataMap.put("key", "value");
+
+            monitor.update(new MonitorQuery(Integer.toString(1), "+test " + Integer.toString(1), metadataMap));
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
+
+            MatcherFactory<QueryMatch> testMatcherFactory = new MatcherFactory<QueryMatch>() {
+                @Override
+                public CandidateMatcher<QueryMatch> createMatcher(InputDocument doc) {
+                    return new CandidateMatcher<QueryMatch>(doc) {
+                        @Override
+                        protected QueryMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+                            assertThat(metadata.get("key")).isEqualTo("value");
+                            exeception.expect(RuntimeException.class);
+                            metadata.put("key", "newValue");
+                            return null;
+                        }
+
+                        @Override
+                        public QueryMatch resolve(QueryMatch match1, QueryMatch match2) {
+                            return null;
+                        }
+                    };
+                }
+            };
+
+            monitor.match(doc, matcherFactory(executor, testMatcherFactory , 10));
+        }
+    }
 
     @Test
     public void testAllMatchesAreCollected() throws IOException {
