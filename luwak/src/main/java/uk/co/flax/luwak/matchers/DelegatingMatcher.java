@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.CandidateMatcher;
@@ -34,8 +35,8 @@ public abstract class DelegatingMatcher<M extends QueryMatch, W extends WrappedM
     }
 
     @Override
-    protected W doMatchQuery(String queryId, Query matchQuery) throws IOException {
-        M match = matcher.matchQuery(queryId, matchQuery);
+    protected W doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+        M match = matcher.matchQuery(queryId, matchQuery, metadata);
         if (match == null)
             return wrapMiss(queryId, matchQuery);
 

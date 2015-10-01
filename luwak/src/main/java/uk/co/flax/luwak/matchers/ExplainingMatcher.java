@@ -2,6 +2,7 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Query;
@@ -40,7 +41,7 @@ public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
     }
 
     @Override
-    protected ExplainingMatch doMatchQuery(String queryId, Query matchQuery) throws IOException {
+    protected ExplainingMatch doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadat) throws IOException {
         Explanation explanation = doc.getSearcher().explain(matchQuery, 0);
         if (!explanation.isMatch())
             return null;

@@ -2,6 +2,7 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
@@ -46,7 +47,7 @@ public abstract class CollectingMatcher<T extends QueryMatch> extends CandidateM
     }
 
     @Override
-    protected T doMatchQuery(final String queryId, Query matchQuery) throws IOException {
+    protected T doMatchQuery(final String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
 
         MatchCollector coll = new MatchCollector(queryId);
 

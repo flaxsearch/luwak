@@ -58,12 +58,12 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public final T matchQuery(String queryId, Query matchQuery) throws IOException {
+    public final T matchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
         presearcherHits.add(queryId);
-        return doMatchQuery(queryId, matchQuery);
+        return doMatchQuery(queryId, matchQuery, metadata);
     }
 
-    protected abstract T doMatchQuery(String queryId, Query matchQuery) throws IOException;
+    protected abstract T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;
 
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))

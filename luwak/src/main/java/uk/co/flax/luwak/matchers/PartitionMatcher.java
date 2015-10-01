@@ -3,6 +3,7 @@ package uk.co.flax.luwak.matchers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -58,10 +59,12 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
         final String queryId;
         final Query matchQuery;
+        final Map<String, String> metadata;
 
-        private MatchTask(String queryId, Query matchQuery) {
+        private MatchTask(String queryId, Query matchQuery, Map<String,String> metadata) {
             this.queryId = queryId;
             this.matchQuery = matchQuery;
+            this.metadata = metadata;
         }
     }
 
@@ -76,8 +79,8 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery) throws IOException {
-        tasks.add(new MatchTask(queryId, matchQuery));
+    protected T doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+        tasks.add(new MatchTask(queryId, matchQuery, metadata));
         return null;
     }
 
@@ -126,7 +129,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         public Matches<T> call() {
             for (MatchTask task : tasks) {
                 try {
-                    matcher.matchQuery(task.queryId, task.matchQuery);
+                    matcher.matchQuery(task.queryId, task.matchQuery, task.metadata);
                 } catch (IOException e) {
                     PartitionMatcher.this.reportError(new MatchError(task.queryId, e));
                 }
