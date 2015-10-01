@@ -2,6 +2,7 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -69,7 +70,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         try {
             queue.put(new MatcherTask(queryId, matchQuery, metadata));
         } catch (InterruptedException e) {
@@ -153,7 +154,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
         final Query matchQuery;
         final Map<String,String> metadata;
 
-        private MatcherTask(String id, Query matchQuery, Map<String,String> metadata) {
+        private MatcherTask(String id, Query matchQuery, Map<String, String> metadata) {
             this.id = id;
             this.matchQuery = matchQuery;
             this.metadata = metadata;
@@ -162,7 +163,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
     /* Marker object placed on the queue after all matches are done, to indicate to the
        worker threads that they should finish */
-    private static final MatcherTask END = new MatcherTask("", null, null);
+    private static final MatcherTask END = new MatcherTask("", null, Collections.<String, String>emptyMap());
 
     public static class ParallelMatcherFactory<T extends QueryMatch> implements MatcherFactory<T> {
 

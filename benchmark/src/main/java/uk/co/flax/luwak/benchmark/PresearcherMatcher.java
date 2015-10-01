@@ -37,7 +37,7 @@ public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
     }
 
     @Override
-    protected PresearcherMatch doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+    protected PresearcherMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         return new PresearcherMatch(queryId);
     }
 

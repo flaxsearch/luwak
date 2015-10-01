@@ -61,7 +61,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         final Query matchQuery;
         final Map<String, String> metadata;
 
-        private MatchTask(String queryId, Query matchQuery, Map<String,String> metadata) {
+        private MatchTask(String queryId, Query matchQuery, Map<String, String> metadata) {
             this.queryId = queryId;
             this.matchQuery = matchQuery;
             this.metadata = metadata;
@@ -79,7 +79,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+    protected T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, metadata));
         return null;
     }

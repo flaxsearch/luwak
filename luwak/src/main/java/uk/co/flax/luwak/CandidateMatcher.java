@@ -58,9 +58,9 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @throws IOException on IO errors
      * @return true if the query matches
      */
-    public final T matchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+    public final T matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         presearcherHits.add(queryId);
-        return doMatchQuery(queryId, matchQuery, metadata);
+        return doMatchQuery(queryId, matchQuery, Collections.unmodifiableMap(metadata));
     }
 
     protected abstract T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;

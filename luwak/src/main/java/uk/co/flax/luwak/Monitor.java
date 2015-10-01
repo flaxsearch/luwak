@@ -188,7 +188,7 @@ public class Monitor implements Closeable {
         public final BytesRef hash;
         public final Map<String,String> metadata;
 
-        public CacheEntry(BytesRef hash, Query matchQuery, Map<String,String> metadata) {
+        public CacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
             this.hash = hash;
             this.matchQuery = matchQuery;
             this.metadata = metadata;

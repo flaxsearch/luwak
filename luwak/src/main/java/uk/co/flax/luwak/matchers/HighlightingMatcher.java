@@ -48,7 +48,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     @Override
-    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
+    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         HighlightsMatch match = doMatch(queryId, matchQuery);
         if (match != null)
             this.addMatch(queryId, match);
