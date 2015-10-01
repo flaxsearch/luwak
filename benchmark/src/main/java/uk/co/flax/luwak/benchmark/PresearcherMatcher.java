@@ -17,6 +17,7 @@ package uk.co.flax.luwak.benchmark;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -36,7 +37,7 @@ public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
     }
 
     @Override
-    protected PresearcherMatch doMatchQuery(String queryId, Query matchQuery) throws IOException {
+    protected PresearcherMatch doMatchQuery(String queryId, Query matchQuery, Map<String,String> metadata) throws IOException {
         return new PresearcherMatch(queryId);
     }
 
