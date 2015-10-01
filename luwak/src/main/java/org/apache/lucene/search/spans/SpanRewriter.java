@@ -17,6 +17,8 @@ package org.apache.lucene.search.spans;
 
 import org.apache.lucene.search.*;
 
+import java.util.ArrayList;
+
 public class SpanRewriter {
 
     public static final SpanRewriter INSTANCE = new SpanRewriter();
@@ -30,6 +32,8 @@ public class SpanRewriter {
             return rewriteBoolean((BooleanQuery) in);
         if (in instanceof MultiTermQuery)
             return rewriteMultiTermQuery((MultiTermQuery)in);
+        if (in instanceof DisjunctionMaxQuery)
+            return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in);
 
         return rewriteUnknown(in);
     }
@@ -48,6 +52,14 @@ public class SpanRewriter {
 
     protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {
         return new SpanMultiTermQueryWrapper<>(mtq);
+    }
+
+    protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) {
+        ArrayList<Query> subQueries = new ArrayList<>();
+        for (Query subQuery : disjunctionMaxQuery) {
+            subQueries.add(rewrite(subQuery));
+        }
+        return new DisjunctionMaxQuery(subQueries, disjunctionMaxQuery.getTieBreakerMultiplier());
     }
 
     protected Query rewriteUnknown(Query query) {
