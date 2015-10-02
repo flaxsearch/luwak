@@ -193,4 +193,25 @@ public class TestHighlightingMatcher {
 
     }
 
+    @Test
+    public void testDisjunctionMaxQuery() throws IOException {
+        final DisjunctionMaxQuery query = new DisjunctionMaxQuery(1.0f);
+        query.add(new TermQuery(new Term(textfield, "term1")));
+        query.add(new PrefixQuery(new Term(textfield, "term2")));
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return query;
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2 term3"), HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+                .matchesQuery("1")
+                .withHitCount(2);
+    }
+
 }
