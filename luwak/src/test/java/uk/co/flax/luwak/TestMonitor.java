@@ -2,12 +2,17 @@ package uk.co.flax.luwak;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.search.Query;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -166,6 +171,40 @@ public class TestMonitor {
         monitor.update(queries);
         Assertions.assertThat(total.get()).isEqualTo(10355);
 
+    }
+
+    @Test
+    public void testMatcherMetadata() throws IOException {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
+            HashMap<String, String> metadataMap = new HashMap<>();
+            metadataMap.put("key", "value");
+
+            monitor.update(new MonitorQuery(Integer.toString(1), "+test " + Integer.toString(1), metadataMap));
+
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+
+            InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
+
+            MatcherFactory<QueryMatch> testMatcherFactory = new MatcherFactory<QueryMatch>() {
+                @Override
+                public CandidateMatcher<QueryMatch> createMatcher(InputDocument doc) {
+                    return new CandidateMatcher<QueryMatch>(doc) {
+                        @Override
+                        protected QueryMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+                            Assertions.assertThat(metadata.get("key")).isEqualTo("value");
+                            return null;
+                        }
+
+                        @Override
+                        public QueryMatch resolve(QueryMatch match1, QueryMatch match2) {
+                            return null;
+                        }
+                    };
+                }
+            };
+
+            monitor.match(doc, testMatcherFactory);
+        }
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer();
