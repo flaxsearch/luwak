@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.Query;
 
 /*
@@ -40,6 +41,10 @@ public class QueryDecomposer {
 
         if (q instanceof BooleanQuery)
             return decomposeBoolean((BooleanQuery) q);
+
+        if (q instanceof DisjunctionMaxQuery) {
+            return ((DisjunctionMaxQuery)q).getDisjuncts();
+        }
 
         return listOf(q);
     }

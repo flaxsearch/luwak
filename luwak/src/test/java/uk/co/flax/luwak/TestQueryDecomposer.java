@@ -1,6 +1,10 @@
 package uk.co.flax.luwak;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.junit.Test;
 import uk.co.flax.luwak.util.ParserUtils;
 
@@ -87,6 +91,15 @@ public class TestQueryDecomposer {
                 .containsExactly(q("+hello^0.7 -goodbye"), q("+world^0.7 -goodbye"));
         assertThat(decomposer.decompose(q("+(hello^0.5 world)^0.8")))
                 .containsExactly(q("hello^0.4"), q("world^0.8"));
+    }
+
+    @Test
+    public void testDisjunctionMaxDecomposition() throws Exception {
+        Query q = new DisjunctionMaxQuery(
+                ImmutableList.<Query>of(new TermQuery(new Term("f", "t1")), new TermQuery(new Term("f", "t2"))), 0.1f
+        );
+
+        assertThat(decomposer.decompose(q)).containsExactly(q("f:t1"), q("f:t2"));
     }
 
 }

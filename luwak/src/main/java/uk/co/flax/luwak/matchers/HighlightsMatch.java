@@ -29,9 +29,9 @@ import uk.co.flax.luwak.QueryMatch;
  */
 public class HighlightsMatch extends QueryMatch {
 
-    private static final Map<String, List<Hit>> EMPTYMAP = new HashMap<>();
+    private static final Map<String, Set<Hit>> EMPTYMAP = new HashMap<>();
 
-    private final Map<String, List<Hit>> hits;
+    private final Map<String, Set<Hit>> hits;
     public String error;
 
     /**
@@ -40,7 +40,7 @@ public class HighlightsMatch extends QueryMatch {
      * @param queryId the ID of the query
      * @param hits the hits recorded for this query
      */
-    public HighlightsMatch(String queryId, Map<String, List<Hit>> hits) {
+    public HighlightsMatch(String queryId, Map<String, Set<Hit>> hits) {
         super(queryId);
         this.hits = new TreeMap<>(hits);
     }
@@ -73,18 +73,18 @@ public class HighlightsMatch extends QueryMatch {
      */
     public int getHitCount() {
         int c = 0;
-        for (List<Hit> fieldhits : hits.values()) {
+        for (Set<Hit> fieldhits : hits.values()) {
             c += fieldhits.size();
         }
         return c;
     }
 
     public static HighlightsMatch merge(String queryId, HighlightsMatch... matches) {
-        HighlightsMatch newMatch = new HighlightsMatch(queryId, EMPTYMAP);
+        HighlightsMatch newMatch = new HighlightsMatch(queryId);
         for (HighlightsMatch match : matches) {
             for (String field : match.getFields()) {
                 if (!newMatch.hits.containsKey(field))
-                    newMatch.hits.put(field, new ArrayList<Hit>());
+                    newMatch.hits.put(field, new TreeSet<Hit>());
                 newMatch.hits.get(field).addAll(match.getHits(field));
             }
         }
@@ -113,7 +113,7 @@ public class HighlightsMatch extends QueryMatch {
 
     void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
         if (!hits.containsKey(field))
-            hits.put(field, new ArrayList<Hit>());
+            hits.put(field, new TreeSet<Hit>());
         hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
     }
 
