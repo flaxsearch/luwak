@@ -9,6 +9,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -50,6 +51,11 @@ public class TestHighlightingMatcher {
     @Before
     public void setUp() throws IOException {
         monitor = new Monitor(new LuceneQueryParser(textfield), new MatchAllPresearcher());
+    }
+
+    @After
+    public void testDown() throws IOException {
+        monitor.close();
     }
 
     @Test
@@ -212,6 +218,28 @@ public class TestHighlightingMatcher {
         assertThat(matches)
                 .matchesQuery("1")
                 .withHitCount(2);
+    }
+
+    @Test
+    public void testIdenticalMatches() throws Exception {
+
+        final BooleanQuery bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "term1")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "term1")), BooleanClause.Occur.SHOULD)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return bq;
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2"), HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1").withHitCount(1);
+
     }
 
 }
