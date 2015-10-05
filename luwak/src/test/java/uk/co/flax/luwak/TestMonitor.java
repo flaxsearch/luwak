@@ -181,8 +181,6 @@ public class TestMonitor {
 
             monitor.update(new MonitorQuery(Integer.toString(1), "+test " + Integer.toString(1), metadataMap));
 
-            ExecutorService executor = Executors.newFixedThreadPool(1);
-
             InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
 
             MatcherFactory<QueryMatch> testMatcherFactory = new MatcherFactory<QueryMatch>() {

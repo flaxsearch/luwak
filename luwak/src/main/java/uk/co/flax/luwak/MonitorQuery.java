@@ -58,7 +58,7 @@ public class MonitorQuery {
      * @param query the query
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, new HashMap<String, String>());
+        this(id, query, Collections.<String, String>emptyMap());
     }
 
     /**
