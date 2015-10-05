@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
@@ -47,7 +48,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     @Override
-    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery) throws IOException {
+    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         HighlightsMatch match = doMatch(queryId, matchQuery);
         if (match != null)
             this.addMatch(queryId, match);

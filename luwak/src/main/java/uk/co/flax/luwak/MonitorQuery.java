@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -48,7 +49,7 @@ public class MonitorQuery {
     public MonitorQuery(String id, String query, Map<String, String> metadata) {
         this.id = id;
         this.query = query;
-        this.metadata = new TreeMap<>(metadata);
+        this.metadata = Collections.unmodifiableMap(new TreeMap<>(metadata));
     }
 
     /**
@@ -57,7 +58,7 @@ public class MonitorQuery {
      * @param query the query
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, new HashMap<String, String>());
+        this(id, query, Collections.<String, String>emptyMap());
     }
 
     /**

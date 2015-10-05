@@ -186,10 +186,12 @@ public class Monitor implements Closeable {
 
         public final Query matchQuery;
         public final BytesRef hash;
+        public final Map<String,String> metadata;
 
-        public CacheEntry(BytesRef hash, Query matchQuery) {
+        public CacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
             this.hash = hash;
             this.matchQuery = matchQuery;
+            this.metadata = metadata;
         }
     }
 
@@ -382,7 +384,7 @@ public class Monitor implements Closeable {
             BytesRefBuilder subHash = new BytesRefBuilder();
             subHash.append(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery));
+            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, query.getMetadata()));
         }
 
         return cacheEntries;
@@ -584,7 +586,7 @@ public class Monitor implements Closeable {
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
                 CacheEntry entry = queries.get(hash);
-                matcher.matchQuery(queryId, entry.matchQuery);
+                matcher.matchQuery(queryId, entry.matchQuery, entry.metadata);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
