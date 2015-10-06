@@ -50,6 +50,8 @@ public class QueryAnalyzer {
             new SimpleTermQueryTreeBuilder(),
             new SpanTermQueryTreeBuilder(),
             new SpanNearQueryTreeBuilder(),
+            new SpanOrQueryTreeBuilder(),
+            new SpanMultiTermQueryWrapperTreeBuilder(),
             new SpanNotQueryTreeBuilder(),
             new GenericQueryTreeBuilder()
     );

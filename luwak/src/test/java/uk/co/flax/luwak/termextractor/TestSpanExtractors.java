@@ -2,10 +2,7 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.search.spans.SpanNearQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.*;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +45,24 @@ public class TestSpanExtractors {
         }, 0, true);
 
         assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
+    }
+
+    @Test
+    public void testSpanOrExtractor() {
+        SpanOrQuery or = new SpanOrQuery(new SpanTermQuery(new Term("field", "term1")),
+                                         new SpanTermQuery(new Term("field", "term2")));
+        assertThat(treeBuilder.collectTerms(or)).containsOnly(
+                new QueryTerm("field", "term1", QueryTerm.Type.EXACT),
+                new QueryTerm("field", "term2", QueryTerm.Type.EXACT)
+        );
+    }
+
+    @Test
+    public void testSpanMultiTerms() {
+        SpanQuery q = new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term("field", "term.*")));
+        assertThat(treeBuilder.collectTerms(q)).containsOnly(
+                new QueryTerm("field", "field:/term.*/", QueryTerm.Type.ANY)
+        );
     }
 
 }
