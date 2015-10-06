@@ -65,7 +65,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
         BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(presearcherQuery, BooleanClause.Occur.MUST);
-        bq.add(filterClause, BooleanClause.Occur.MUST);
+        bq.add(filterClause, BooleanClause.Occur.FILTER);
         return bq.build();
     }
 
@@ -80,7 +80,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         BytesRef term;
         TermsEnum te = terms.iterator();
         while ((term = te.next()) != null) {
-            bq.add(new TermQuery(new Term(field, term.utf8ToString())), BooleanClause.Occur.SHOULD);
+            bq.add(new TermQuery(new Term(field, term.clone())), BooleanClause.Occur.SHOULD);
         }
 
         BooleanQuery built = bq.build();
