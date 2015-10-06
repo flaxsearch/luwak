@@ -29,7 +29,7 @@ public class SlowLog implements Iterable<SlowLog.Entry> {
     private final List<Entry> slowQueries = new ArrayList<>();
 
     /**
-     * Record all queries that take longer than this limit (in ms)
+     * Record all queries that take longer than this limit (in ns)
      * @param limit the limit
      */
     public void setLimit(long limit) {
@@ -49,7 +49,7 @@ public class SlowLog implements Iterable<SlowLog.Entry> {
      * The query will only be recorded if the time is above the configured limit
      *
      * @param query the query id
-     * @param time  the time taken by the query in ms
+     * @param time  the time taken by the query in ns
      */
     public void addQuery(String query, long time) {
         if (time < limit)
@@ -95,7 +95,7 @@ public class SlowLog implements Iterable<SlowLog.Entry> {
     public String toString() {
         StringBuilder sb = new StringBuilder("Limit: ").append(limit).append("\n");
         for (Entry entry : slowQueries) {
-            sb.append("\t").append(entry.queryId).append(" [").append(entry.time).append("ms]\n");
+            sb.append("\t").append(entry.queryId).append(" [").append(entry.time).append("ns]\n");
         }
         return sb.toString();
     }
