@@ -15,22 +15,28 @@ package uk.co.flax.luwak.benchmark;
  *   limitations under the License.
  */
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Locale;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
-import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.QueryMatch;
 
 public class BenchmarkResults<T extends QueryMatch> {
 
-    private final Timer timer = new Timer();
+    private final MetricRegistry METRICS = new MetricRegistry();
+    private final Timer timer = METRICS.timer("searchTimes");
+    private final Histogram queryBuildTimes = METRICS.histogram("queryBuildTimes");
 
     public void add(Matches<T> benchmarkMatches) {
         timer.update(benchmarkMatches.getSearchTime(), TimeUnit.MILLISECONDS);
+        queryBuildTimes.update(benchmarkMatches.getQueryBuildTime());
     }
 
     public Timer getTimer() {
@@ -39,23 +45,13 @@ public class BenchmarkResults<T extends QueryMatch> {
 
     @Override
     public String toString() {
-        StringWriter sw = new StringWriter();
-        Locale locale = Locale.ROOT;
-        try (PrintWriter output = new PrintWriter(sw)) {
-            final Snapshot snapshot = timer.getSnapshot();
-            output.printf(locale, "Benchmark Results%n");
-            output.printf(locale, "             count = %d%n", timer.getCount());
-            output.printf(locale, "         mean rate = %2.2f calls/%s%n", timer.getMeanRate(), "s");
-            output.printf(locale, "               min = %d %s%n", TimeUnit.NANOSECONDS.toMillis(snapshot.getMin()), "ms");
-            output.printf(locale, "               max = %d %s%n", TimeUnit.NANOSECONDS.toMillis(snapshot.getMax()), "ms");
-            output.printf(locale, "              mean = %2.2f %s%n", snapshot.getMean() / 1000000, "ms");
-            output.printf(locale, "            stddev = %2.2f %s%n", snapshot.getStdDev() / 1000000, "ms");
-            output.printf(locale, "            median = %2.2f %s%n", snapshot.getMedian() / 1000000, "ms");
-            output.printf(locale, "              75%% <= %2.2f %s%n", snapshot.get75thPercentile() / 1000000, "ms");
-            output.printf(locale, "              95%% <= %2.2f %s%n", snapshot.get95thPercentile() / 1000000, "ms");
-            output.printf(locale, "            99.9%% <= %2.2f %s%n", snapshot.get999thPercentile() / 1000000, "ms");
-
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            PrintStream out = new PrintStream(os, true, StandardCharsets.UTF_8.name());
+            ConsoleReporter.forRegistry(METRICS).outputTo(out).build().report();
+            return os.toString(StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
-        return sw.toString();
     }
 }
