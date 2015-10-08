@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
@@ -170,4 +172,9 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
      * @param terms the terms collected from it
      */
     protected void debug(QueryTree tree, Map<String, BytesRefHash> terms) {}
+
+    @Override
+    public void showQueryTree(Query query, PrintStream out) {
+        QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, advancer, out);
+    }
 }

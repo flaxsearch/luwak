@@ -17,6 +17,7 @@ package uk.co.flax.luwak.presearcher;
  */
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 import org.apache.lucene.analysis.TokenStream;
@@ -42,6 +43,7 @@ import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 
 /**
@@ -167,6 +169,13 @@ public class TermFilteredPresearcher extends Presearcher {
         }
 
         return doc;
+    }
+
+    /**
+     * Debugging: write the parsed query tree to a PrintStream
+     */
+    public void showQueryTree(Query query, PrintStream out) {
+        QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, out);
     }
 
     protected Document buildQueryDocument(QueryTree querytree) {
