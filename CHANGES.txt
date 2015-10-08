@@ -1,12 +1,19 @@
 Luwak 1.3.0
 ===========
 
+API changes:
+
+* Presearcher.buildQuery now takes a QueryTermFilter rather than an
+  IndexReaderContext
+
 New features:
 
 * You can now configure different Similarity implementations on an InputDocument
 * Query metadata is passed to CandidateMatcher.doMatchQuery()
 * DisjunctionMaxQuery can be highlighted
 * DisjunctionMaxQuery can be decomposed and indexed separately
+* Performance improvements: use TermsQuery for the document disjunction, and 
+  filter out non-existent query terms before they're added to the query
 
 Bug fixes:
 
