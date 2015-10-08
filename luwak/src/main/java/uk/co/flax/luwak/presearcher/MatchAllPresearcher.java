@@ -19,11 +19,11 @@ package uk.co.flax.luwak.presearcher;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.QueryTermFilter;
 
 /**
  * A simple Presearcher implementation that runs all queries in a Monitor against
@@ -36,7 +36,7 @@ public class MatchAllPresearcher extends Presearcher {
     }
 
     @Override
-    public Query buildQuery(InputDocument doc, IndexReaderContext ctx) {
+    public Query buildQuery(InputDocument doc, QueryTermFilter queryTermFilter) {
         return new MatchAllDocsQuery();
     }
 

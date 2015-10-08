@@ -1,17 +1,15 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRefHash;
@@ -133,21 +131,17 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
             try (IndexReader reader = DirectoryReader.open(writer, false)) {
 
-                IndexReaderContext ctx = reader.getContext();
                 InputDocument doc = InputDocument.builder("doc1")
                         .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
 
-                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, ctx);
-                IndexSearcher searcher = new IndexSearcher(ctx);
-                Weight w = searcher.createNormalizedWeight(q, true);
+                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, new QueryTermFilter(reader));
+                BooleanQuery expected = new BooleanQuery.Builder()
+                        .add(should(new TermsQuery(new Term("f", "test"))))
+                        .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
+                        .build();
 
-                Set<Term> terms = new HashSet<>();
-                w.extractTerms(terms);
+                Assertions.assertThat(q).isEqualTo(expected);
 
-                Assertions.assertThat(terms).containsOnly(
-                        new Term("f", "test"),
-                        new Term("__anytokenfield", "__ANYTOKEN__")
-                );
             }
 
         }

@@ -22,6 +22,9 @@ import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.analysis.util.FilteringTokenFilter;
 import org.apache.lucene.util.BytesRefHash;
 
+/**
+ * A FilteringTokenFilter that only accepts terms already contained in a BytesRefHash
+ */
 public class BytesRefFilteredTokenFilter extends FilteringTokenFilter {
 
     private final BytesRefHash termsHash;

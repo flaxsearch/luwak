@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
@@ -106,8 +105,8 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     }
 
     @Override
-    protected DocumentQueryBuilder getQueryBuilder(IndexReaderContext ctx) {
-        return new MultipassDocumentQueryBuilder(ctx);
+    protected DocumentQueryBuilder getQueryBuilder() {
+        return new MultipassDocumentQueryBuilder();
     }
 
     static String field(String field, int pass) {
@@ -118,10 +117,8 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
         BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
         List<Term>[] terms = new List[passes];
-        final IndexReaderContext ctx;
 
-        public MultipassDocumentQueryBuilder(IndexReaderContext ctx) {
-            this.ctx = ctx;
+        public MultipassDocumentQueryBuilder() {
             for (int i = 0; i < queries.length; i++) {
                 queries[i] = new BooleanQuery.Builder();
                 terms[i] = new ArrayList<>();

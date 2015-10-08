@@ -97,11 +97,10 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
             try (IndexReader reader = DirectoryReader.open(writer, false)) {
 
-                IndexReaderContext ctx = reader.getContext();
                 InputDocument doc = InputDocument.builder("doc1")
                         .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
 
-                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, ctx);
+                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, new QueryTermFilter(reader));
 
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new BooleanQuery.Builder()
@@ -120,11 +119,4 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
     }
 
-    private static BooleanClause must(Query q) {
-        return new BooleanClause(q, BooleanClause.Occur.MUST);
-    }
-
-    private static BooleanClause should(Query q) {
-        return new BooleanClause(q, BooleanClause.Occur.SHOULD);
-    }
 }

@@ -10,6 +10,7 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -239,6 +240,14 @@ public abstract class PresearcherTestBase {
             }
 
         }
+    }
+
+    public static BooleanClause must(Query q) {
+        return new BooleanClause(q, BooleanClause.Occur.MUST);
+    }
+
+    public static BooleanClause should(Query q) {
+        return new BooleanClause(q, BooleanClause.Occur.SHOULD);
     }
     
 }

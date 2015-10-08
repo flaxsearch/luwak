@@ -42,7 +42,7 @@ public abstract class Presearcher {
      * @param queryIndexContext the IndexReaderContext of the Monitor's queryindex
      * @return a Query to run over a Monitor's queryindex
      */
-    public abstract Query buildQuery(InputDocument inputDocument, IndexReaderContext queryIndexContext);
+    public abstract Query buildQuery(InputDocument inputDocument, QueryTermFilter queryIndexContext);
 
     /**
      * Build a lucene Document to index the query in a Monitor's queryindex

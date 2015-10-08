@@ -53,6 +53,9 @@ public class Monitor implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager manager;
 
+    // package-private for testing
+    final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
+
     protected long slowLogLimit = 2000000;
 
     protected long commitBatchSize = 5000;
@@ -98,7 +101,7 @@ public class Monitor implements Closeable {
         this.decomposer = decomposer;
         this.writer = indexWriter;
 
-        this.manager = new SearcherManager(writer, true, new SearcherFactory());
+        this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
 
         loadCache();
 
@@ -159,6 +162,21 @@ public class Monitor implements Closeable {
 
         return new IndexWriter(directory, iwc);
 
+    }
+
+    private class TermsHashBuilder extends SearcherFactory {
+        @Override
+        public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
+            IndexSearcher searcher = super.newSearcher(reader, previousReader);
+            termFilters.put(reader, new QueryTermFilter(reader));
+            reader.addReaderClosedListener(new IndexReader.ReaderClosedListener() {
+                @Override
+                public void onClose(IndexReader reader) throws IOException {
+                    termFilters.remove(reader);
+                }
+            });
+            return searcher;
+        }
     }
 
     /**
@@ -465,7 +483,7 @@ public class Monitor implements Closeable {
         IndexSearcher searcher = null;
         try {
             searcher = manager.acquire();
-            Query query = presearcher.buildQuery(matcher.getDocument(), searcher.getTopReaderContext());
+            Query query = presearcher.buildQuery(matcher.getDocument(), termFilters.get(searcher.getIndexReader()));
             buildTime = (System.nanoTime() - buildTime) / 1000000;
             collector.setQueryMap(this.queries);
             searcher.search(query, collector);
@@ -553,7 +571,7 @@ public class Monitor implements Closeable {
             PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
             collector.setQueryMap(queries);
             Query presearcherQuery = new ForceNoBulkScoringQuery(
-                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(doc, searcher.getTopReaderContext()))
+                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(doc, termFilters.get(searcher.getIndexReader())))
             );
             searcher.search(presearcherQuery, collector);
             return collector.getMatches();
