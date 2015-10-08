@@ -1,17 +1,18 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
@@ -116,30 +117,29 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     private class MultipassDocumentQueryBuilder implements DocumentQueryBuilder {
 
         BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
+        List<Term>[] terms = new List[passes];
         final IndexReaderContext ctx;
 
         public MultipassDocumentQueryBuilder(IndexReaderContext ctx) {
             this.ctx = ctx;
             for (int i = 0; i < queries.length; i++) {
                 queries[i] = new BooleanQuery.Builder();
+                terms[i] = new ArrayList<>();
             }
         }
 
         @Override
         public void addTerm(String field, BytesRef term) throws IOException {
             for (int i = 0; i < passes; i++) {
-                Term t = new Term(field(field, i), term);
-                TermContext tc = TermContext.build(ctx, t);
-                if (tc.docFreq() > 0)
-                    queries[i].add(new TermQuery(t, tc), BooleanClause.Occur.SHOULD);
+                terms[i].add(new Term(field(field, i), term));
             }
         }
 
         @Override
         public Query build() {
             BooleanQuery.Builder parent = new BooleanQuery.Builder();
-            for (BooleanQuery.Builder child : queries) {
-                parent.add(child.build(), BooleanClause.Occur.MUST);
+            for (int i = 0; i < passes; i++) {
+                parent.add(new TermsQuery(terms[i]), BooleanClause.Occur.MUST);
             }
             return parent.build();
         }

@@ -1,15 +1,15 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queries.TermsQuery;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.assertj.core.api.Assertions;
@@ -102,20 +102,29 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                         .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
 
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, ctx);
-                IndexSearcher searcher = new IndexSearcher(ctx);
-                Weight w = searcher.createNormalizedWeight(q, true);
 
-                Set<Term> terms = new HashSet<>();
-                w.extractTerms(terms);
+                BooleanQuery expected = new BooleanQuery.Builder()
+                        .add(should(new BooleanQuery.Builder()
+                                        .add(must(new TermsQuery(new Term("f_0", "test"))))
+                                        .add(must(new TermsQuery(new Term("f_1", "test"))))
+                                        .add(must(new TermsQuery(new Term("f_2", "test"))))
+                                        .add(must(new TermsQuery(new Term("f_3", "test"))))
+                                        .build()))
+                        .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
+                        .build();
 
-                Assertions.assertThat(terms).containsOnly(
-                        new Term("f_1", "test"), new Term("f_2", "test"),
-                        new Term("f_3", "test"), new Term("f_0", "test"),
-                        new Term("__anytokenfield", "__ANYTOKEN__")
-                );
+                Assertions.assertThat(q).isEqualTo(expected);
             }
 
         }
 
+    }
+
+    private static BooleanClause must(Query q) {
+        return new BooleanClause(q, BooleanClause.Occur.MUST);
+    }
+
+    private static BooleanClause should(Query q) {
+        return new BooleanClause(q, BooleanClause.Occur.SHOULD);
     }
 }

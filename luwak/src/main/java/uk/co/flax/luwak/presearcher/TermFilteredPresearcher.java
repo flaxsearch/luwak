@@ -35,6 +35,7 @@ import org.apache.lucene.util.BytesRefHash;
 import org.apache.lucene.util.BytesRefIterator;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.analysis.BytesRefFilteredTokenFilter;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
@@ -79,6 +80,7 @@ public class TermFilteredPresearcher extends Presearcher {
     public final Query buildQuery(InputDocument doc, IndexReaderContext queryIndexContext) {
         try {
             LeafReader reader = doc.asAtomicReader();
+            LeafReader queryTermsReader = SlowCompositeReaderWrapper.wrap(queryIndexContext.reader());
             DocumentQueryBuilder queryBuilder = getQueryBuilder(queryIndexContext);
 
             for (String field : reader.fields()) {
@@ -87,6 +89,9 @@ public class TermFilteredPresearcher extends Presearcher {
                 for (PresearcherComponent component : components) {
                     ts = component.filterDocumentTokens(field, ts);
                 }
+
+                BytesRefHash termsHash = buildTermsHash(field, queryTermsReader);
+                ts = new BytesRefFilteredTokenFilter(ts, termsHash);
 
                 TermToBytesRefAttribute termAtt = ts.addAttribute(TermToBytesRefAttribute.class);
                 while (ts.incrementToken()) {
@@ -111,6 +116,20 @@ public class TermFilteredPresearcher extends Presearcher {
             // We're a MemoryIndex, so this shouldn't happen...
             throw new RuntimeException(e);
         }
+    }
+
+    protected BytesRefHash buildTermsHash(String field, LeafReader reader) throws IOException {
+        BytesRefHash terms = new BytesRefHash();
+        Terms t = reader.terms(field);
+        if (t == null) {
+            return terms;
+        }
+        TermsEnum te = t.iterator();
+        BytesRef term;
+        while ((term = te.next()) != null) {
+            terms.add(term);
+        }
+        return terms;
     }
 
     protected DocumentQueryBuilder getQueryBuilder(final IndexReaderContext ctx) {
