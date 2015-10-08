@@ -18,7 +18,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.*;
-import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.matchers.HighlightingMatcher;
+import uk.co.flax.luwak.matchers.HighlightsMatch;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -56,7 +57,7 @@ public class LuwakDemo {
             addQueries(monitor, queriesFile);
 
             for (InputDocument doc : buildDocs(inputDirectory)) {
-                Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+                Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
                 outputMatches(matches);
             }
         }
@@ -98,10 +99,10 @@ public class LuwakDemo {
         return docs;
     }
 
-    static void outputMatches(Matches<QueryMatch> matches) {
+    static void outputMatches(Matches<HighlightsMatch> matches) {
         logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
-        for (QueryMatch query : matches) {
-            logger.info("\tQuery: {}", query.getQueryId());
+        for (HighlightsMatch match : matches) {
+            logger.info("\tQuery: {} ({} hits)", match.getQueryId(), match.getHitCount());
         }
     }
 
