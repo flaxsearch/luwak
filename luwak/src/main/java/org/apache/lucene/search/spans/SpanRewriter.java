@@ -15,9 +15,14 @@ package org.apache.lucene.search.spans;
  *   limitations under the License.
  */
 
-import org.apache.lucene.search.*;
-
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+
+import org.apache.lucene.index.PrefixCodedTerms;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.TermsQuery;
+import org.apache.lucene.search.*;
+import org.apache.lucene.util.BytesRef;
 
 public class SpanRewriter {
 
@@ -34,6 +39,8 @@ public class SpanRewriter {
             return rewriteMultiTermQuery((MultiTermQuery)in);
         if (in instanceof DisjunctionMaxQuery)
             return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in);
+        if (in instanceof TermsQuery)
+            return rewriteTermsQuery((TermsQuery) in);
 
         return rewriteUnknown(in);
     }
@@ -60,6 +67,25 @@ public class SpanRewriter {
             subQueries.add(rewrite(subQuery));
         }
         return new DisjunctionMaxQuery(subQueries, disjunctionMaxQuery.getTieBreakerMultiplier());
+    }
+
+    protected Query rewriteTermsQuery(TermsQuery query) {
+
+        try {
+            Field termsField = TermsQuery.class.getDeclaredField("termData");
+            termsField.setAccessible(true);
+            PrefixCodedTerms terms = (PrefixCodedTerms) termsField.get(query);
+            SpanTermQuery[] spanterms = new SpanTermQuery[(int)terms.size()];
+            PrefixCodedTerms.TermIterator it = terms.iterator();
+            for (int i = 0; i < terms.size(); i++) {
+                BytesRef term = BytesRef.deepCopyOf(it.next());
+                spanterms[i] = new SpanTermQuery(new Term(it.field(), term));
+            }
+            return new SpanOrQuery(spanterms);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+
     }
 
     protected Query rewriteUnknown(Query query) {
