@@ -170,9 +170,9 @@ Creating an entirely new type of Presearcher
 --------------------------------------------
 
 You can implement your own query filtering code by subclassing ```Presearcher```.  You will need
-to implement ```buildQuery(InputDocument)``` which converts incoming documents into queries to
+to implement ```buildQuery(InputDocument, QueryTermFilter)``` which converts incoming documents into queries to
 be run against the Monitor's query index, and ```indexQuery(Query, Map<String,String>)``` which converts registered
 queries into a form that can be indexed.
 
-Note that ```indexQuery(Query)``` may not create fields named '_id' or '_query', as these are reserved
+Note that ```indexQuery(Query, Map<String,String>)``` may not create fields named '_id' or '_query', as these are reserved
 by the Monitor's internal index.
