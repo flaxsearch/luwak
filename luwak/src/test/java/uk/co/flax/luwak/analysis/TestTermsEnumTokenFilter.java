@@ -62,7 +62,7 @@ public class TestTermsEnumTokenFilter {
             }
         };
 
-        try (TokenStream ts = new LeapfrogTokenFilter(new DuplicateRemovalTokenFilter(new TermsEnumTokenStream(terms)))) {
+        try (TokenStream ts = new LeapfrogTokenFilter(new TermsEnumTokenStream(terms))) {
             while (ts.incrementToken()) {
                 // This tight loop will throw an exception if clearAttributes() is not called
                 // by TermsEnumTokenStream.  See issue #46
