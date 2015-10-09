@@ -16,14 +16,29 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
+/**
+ * Represents a match for a specific query
+ *
+ * Derived classes may contain more information (such as scores, highlights, etc)
+ *
+ * @see uk.co.flax.luwak.matchers.ExplainingMatch
+ * @see uk.co.flax.luwak.matchers.ScoringMatch
+ * @see uk.co.flax.luwak.matchers.HighlightsMatch
+ */
 public class QueryMatch {
 
     private final String queryId;
 
+    /**
+     * Creates a new QueryMatch for a specific query
+     */
     public QueryMatch(String queryId) {
         this.queryId = queryId;
     }
 
+    /**
+     * @return the queryid of this match
+     */
     public String getQueryId() {
         return queryId;
     }

@@ -20,8 +20,15 @@ import java.util.Map;
 
 import org.apache.lucene.search.Query;
 
+/**
+ * Defines how a query is parsed
+ */
 public interface MonitorQueryParser {
 
-        public Query parse(String queryString, Map<String, String> metadata) throws Exception;
+    /**
+     * Given a string representation of a query, and associated metadata, return a lucene {@link Query}
+     * @throws Exception if there is an error during parsing
+     */
+    Query parse(String queryString, Map<String, String> metadata) throws Exception;
 
 }
