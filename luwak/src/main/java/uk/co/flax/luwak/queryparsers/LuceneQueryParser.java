@@ -29,7 +29,8 @@ import uk.co.flax.luwak.MonitorQueryParser;
  */
 public class LuceneQueryParser implements MonitorQueryParser {
 
-    private final QueryParser parser;
+    private final String defaultField;
+    private final Analyzer analyzer;
 
     /**
      * Creates a parser with a given default field and analyzer
@@ -37,8 +38,8 @@ public class LuceneQueryParser implements MonitorQueryParser {
      * @param analyzer an analyzer to use to analyzer query terms
      */
     public LuceneQueryParser(String defaultField, Analyzer analyzer) {
-        super();
-        this.parser = new QueryParser(defaultField, analyzer);
+        this.defaultField = defaultField;
+        this.analyzer = analyzer;
     }
 
     /**
@@ -46,11 +47,11 @@ public class LuceneQueryParser implements MonitorQueryParser {
      * @param defaultField the default field
      */
     public LuceneQueryParser(String defaultField) {
-        this(defaultField,  new StandardAnalyzer());
+        this(defaultField, new StandardAnalyzer());
     }
 
     @Override
     public Query parse(String query, Map<String, String> metadata) throws Exception {
-        return parser.parse(query);
+        return new QueryParser(defaultField, analyzer).parse(query);
     }
 }

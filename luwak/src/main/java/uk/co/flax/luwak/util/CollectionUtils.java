@@ -1,8 +1,8 @@
 package uk.co.flax.luwak.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -43,5 +43,46 @@ public final class CollectionUtils {
             start = (int) Math.floor(accum);
         }
         return list;
+    }
+
+    /**
+     * Drains the queue as {@link BlockingQueue#drainTo(Collection, int)}, but if the requested
+     * {@code numElements} elements are not available, it will wait for them up to the specified
+     * timeout.
+     *
+     * Taken from Google Guava 18.0 Queues
+     *
+     * @param q the blocking queue to be drained
+     * @param buffer where to add the transferred elements
+     * @param numElements the number of elements to be waited for
+     * @param timeout how long to wait before giving up, in units of {@code unit}
+     * @param unit a {@code TimeUnit} determining how to interpret the timeout parameter
+     * @return the number of elements transferred
+     * @throws InterruptedException if interrupted while waiting
+     */
+    public static <E> int drain(BlockingQueue<E> q, Collection<? super E> buffer, int numElements,
+                                long timeout, TimeUnit unit) throws InterruptedException {
+        buffer = Objects.requireNonNull(buffer);
+        /*
+         * This code performs one System.nanoTime() more than necessary, and in return, the time to
+         * execute Queue#drainTo is not added *on top* of waiting for the timeout (which could make
+         * the timeout arbitrarily inaccurate, given a queue that is slow to drain).
+         */
+        long deadline = System.nanoTime() + unit.toNanos(timeout);
+        int added = 0;
+        while (added < numElements) {
+            // we could rely solely on #poll, but #drainTo might be more efficient when there are multiple
+            // elements already available (e.g. LinkedBlockingQueue#drainTo locks only once)
+            added += q.drainTo(buffer, numElements - added);
+            if (added < numElements) { // not enough elements immediately available; will have to poll
+                E e = q.poll(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
+                if (e == null) {
+                    break; // we already waited enough, and there are no more elements in sight
+                }
+                buffer.add(e);
+                added++;
+            }
+        }
+        return added;
     }
 }

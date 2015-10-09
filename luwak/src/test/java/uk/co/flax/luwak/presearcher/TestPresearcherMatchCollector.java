@@ -38,6 +38,7 @@ public class TestPresearcherMatchCollector {
             monitor.update(new MonitorQuery("2", "foo bar -baz"));
             monitor.update(new MonitorQuery("3", "foo -test"));
             monitor.update(new MonitorQuery("4", "baz"));
+            assertThat(monitor.getQueryCount()).isEqualTo(4);
 
             InputDocument doc = InputDocument.builder("doc1")
                     .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())

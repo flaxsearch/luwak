@@ -213,6 +213,18 @@ public class Monitor implements Closeable {
         }
     }
 
+    protected static class Indexable {
+        final String id;
+        final CacheEntry cacheEntry;
+        final Document document;
+
+        private Indexable(String id, CacheEntry cacheEntry, Document document) {
+            this.id = id;
+            this.cacheEntry = cacheEntry;
+            this.document = document;
+        }
+    }
+
     private void loadCache() throws IOException {
         final List<Exception> parseErrors = new LinkedList<>();
 
@@ -241,15 +253,16 @@ public class Monitor implements Closeable {
         return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
     }
 
-    private void commit(List<CacheEntry> updates) throws IOException {
+    private synchronized void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
         purgeLock.readLock().lock();
         try {
             if (updates != null) {
-                for (CacheEntry update : updates) {
-                    this.queries.put(update.hash, update);
+                for (Indexable update : updates) {
+                    this.queries.put(update.cacheEntry.hash, update.cacheEntry);
+                    writer.addDocument(update.document);
                     if (purgeCache != null)
-                        purgeCache.put(update.hash, update);
+                        purgeCache.put(update.cacheEntry.hash, update.cacheEntry);
                 }
             }
             writer.commit();
@@ -265,13 +278,13 @@ public class Monitor implements Closeable {
      * Called before a commit
      * @param updates the list of updates that will be committed (null for deletes)
      */
-    protected void beforeCommit(List<CacheEntry> updates) {}
+    protected void beforeCommit(List<Indexable> updates) {}
 
     /**
      * Called after a commit
      * @param updates the list of updates that have been committed (null for deletes)
      */
-    protected void afterCommit(List<CacheEntry> updates) {}
+    protected void afterCommit(List<Indexable> updates) {}
 
     /**
      * Remove unused queries from the query cache.
@@ -368,14 +381,13 @@ public class Monitor implements Closeable {
     public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
 
         List<QueryError> errors = new ArrayList<>();
-        List<CacheEntry> updates = new ArrayList<>();
+        List<Indexable> updates = new ArrayList<>();
 
         for (MonitorQuery query : queries) {
             try {
                 writer.deleteDocuments(new Term(FIELDS.del, query.getId()));
                 for (CacheEntry cacheEntry : decomposeQuery(query)) {
-                    updates.add(cacheEntry);
-                    writer.addDocument(buildIndexableQuery(query.getId(), query, cacheEntry));
+                    updates.add(new Indexable(query.getId(), cacheEntry, buildIndexableQuery(query.getId(), query, cacheEntry)));
                 }
             } catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));

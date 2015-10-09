@@ -158,7 +158,7 @@ public class TestMonitor {
         Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher()) {
 
             @Override
-            protected void beforeCommit(List<CacheEntry> updates) {
+            protected void beforeCommit(List<Indexable> updates) {
                 int i = call.getAndIncrement();
                 total.addAndGet(updates.size());
                 Assertions.assertThat(updates.size()).isEqualTo(expectedSizes[i]);
