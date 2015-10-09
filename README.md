@@ -1,7 +1,7 @@
-Luwak - stored query engine from Flax                   [![Build
-Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
-
+Luwak - stored query engine from Flax                   
 =====================================
+[![Build
+Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
 
 What is Luwak?
 --------------
