@@ -1,8 +1,19 @@
-Luwak - stored query engine from Flax
+Luwak - stored query engine from Flax                   [![Build
+Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
+
 =====================================
 
-[![Build
-Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
+What is Luwak?
+--------------
+
+Based on the open source Lucene search library, Luwak is a high performance stored query engine. Simply put, it allows you to define a set of search queries and then monitor a stream of documents for any that might match these queries. Flax developed Luwak for clients who monitor high volumes of news using often extremely complex Boolean expressions. Luwak is being used by companies including Infomedia, Bloomberg and Booz Allen Hamilton.
+
+You can find out a bit more about how Flax use Luwak for media monitoring applications in 
+this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
+from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
+
+Here's some tests we did to compare Luwak to Elasticsearch Percolator:
+http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
 
 Get the artifacts
 -----------------
@@ -14,13 +25,6 @@ Get the artifacts
   <version>1.2.0</version>
 </dependency>
 ```
-
-You can find out a bit more about how Flax use Luwak for media monitoring applications in 
-this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
-from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents
-
-Here's some tests we did to compare Luwak to Elasticsearch Percolator:
-http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
 
 Using the monitor
 -----------------
