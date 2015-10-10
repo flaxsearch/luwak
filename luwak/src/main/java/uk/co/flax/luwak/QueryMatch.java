@@ -31,6 +31,7 @@ public class QueryMatch {
 
     /**
      * Creates a new QueryMatch for a specific query
+     * @param queryId the query id
      */
     public QueryMatch(String queryId) {
         this.queryId = queryId;

@@ -38,6 +38,8 @@ public class QueryTermFilter {
 
     /**
      * Create a QueryTermFilter for an IndexReader
+     * @param reader the {@link IndexReader}
+     * @throws IOException on error
      */
     public QueryTermFilter(IndexReader reader) throws IOException {
         LeafReader leafReader = SlowCompositeReaderWrapper.wrap(reader);
@@ -56,6 +58,8 @@ public class QueryTermFilter {
     }
 
     /**
+     * Get a BytesRefHash containing all terms for a particular field
+     * @param field the field
      * @return a {@link BytesRefHash} containing all terms for the specified field
      */
     public BytesRefHash getTerms(String field) {

@@ -50,21 +50,35 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     /**
      * Runs the supplied query against this CandidateMatcher's InputDocument, storing any
-     * resulting match.
+     * resulting match, and recording the query in the presearcher hits
      *
      * @param queryId the query id
      * @param matchQuery the query to run
+     * @param metadata the query metadata
      * @return a QueryMatch object if the query matched, otherwise null
      * @throws IOException on IO errors
-     * @return true if the query matches
      */
     public final T matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         presearcherHits.add(queryId);
         return doMatchQuery(queryId, matchQuery, metadata);
     }
 
+    /**
+     * Override this method to actually run the query
+     *
+     * @param queryId       the query id
+     * @param matchQuery    the query to run
+     * @param metadata      the query metadata
+     * @return              a QueryMatch object if the query matched, otherwise null
+     * @throws IOException  on error
+     */
     protected abstract T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;
 
+    /**
+     * Record a match
+     * @param queryId   the id of the matching query
+     * @param match     a QueryMatch object
+     */
     protected void addMatch(String queryId, T match) {
         if (matches.containsKey(queryId))
             matches.put(queryId, resolve(match, matches.get(queryId)));
@@ -96,6 +110,11 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
         return doc;
     }
 
+    /**
+     * Called when matching has finished
+     * @param buildTime the time taken to construct the document disjunction
+     * @param queryCount the number of queries run
+     */
     public void finish(long buildTime, int queryCount) {
         this.queryBuildTime = buildTime;
         this.queriesRun = queryCount;
@@ -103,7 +122,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     /*
-     * Called by the Monitor
+     * Called by the Monitor to set the {@link SlowLog} limit
      */
     public void setSlowLogLimit(long t) {
         this.slowlog.setLimit(t);
@@ -118,6 +137,9 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
         return matches.get(queryId);
     }
 
+    /**
+     * @return the matches from this matcher
+     */
     public Matches<T> getMatches() {
         return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog);
     }

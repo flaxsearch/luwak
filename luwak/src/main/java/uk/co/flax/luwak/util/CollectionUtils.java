@@ -57,6 +57,7 @@ public final class CollectionUtils {
      * @param numElements the number of elements to be waited for
      * @param timeout how long to wait before giving up, in units of {@code unit}
      * @param unit a {@code TimeUnit} determining how to interpret the timeout parameter
+     * @param <E> the type of the queue
      * @return the number of elements transferred
      * @throws InterruptedException if interrupted while waiting
      */

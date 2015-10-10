@@ -55,7 +55,8 @@ public class ConcurrentQueryLoader implements Closeable {
     public static final int DEFAULT_QUEUE_SIZE = 2000;
 
     /**
-     * Create a new ConcurrentQueryLoader for a Monitor
+     * Create a new ConcurrentQueryLoader for a {@link Monitor}
+     * @param monitor Monitor
      */
     public ConcurrentQueryLoader(Monitor monitor) {
         this(monitor, Runtime.getRuntime().availableProcessors(), DEFAULT_QUEUE_SIZE);
@@ -79,8 +80,12 @@ public class ConcurrentQueryLoader implements Closeable {
 
     /**
      * Add a MonitorQuery to the loader's internal buffer
-     * @param mq
-     * @throws InterruptedException
+     *
+     * If the buffer is full, this will block until there is room to add
+     * the MonitorQuery
+     *
+     * @param mq the monitor query
+     * @throws InterruptedException if interrupted while waiting
      */
     public void add(MonitorQuery mq) throws InterruptedException {
         if (shutdown)

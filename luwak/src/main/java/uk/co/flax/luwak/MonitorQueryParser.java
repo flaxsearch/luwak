@@ -27,6 +27,9 @@ public interface MonitorQueryParser {
 
     /**
      * Given a string representation of a query, and associated metadata, return a lucene {@link Query}
+     * @param queryString   the query string
+     * @param metadata      query metadata
+     * @return a lucene {@link Query}
      * @throws Exception if there is an error during parsing
      */
     Query parse(String queryString, Map<String, String> metadata) throws Exception;

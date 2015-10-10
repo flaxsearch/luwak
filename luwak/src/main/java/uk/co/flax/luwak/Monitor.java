@@ -546,7 +546,7 @@ public class Monitor implements Closeable {
 
     /**
      * @return the number of queries stored in this Monitor
-     * @throws java.io.IOException on IO errors
+     * @throws IOException on IO errors
      */
     public int getQueryCount() throws IOException {
         return getQueryIds().size();
@@ -554,6 +554,7 @@ public class Monitor implements Closeable {
 
     /**
      * @return the set of query ids of the queries stored in this Monitor
+     * @throws IOException on IO errors
      */
     public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();

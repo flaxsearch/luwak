@@ -173,6 +173,9 @@ public class TermFilteredPresearcher extends Presearcher {
 
     /**
      * Debugging: write the parsed query tree to a PrintStream
+     *
+     * @param query the query to analyze
+     * @param out   a {@link PrintStream}
      */
     public void showQueryTree(Query query, PrintStream out) {
         QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, out);
