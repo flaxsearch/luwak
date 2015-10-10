@@ -48,6 +48,7 @@ public class ConcurrentQueryLoader implements Closeable {
     private final CountDownLatch shutdownLatch;
     private final BlockingQueue<MonitorQuery> queue;
     private final List<QueryError> errors = new CopyOnWriteArrayList<>();
+    private final List<QueryError> errorOutput;
 
     private boolean shutdown = false;
     private IOException error;
@@ -57,19 +58,22 @@ public class ConcurrentQueryLoader implements Closeable {
     /**
      * Create a new ConcurrentQueryLoader for a {@link Monitor}
      * @param monitor Monitor
+     * @param errors a List that will be populated with any query errors
      */
-    public ConcurrentQueryLoader(Monitor monitor) {
-        this(monitor, Runtime.getRuntime().availableProcessors(), DEFAULT_QUEUE_SIZE);
+    public ConcurrentQueryLoader(Monitor monitor, List<QueryError> errors) {
+        this(monitor, errors, Runtime.getRuntime().availableProcessors(), DEFAULT_QUEUE_SIZE);
     }
 
     /**
      * Create a new ConcurrentQueryLoader
      * @param monitor the Monitor to load queries to
+     * @param errors a List that will be populated with any query errors
      * @param threads the number of threads to use
      * @param queueSize the size of the buffer to hold queries in
      */
-    public ConcurrentQueryLoader(Monitor monitor, int threads, int queueSize) {
+    public ConcurrentQueryLoader(Monitor monitor, List<QueryError> errors, int threads, int queueSize) {
         this.monitor = monitor;
+        this.errorOutput = errors;
         this.queue = new LinkedBlockingQueue<>(queueSize);
         this.executor = Executors.newFixedThreadPool(threads);
         this.shutdownLatch = new CountDownLatch(threads);
@@ -102,15 +106,9 @@ public class ConcurrentQueryLoader implements Closeable {
         } catch (InterruptedException e) {
             // fine
         }
+        errorOutput.addAll(errors);
         if (error != null)
             throw error;
-    }
-
-    /**
-     * @return any query errors found while adding queries to the Monitor
-     */
-    public List<QueryError> getErrors() {
-        return errors;
     }
 
     private class Worker implements Runnable {

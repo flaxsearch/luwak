@@ -15,6 +15,9 @@ package uk.co.flax.luwak;
  *   limitations under the License.
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
@@ -27,15 +30,36 @@ public class TestConcurrentQueryLoader {
     public void testLoading() throws Exception {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new MatchAllPresearcher())) {
-
-            try (ConcurrentQueryLoader loader = new ConcurrentQueryLoader(monitor)) {
+            List<QueryError> errors = new ArrayList<>();
+            try (ConcurrentQueryLoader loader = new ConcurrentQueryLoader(monitor, errors)) {
                 for (int i = 0; i < 2000; i++) {
                     loader.add(new MonitorQuery(Integer.toString(i), "\"test " + i + "\""));
                 }
-                assertThat(loader.getErrors()).isEmpty();
+                assertThat(errors).isEmpty();
             }
 
             assertThat(monitor.getQueryCount()).isEqualTo(2000);
+
+        }
+
+    }
+
+    @Test
+    public void testErrorHandling() throws Exception {
+
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new MatchAllPresearcher())) {
+            List<QueryError> errors = new ArrayList<>();
+            try (ConcurrentQueryLoader loader = new ConcurrentQueryLoader(monitor, errors)) {
+                for (int i = 0; i < 2000; i++) {
+                    String query = "test" + i;
+                    if (i % 200 == 0)
+                        query += " [";
+                    loader.add(new MonitorQuery(Integer.toString(i), query));
+                }
+            }
+
+            assertThat(errors).hasSize(10);
+            assertThat(monitor.getQueryCount()).isEqualTo(1990);
 
         }
 
