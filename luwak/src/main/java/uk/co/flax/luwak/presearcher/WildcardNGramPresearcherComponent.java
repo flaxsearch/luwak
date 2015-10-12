@@ -76,6 +76,14 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
         this(DEFAULT_NGRAM_SUFFIX, DEFAULT_MAX_TOKEN_SIZE, DEFAULT_WILDCARD_TOKEN, null);
     }
 
+    /**
+     * Create a new WildcardNGramPresearcherComponent with a maximum token size
+     * @param maxTokenSize the maximum length of an input token before WILDCARD tokens are generated
+     */
+    public WildcardNGramPresearcherComponent(int maxTokenSize) {
+        this(DEFAULT_NGRAM_SUFFIX, maxTokenSize, DEFAULT_WILDCARD_TOKEN, null);
+    }
+
     @Override
     public TokenStream filterDocumentTokens(String field, TokenStream ts) {
         if (excludedFields.contains(field))
