@@ -694,6 +694,11 @@ public class Monitor implements Closeable {
         }
 
         @Override
+        public boolean needsScores() {
+            return true;
+        }
+
+        @Override
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
 
             currentId = queryId;

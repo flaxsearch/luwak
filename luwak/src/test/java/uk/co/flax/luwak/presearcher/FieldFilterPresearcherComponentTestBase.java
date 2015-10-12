@@ -3,10 +3,12 @@ package uk.co.flax.luwak.presearcher;
 import java.io.IOException;
 
 import com.google.common.collect.ImmutableMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.QueryMatch;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
@@ -95,6 +97,21 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
         assertThat(monitor.match(enDoc, SimpleMatcher.FACTORY))
                 .hasMatchCount(0)
                 .hasQueriesRunCount(0);
+    }
+
+    @Test
+    public void testDebugQueries() throws Exception {
+
+        monitor.update(new MonitorQuery("1", "test", ImmutableMap.of("language", "en")));
+        InputDocument enDoc = InputDocument.builder("enDoc")
+                .addField(TEXTFIELD, "this is a test", WHITESPACE)
+                .addField("language", "en", WHITESPACE)
+                .build();
+
+        PresearcherMatches<QueryMatch> matches = monitor.debug(enDoc, SimpleMatcher.FACTORY);
+        Assertions.assertThat(matches.match("1").presearcherMatches).isNotEmpty();
+        System.out.println(matches.match("1").presearcherMatches);
+
     }
 
 }

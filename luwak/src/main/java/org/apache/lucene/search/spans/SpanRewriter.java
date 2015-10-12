@@ -55,7 +55,10 @@ public class SpanRewriter {
     protected Query rewriteBoolean(BooleanQuery bq) {
         BooleanQuery.Builder newbq = new BooleanQuery.Builder();
         for (BooleanClause clause : bq) {
-            newbq.add(rewrite(clause.getQuery()), clause.getOccur());
+            BooleanClause.Occur occur = clause.getOccur();
+            if (occur == BooleanClause.Occur.FILTER)
+                occur = BooleanClause.Occur.MUST;   // rewrite FILTER to MUST to ensure scoring
+            newbq.add(rewrite(clause.getQuery()), occur);
         }
         return new ForceNoBulkScoringQuery(newbq.build());
     }

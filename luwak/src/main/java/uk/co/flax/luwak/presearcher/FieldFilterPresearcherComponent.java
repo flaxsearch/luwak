@@ -7,7 +7,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -95,7 +95,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
     public void adjustQueryDocument(Document doc, Map<String, String> metadata) {
         if (metadata == null || !metadata.containsKey(field))
             return;
-        doc.add(new StringField(field, metadata.get(field), Field.Store.YES));
+        doc.add(new TextField(field, metadata.get(field), Field.Store.YES));
     }
 
     @Override
