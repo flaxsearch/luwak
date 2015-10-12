@@ -17,6 +17,9 @@ package org.apache.lucene.search.spans;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
@@ -71,17 +74,27 @@ public class SpanRewriter {
 
     protected Query rewriteTermsQuery(TermsQuery query) {
 
+        Map<String, List<SpanTermQuery>> spanQueries = new HashMap<>();
+
         try {
             Field termsField = TermsQuery.class.getDeclaredField("termData");
             termsField.setAccessible(true);
             PrefixCodedTerms terms = (PrefixCodedTerms) termsField.get(query);
-            SpanTermQuery[] spanterms = new SpanTermQuery[(int)terms.size()];
             PrefixCodedTerms.TermIterator it = terms.iterator();
             for (int i = 0; i < terms.size(); i++) {
                 BytesRef term = BytesRef.deepCopyOf(it.next());
-                spanterms[i] = new SpanTermQuery(new Term(it.field(), term));
+                if (spanQueries.containsKey(it.field()) == false) {
+                    spanQueries.put(it.field(), new ArrayList<SpanTermQuery>());
+                }
+                spanQueries.get(it.field()).add(new SpanTermQuery(new Term(it.field(), term)));
             }
-            return new SpanOrQuery(spanterms);
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            for (String field : spanQueries.keySet()) {
+                List<SpanTermQuery> termQueries = spanQueries.get(field);
+                builder.add(new SpanOrQuery(termQueries.toArray(new SpanTermQuery[termQueries.size()])),
+                        BooleanClause.Occur.SHOULD);
+            }
+            return builder.build();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

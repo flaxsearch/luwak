@@ -35,13 +35,14 @@ public class TestPresearcherMatchCollector {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher())) {
             monitor.update(new MonitorQuery("1", "test"));
-            monitor.update(new MonitorQuery("2", "foo bar -baz"));
+            monitor.update(new MonitorQuery("2", "foo bar -baz f2:quuz"));
             monitor.update(new MonitorQuery("3", "foo -test"));
             monitor.update(new MonitorQuery("4", "baz"));
             assertThat(monitor.getQueryCount()).isEqualTo(4);
 
             InputDocument doc = InputDocument.builder("doc1")
                     .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
+                    .addField("f2", "quuz", new WhitespaceAnalyzer())
                     .build();
 
             PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);
@@ -53,7 +54,7 @@ public class TestPresearcherMatchCollector {
                     .isInstanceOf(QueryMatch.class);
 
             assertThat(matches.match("2")).isNotNull();
-            assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo");
+            assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo f2:quuz");
 
             assertThat(matches.match("3")).isNotNull();
             assertThat(matches.match("3").presearcherMatches).isEqualTo(" f:foo");
@@ -62,4 +63,5 @@ public class TestPresearcherMatchCollector {
             assertThat(matches.match("4")).isNull();
         }
     }
+
 }
