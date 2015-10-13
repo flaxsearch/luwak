@@ -155,7 +155,7 @@ public class TestMonitor {
         final AtomicInteger call = new AtomicInteger();
         final AtomicInteger total = new AtomicInteger();
 
-        Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher()) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher()) {
 
             @Override
             protected void beforeCommit(List<Indexable> updates) {
@@ -164,10 +164,10 @@ public class TestMonitor {
                 Assertions.assertThat(updates.size()).isEqualTo(expectedSizes[i]);
             }
 
-        };
-
-        monitor.update(queries);
-        Assertions.assertThat(total.get()).isEqualTo(10355);
+        }) {
+            monitor.update(queries);
+            Assertions.assertThat(total.get()).isEqualTo(10355);
+        }
 
     }
 
@@ -201,6 +201,28 @@ public class TestMonitor {
 
             monitor.match(doc, testMatcherFactory);
         }
+    }
+
+    @Test
+    public void testMatcherCommitWithin() throws IOException {
+        monitor.clear();
+        monitor.setCommitTimeout(5000);
+
+        monitor.update(new MonitorQuery("query1", "a"), new MonitorQuery("query2", "b"), new MonitorQuery("query3", "c"));
+
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(0);
+
+        try {
+            Thread.sleep(5000);
+        }
+        catch (InterruptedException ex)
+        {
+            // TODO
+        }
+
+        Assertions.assertThat(monitor.getQueryCount()).isEqualTo(3);
+
+        monitor.setCommitTimeout(0);
     }
 
     static final Analyzer WHITESPACE = new WhitespaceAnalyzer();
