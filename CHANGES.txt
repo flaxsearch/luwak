@@ -14,8 +14,12 @@ New features:
 * DisjunctionMaxQuery can be decomposed and indexed separately
 * Performance improvements: use TermsQuery for the document disjunction, and 
   filter out non-existent query terms before they're added to the query
+* ConcurrentQueryLoader allows more efficient query loading on startup
+* WildcardNGramPresearcherComponent makes it easier to adjust its max token
+  length
 
 Bug fixes:
 
 * The slowlog was reporting nanosecond values as milliseconds
 * FieldFilterPresearcherComponent didn't work for binary terms
+* FieldFilterPresearcherComponent was breaking debug()
