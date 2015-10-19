@@ -65,6 +65,7 @@ public class Monitor implements Closeable {
 
     /* Used to lock around the creation of the purgeCache */
     private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
+    private final Object commitLock = new Object();
 
     /* The current query cache */
     private Map<BytesRef, CacheEntry> queries = new ConcurrentHashMap<>();
@@ -253,25 +254,26 @@ public class Monitor implements Closeable {
         return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
     }
 
-    private synchronized void commit(List<Indexable> updates) throws IOException {
-        beforeCommit(updates);
-        purgeLock.readLock().lock();
-        try {
-            if (updates != null) {
-                for (Indexable update : updates) {
-                    this.queries.put(update.cacheEntry.hash, update.cacheEntry);
-                    writer.addDocument(update.document);
-                    if (purgeCache != null)
-                        purgeCache.put(update.cacheEntry.hash, update.cacheEntry);
+    private void commit(List<Indexable> updates) throws IOException {
+        synchronized (commitLock) {
+            beforeCommit(updates);
+            purgeLock.readLock().lock();
+            try {
+                if (updates != null) {
+                    for (Indexable update : updates) {
+                        this.queries.put(update.cacheEntry.hash, update.cacheEntry);
+                        writer.addDocument(update.document);
+                        if (purgeCache != null)
+                            purgeCache.put(update.cacheEntry.hash, update.cacheEntry);
+                    }
                 }
+                writer.commit();
+                manager.maybeRefresh();
+            } finally {
+                purgeLock.readLock().unlock();
             }
-            writer.commit();
-            manager.maybeRefresh();
+            afterCommit(updates);
         }
-        finally {
-            purgeLock.readLock().unlock();
-        }
-        afterCommit(updates);
     }
 
     /**
