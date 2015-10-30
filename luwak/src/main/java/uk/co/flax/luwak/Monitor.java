@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -60,6 +61,10 @@ public class Monitor implements Closeable {
 
     protected long commitBatchSize = 5000;
 
+    private long commitTimeout = 0;
+    private long lastCommitTime = 0;
+    private volatile ScheduledFuture<?> commitJob = null;
+
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
 
@@ -78,6 +83,7 @@ public class Monitor implements Closeable {
     }
 
     private final ScheduledExecutorService purgeExecutor;
+    private final ScheduledExecutorService commitExecutor;
 
     private long lastPurged = -1;
 
@@ -118,6 +124,7 @@ public class Monitor implements Closeable {
                 }
             }
         }, purgeFrequency, purgeFrequency, TimeUnit.SECONDS);
+        this.commitExecutor = Executors.newSingleThreadScheduledExecutor();
     }
 
     /**
@@ -253,7 +260,7 @@ public class Monitor implements Closeable {
         return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
     }
 
-    private synchronized void commit(List<Indexable> updates) throws IOException {
+    private synchronized void commit(List<Indexable> updates, boolean forceFlush) throws IOException {
         beforeCommit(updates);
         purgeLock.readLock().lock();
         try {
@@ -265,13 +272,54 @@ public class Monitor implements Closeable {
                         purgeCache.put(update.cacheEntry.hash, update.cacheEntry);
                 }
             }
-            writer.commit();
-            manager.maybeRefresh();
+
+            // If we have a pending commit job, then remove it,
+            // as we are going to commit now or schedule a new one.
+            try
+            {
+                if (!commitJob.isDone())
+                {
+                    commitJob.cancel(false);
+                }
+            }
+            catch (NullPointerException ex)
+            {
+                // Ignore this, if commitJob is null, then is by definition "done" :)
+            }
+
+            // If we aren't enforcing an immediate flush (used by clear())
+            // and we have a commitTimeout, then schedule a job.
+            // It maybe that lastCommitTime + commitTimeout - System.currentTimeMillis()
+            // is negative, which is fine, the job will just run ASAP then.
+            if (!forceFlush && commitTimeout > 0) {
+                commitJob = this.commitExecutor.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            forceCommit();
+                        }
+                        catch (Exception e) {
+                            // TODO: How to deal with exceptions here?
+                        }
+                    }
+                }, lastCommitTime + commitTimeout - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+            }
+            else
+            {
+                forceCommit();
+            }
         }
         finally {
             purgeLock.readLock().unlock();
         }
         afterCommit(updates);
+    }
+
+    private synchronized void forceCommit() throws IOException {
+        lastCommitTime = System.currentTimeMillis();
+        writer.commit();
+        manager.maybeRefresh();
+        commitJob = null;
     }
 
     /**
@@ -348,6 +396,7 @@ public class Monitor implements Closeable {
      *
      * @return the frequency (in seconds)
      */
+    @SuppressWarnings("static-method")
     protected long configurePurgeFrequency() {
         return 300;
     }
@@ -364,6 +413,18 @@ public class Monitor implements Closeable {
      */
     public void setSlowLogLimit(long limit) {
         this.slowLogLimit = limit;
+    }
+
+    /**
+     * Set the commit Timeout (commitWithin)
+     *
+     * If set to 0 (default), then all queriees are committed to the index immediately.
+     * If set to non-zero, then the commit is delayed by up to that many milliseconds.
+     * This means that multiple updates might be committed together.  
+     * @param millis the timeout to use for commits
+     */
+    public void setCommitTimeout(long millis) {
+        this.commitTimeout = millis;
     }
 
     @Override
@@ -393,12 +454,12 @@ public class Monitor implements Closeable {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
             }
             if (updates.size() > commitBatchSize) {
-                commit(updates);
+                commit(updates, false);
                 updates.clear();
             }
         }
 
-        commit(updates);
+        commit(updates, false);
         return errors;
     }
 
@@ -439,7 +500,7 @@ public class Monitor implements Closeable {
         for (MonitorQuery mq : queries) {
             writer.deleteDocuments(new Term(Monitor.FIELDS.del, mq.getId()));
         }
-        commit(null);
+        commit(null, false);
     }
 
     /**
@@ -451,7 +512,7 @@ public class Monitor implements Closeable {
         for (String queryId : queryIds) {
             writer.deleteDocuments(new Term(FIELDS.del, queryId));
         }
-        commit(null);
+        commit(null, false);
     }
 
     /**
@@ -469,7 +530,7 @@ public class Monitor implements Closeable {
      */
     public void clear() throws IOException {
         writer.deleteDocuments(new MatchAllDocsQuery());
-        commit(null);
+        commit(null, true);
     }
 
     /**
