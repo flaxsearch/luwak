@@ -58,6 +58,7 @@ public class Monitor implements Closeable {
     protected long slowLogLimit = 2000000;
 
     private final long commitBatchSize;
+    private final boolean storeQueries;
 
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
@@ -103,7 +104,8 @@ public class Monitor implements Closeable {
 
         this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
 
-        prepareQueryCache();
+        this.storeQueries = configuration.storeQueries();
+        prepareQueryCache(this.storeQueries);
 
         long purgeFrequency = configuration.getPurgeFrequency();
         this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -153,6 +155,18 @@ public class Monitor implements Closeable {
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
         this(queryParser, presearcher, defaultIndexWriter(directory), new MonitorConfiguration());
+    }
+
+    /**
+     * Create a new Monitor instance
+     * @param queryParser the query parser to use
+     * @param presearcher the presearcher to use
+     * @param directory the directory where the queryindex is to be stored
+     * @param config the monitor configuration
+     * @throws IOException on IO errors
+     */
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory, MonitorConfiguration config) throws IOException {
+        this(queryParser, presearcher, defaultIndexWriter(directory), config);
     }
 
     /**
@@ -239,7 +253,16 @@ public class Monitor implements Closeable {
         }
     }
 
-    private void prepareQueryCache() throws IOException {
+    private void prepareQueryCache(boolean storeQueries) throws IOException {
+
+        if (storeQueries == false) {
+            // we're not storing the queries, so ensure that the queryindex is empty
+            // before we add any.
+            clear();
+            return;
+        }
+
+        // load any queries that have already been added to the queryindex
         final List<Exception> parseErrors = new LinkedList<>();
 
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
@@ -541,8 +564,11 @@ public class Monitor implements Closeable {
      * @param queryId the id of the query to get
      * @return the MonitorQuery stored for this id, or null if not found
      * @throws IOException on IO errors
+     * @throws IllegalStateException if queries are not stored in the queryindex
      */
     public MonitorQuery getQuery(String queryId) throws IOException {
+        if (storeQueries == false)
+            throw new IllegalStateException("Cannot call getQuery() as queries are not stored");
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
         match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
             @Override

@@ -69,6 +69,42 @@ public class TestMonitorPersistence {
 
     }
 
+    @Test
+    public void testMonitorCanAvoidStoringQueries() throws IOException {
+
+        MonitorConfiguration config = new MonitorConfiguration().storeQueries(false);
+        InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
+
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+                new MMapDirectory(indexDirectory), config)) {
+
+            monitor.update(new MonitorQuery("1", "test"),
+                    new MonitorQuery("2", "test"),
+                    new MonitorQuery("3", "test", ImmutableMap.of("language", "en")),
+                    new MonitorQuery("4", "test", ImmutableMap.of("language", "en", "wibble", "quack")));
+
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                    .hasMatchCount("doc1", 4);
+
+        }
+
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+                new MMapDirectory(indexDirectory), config)) {
+
+            Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(0);
+            Assertions.assertThat(monitor2.getDisjunctCount()).isEqualTo(0);
+
+            try {
+                monitor2.getQuery("query");
+                Assertions.fail("Expected an IllegalStateException");
+            }
+            catch (IllegalStateException e) {
+                Assertions.assertThat(e).hasMessage("Cannot call getQuery() as queries are not stored");
+            }
+        }
+
+    }
+
     @After
     public void teardown() throws IOException {
         FileUtils.deleteDirectory(indexDirectory);

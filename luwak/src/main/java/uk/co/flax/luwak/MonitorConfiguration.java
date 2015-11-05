@@ -28,6 +28,7 @@ public class MonitorConfiguration {
     private TimeUnit purgeFrequencyUnits = TimeUnit.MINUTES;
     private int slowLogLimit = 2000000;
     private QueryDecomposer queryDecomposer = new QueryDecomposer();
+    private boolean storeQueries = true;
 
     /**
      * Set the QueryDecomposer to be used by the Monitor
@@ -82,6 +83,24 @@ public class MonitorConfiguration {
      */
     public int getQueryUpdateBufferSize() {
         return queryUpdateBufferSize;
+    }
+
+    /**
+     * Set whether or not the Monitor should store its MonitorQueries
+     *
+     * If you don't need to call Monitor.getQuery() at all, you can save some memory
+     * by setting this to {@code false}.
+     */
+    public MonitorConfiguration storeQueries(boolean storeQueries) {
+        this.storeQueries = storeQueries;
+        return this;
+    }
+
+    /**
+     * @return whether or not the Monitor is storing its MonitorQueries
+     */
+    public boolean storeQueries() {
+        return storeQueries;
     }
 
     /**
