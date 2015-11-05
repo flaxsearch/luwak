@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -58,7 +57,7 @@ public class Monitor implements Closeable {
 
     protected long slowLogLimit = 2000000;
 
-    protected long commitBatchSize = 5000;
+    private final long commitBatchSize;
 
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, CacheEntry> purgeCache = null;
@@ -91,22 +90,22 @@ public class Monitor implements Closeable {
      * @param queryParser the query parser to use
      * @param presearcher the presearcher to use
      * @param indexWriter an indexWriter for the query index
-     * @param decomposer the QueryDecomposer to use
+     * @param configuration the MonitorConfiguration
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher,
-                   IndexWriter indexWriter, QueryDecomposer decomposer) throws IOException {
+                   IndexWriter indexWriter, MonitorConfiguration configuration) throws IOException {
 
         this.queryParser = queryParser;
         this.presearcher = presearcher;
-        this.decomposer = decomposer;
+        this.decomposer = configuration.getQueryDecomposer();
         this.writer = indexWriter;
 
         this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
 
-        loadCache();
+        prepareQueryCache();
 
-        long purgeFrequency = configurePurgeFrequency();
+        long purgeFrequency = configuration.getPurgeFrequency();
         this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
         this.purgeExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -118,17 +117,31 @@ public class Monitor implements Closeable {
                     // TODO: How to deal with exceptions here?
                 }
             }
-        }, purgeFrequency, purgeFrequency, TimeUnit.SECONDS);
+        }, purgeFrequency, purgeFrequency, configuration.getPurgeFrequencyUnits());
+
+        this.commitBatchSize = configuration.getQueryUpdateBufferSize();
+        this.slowLogLimit = configuration.getSlowLogLimit();
     }
 
     /**
-     * Create a new Monitor instance, using a RAMDirectory and the default QueryDecomposer
+     * Create a new Monitor instance, using a RAMDirectory and the default configuration
      * @param queryParser the query parser to use
      * @param presearcher the presearcher to use
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new MonitorConfiguration());
+    }
+
+    /**
+     * Create a new Monitor instance using a RAMDirectory
+     * @param queryParser the query parser to use
+     * @param presearcher the presearcher to use
+     * @param config the monitor configuration
+     * @throws IOException on IO errors
+     */
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, MonitorConfiguration config) throws IOException {
+        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), config);
     }
 
     /**
@@ -139,7 +152,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(directory), new QueryDecomposer());
+        this(queryParser, presearcher, defaultIndexWriter(directory), new MonitorConfiguration());
     }
 
     /**
@@ -150,7 +163,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, IndexWriter indexWriter) throws IOException {
-        this(queryParser, presearcher, indexWriter, new QueryDecomposer());
+        this(queryParser, presearcher, indexWriter, new MonitorConfiguration());
     }
 
     private static IndexWriter defaultIndexWriter(Directory directory) throws IOException {
@@ -226,7 +239,7 @@ public class Monitor implements Closeable {
         }
     }
 
-    private void loadCache() throws IOException {
+    private void prepareQueryCache() throws IOException {
         final List<Exception> parseErrors = new LinkedList<>();
 
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
@@ -341,17 +354,6 @@ public class Monitor implements Closeable {
         finally {
             purgeLock.writeLock().unlock();
         }
-    }
-
-    /**
-     * Configure the frequency with which the query cache will be purged.
-     *
-     * Default = 5 minutes
-     *
-     * @return the frequency (in seconds)
-     */
-    protected long configurePurgeFrequency() {
-        return 300;
     }
 
     /**
