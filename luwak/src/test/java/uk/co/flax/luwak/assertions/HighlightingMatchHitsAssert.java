@@ -21,12 +21,11 @@ import uk.co.flax.luwak.matchers.HighlightsMatch;
  */
 public class HighlightingMatchHitsAssert extends AbstractAssert<HighlightingMatchHitsAssert, HighlightsMatch> {
 
-    protected HighlightingMatchHitsAssert(HighlightsMatch actual) {
-        super(actual, HighlightingMatchHitsAssert.class);
-    }
+    final HighlightingMatchAssert parent;
 
-    public static HighlightingMatchHitsAssert assertThat(HighlightsMatch actual) {
-        return new HighlightingMatchHitsAssert(actual);
+    protected HighlightingMatchHitsAssert(HighlightsMatch actual, HighlightingMatchAssert parent) {
+        super(actual, HighlightingMatchHitsAssert.class);
+        this.parent = parent;
     }
 
     public HighlightingMatchHitsAssert withHitCount(int count) {

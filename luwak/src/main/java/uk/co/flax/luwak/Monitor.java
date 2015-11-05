@@ -475,19 +475,32 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Match an {@link InputDocument} against the queryindex, calling a {@link CandidateMatcher} produced by the
-     * supplied {@link MatcherFactory} for each matching query.
-     * @param doc the InputDocument to match
+     * Match a {@link DocumentBatch} against the queryindex, calling a {@link CandidateMatcher} produced by the
+     * supplied {@link MatcherFactory} for each possible matching query.
+     * @param docs the DocumentBatch to match
      * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
-     * @param <T> the type of {@link CandidateMatcher} to return
-     * @return a {@link CandidateMatcher} summarizing the match run.
+     * @param <T> the type of {@link QueryMatch} to return
+     * @return a {@link Matches} object summarizing the match run.
      * @throws IOException on IO errors
      */
-    public <T extends QueryMatch> Matches<T> match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
-        CandidateMatcher<T> matcher = factory.createMatcher(doc);
+    public <T extends QueryMatch> Matches<T> match(DocumentBatch docs, MatcherFactory<T> factory) throws IOException {
+        CandidateMatcher<T> matcher = factory.createMatcher(docs);
         matcher.setSlowLogLimit(slowLogLimit);
         match(matcher);
         return matcher.getMatches();
+    }
+
+    /**
+     * Match a single {@link InputDocument} against the queryindex, calling a {@link CandidateMatcher} produced by the
+     * supplied {@link MatcherFactory} for each possible matching query.
+     * @param doc the InputDocument to match
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of {@link QueryMatch} to return
+     * @return a {@link Matches} object summarizing the match run.
+     * @throws IOException on IO errors
+     */
+    public <T extends QueryMatch> Matches<T> match(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        return match(DocumentBatch.of(doc), factory);
     }
 
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
@@ -497,7 +510,7 @@ public class Monitor implements Closeable {
         IndexSearcher searcher = null;
         try {
             searcher = manager.acquire();
-            Query query = presearcher.buildQuery(matcher.getDocument(), termFilters.get(searcher.getIndexReader()));
+            Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(searcher.getIndexReader()));
             buildTime = (System.nanoTime() - buildTime) / 1000000;
             collector.setQueryMap(this.queries);
             searcher.search(query, collector);
@@ -570,23 +583,23 @@ public class Monitor implements Closeable {
     }
 
     /**
-     * Match an InputDocument against the queries stored in the Monitor, also returning information
+     * Match a DocumentBatch against the queries stored in the Monitor, also returning information
      * about which queries were selected by the presearcher, and why.
-     * @param doc an InputDocument to match against the index
+     * @param docs a DocumentBatch to match against the index
      * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
      * @param <T> the type of QueryMatch produced by the CandidateMatcher
-     * @return a PresearcherMatches object
+     * @return a {@link PresearcherMatches} object containing debug information
      * @throws IOException on IO errors
      */
-    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory)
+    public <T extends QueryMatch> PresearcherMatches<T> debug(DocumentBatch docs, MatcherFactory<T> factory)
             throws IOException {
         IndexSearcher searcher = null;
         try {
             searcher = manager.acquire();
-            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(doc));
+            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
             collector.setQueryMap(queries);
             Query presearcherQuery = new ForceNoBulkScoringQuery(
-                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(doc, termFilters.get(searcher.getIndexReader())))
+                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(searcher.getIndexReader())))
             );
             searcher.search(presearcherQuery, collector);
             return collector.getMatches();
@@ -596,6 +609,26 @@ public class Monitor implements Closeable {
         }
     }
 
+    /**
+     * Match a single {@link InputDocument} against the queries stored in the Monitor, also returning information
+     * about which queries were selected by the presearcher, and why.
+     * @param doc an InputDocument to match against the index
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of QueryMatch produced by the CandidateMatcher
+     * @return a {@link PresearcherMatches} object containing debug information
+     * @throws IOException on IO errors
+     */
+    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        return debug(DocumentBatch.of(doc), factory);
+    }
+
+    /**
+     * Build a lucene {@link Document} to be stored in the queryindex from a query entry
+     * @param id the query id
+     * @param mq the MonitorQuery to be indexed
+     * @param query the (possibly partial after decomposition) query to be indexed
+     * @return a Document that will be indexed in the Monitor's queryindex
+     */
     protected Document buildIndexableQuery(String id, MonitorQuery mq, CacheEntry query) {
         Document doc = presearcher.indexQuery(query.matchQuery, mq.getMetadata());
         doc.add(new StringField(FIELDS.id, id, Field.Store.NO));

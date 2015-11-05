@@ -29,8 +29,6 @@ import uk.co.flax.luwak.QueryMatch;
  */
 public class HighlightsMatch extends QueryMatch {
 
-    private static final Map<String, Set<Hit>> EMPTYMAP = new HashMap<>();
-
     private final Map<String, Set<Hit>> hits;
     public String error;
 
@@ -40,13 +38,13 @@ public class HighlightsMatch extends QueryMatch {
      * @param queryId the ID of the query
      * @param hits the hits recorded for this query
      */
-    public HighlightsMatch(String queryId, Map<String, Set<Hit>> hits) {
-        super(queryId);
+    public HighlightsMatch(String queryId, String docId, Map<String, Set<Hit>> hits) {
+        super(queryId, docId);
         this.hits = new TreeMap<>(hits);
     }
 
-    public HighlightsMatch(String queryId) {
-        super(queryId);
+    public HighlightsMatch(String queryId, String docId) {
+        super(queryId, docId);
         this.hits = new TreeMap<>();
     }
 
@@ -79,9 +77,10 @@ public class HighlightsMatch extends QueryMatch {
         return c;
     }
 
-    public static HighlightsMatch merge(String queryId, HighlightsMatch... matches) {
-        HighlightsMatch newMatch = new HighlightsMatch(queryId);
+    public static HighlightsMatch merge(String queryId, String docId, HighlightsMatch... matches) {
+        HighlightsMatch newMatch = new HighlightsMatch(queryId, docId);
         for (HighlightsMatch match : matches) {
+            assert newMatch.getDocId().equals(match.getDocId());
             for (String field : match.getFields()) {
                 if (!newMatch.hits.containsKey(field))
                     newMatch.hits.put(field, new TreeSet<Hit>());

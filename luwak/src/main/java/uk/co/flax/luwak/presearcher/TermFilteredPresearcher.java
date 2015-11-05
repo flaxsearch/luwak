@@ -35,7 +35,6 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import org.apache.lucene.util.BytesRefIterator;
-import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.QueryTermFilter;
 import uk.co.flax.luwak.analysis.BytesRefFilteredTokenFilter;
@@ -81,11 +80,9 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     @Override
-    public final Query buildQuery(InputDocument doc, QueryTermFilter queryTermFilter) {
+    public final Query buildQuery(LeafReader reader, QueryTermFilter queryTermFilter) {
         try {
-            LeafReader reader = doc.asAtomicReader();
             DocumentQueryBuilder queryBuilder = getQueryBuilder();
-
             for (String field : reader.fields()) {
 
                 TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator());
@@ -109,7 +106,7 @@ public class TermFilteredPresearcher extends Presearcher {
             presearcherQuery = bq.build();
 
             for (PresearcherComponent component : components) {
-                presearcherQuery = component.adjustPresearcherQuery(doc, presearcherQuery);
+                presearcherQuery = component.adjustPresearcherQuery(reader, presearcherQuery);
             }
 
             return presearcherQuery;

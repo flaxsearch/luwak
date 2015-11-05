@@ -3,7 +3,8 @@ package uk.co.flax.luwak.matchers;
 import java.io.IOException;
 
 import org.apache.lucene.search.Scorer;
-import uk.co.flax.luwak.InputDocument;
+import org.apache.lucene.search.similarities.Similarity;
+import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
 
 /*
@@ -23,19 +24,23 @@ import uk.co.flax.luwak.MatcherFactory;
  */
 
 /**
- * A Matcher that reports the scores of queries run against its InputDocument
+ * A Matcher that reports the scores of queries run against its DocumentBatch
+ *
+ * To change the {@link Similarity} implementation used for scoring here, use
+ * {@link DocumentBatch.Builder#setSimilarity(Similarity)} when building the
+ * batch.
  */
 public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
 
-    public ScoringMatcher(InputDocument doc) {
-        super(doc);
+    public ScoringMatcher(DocumentBatch docs) {
+        super(docs);
     }
 
     @Override
-    protected ScoringMatch doMatch(String queryId, Scorer scorer) throws IOException {
+    protected ScoringMatch doMatch(String queryId, String docId, Scorer scorer) throws IOException {
         float score = scorer.score();
         if (score > 0)
-            return new ScoringMatch(queryId, score);
+            return new ScoringMatch(queryId, docId, score);
         return null;
     }
 
@@ -49,8 +54,8 @@ public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
      */
     public static final MatcherFactory<ScoringMatch> FACTORY = new MatcherFactory<ScoringMatch>() {
         @Override
-        public ScoringMatcher createMatcher(InputDocument doc) {
-            return new ScoringMatcher(doc);
+        public ScoringMatcher createMatcher(DocumentBatch docs) {
+            return new ScoringMatcher(docs);
         }
     };
 

@@ -19,7 +19,7 @@ import uk.co.flax.luwak.QueryMatch;
 
 public class PresearcherMatch extends QueryMatch {
 
-    public PresearcherMatch(String queryId) {
-        super(queryId);
+    public PresearcherMatch(String queryId, String docId) {
+        super(queryId, docId);
     }
 }

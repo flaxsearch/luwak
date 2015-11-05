@@ -2,9 +2,12 @@ package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Test;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.QueryMatch;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -41,26 +44,26 @@ public class TestPresearcherMatchCollector {
             assertThat(monitor.getQueryCount()).isEqualTo(4);
 
             InputDocument doc = InputDocument.builder("doc1")
-                    .addField(TEXTFIELD, "this is a foo test", new WhitespaceAnalyzer())
-                    .addField("f2", "quuz", new WhitespaceAnalyzer())
+                    .addField(TEXTFIELD, "this is a foo test", new StandardAnalyzer())
+                    .addField("f2", "quuz", new StandardAnalyzer())
                     .build();
 
             PresearcherMatches<QueryMatch> matches = monitor.debug(doc, SimpleMatcher.FACTORY);
 
-            assertThat(matches.match("1")).isNotNull();
-            assertThat(matches.match("1").presearcherMatches).isEqualTo(" f:test");
-            assertThat(matches.match("1").queryMatch)
+            assertThat(matches.match("1", "doc1")).isNotNull();
+            assertThat(matches.match("1", "doc1").presearcherMatches).isEqualTo(" f:test");
+            assertThat(matches.match("1", "doc1").queryMatch)
                     .isNotNull()
                     .isInstanceOf(QueryMatch.class);
 
-            assertThat(matches.match("2")).isNotNull();
-            assertThat(matches.match("2").presearcherMatches).isEqualTo(" f:foo f2:quuz");
+            assertThat(matches.match("2", "doc1")).isNotNull();
+            assertThat(matches.match("2", "doc1").presearcherMatches).isEqualTo(" f:foo f2:quuz");
 
-            assertThat(matches.match("3")).isNotNull();
-            assertThat(matches.match("3").presearcherMatches).isEqualTo(" f:foo");
-            assertThat(matches.match("3").queryMatch).isNull();
+            assertThat(matches.match("3", "doc1")).isNotNull();
+            assertThat(matches.match("3", "doc1").presearcherMatches).isEqualTo(" f:foo");
+            assertThat(matches.match("3", "doc1").queryMatch).isNull();
 
-            assertThat(matches.match("4")).isNull();
+            assertThat(matches.match("4", "doc1")).isNull();
         }
     }
 

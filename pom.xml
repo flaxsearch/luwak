@@ -5,7 +5,7 @@
     <groupId>com.github.flaxsearch</groupId>
     <artifactId>luwak-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.2.1-SNAPSHOT</version>
+    <version>1.3.0-SNAPSHOT</version>
     <modules>
         <module>benchmark</module>
         <module>luwak</module>
@@ -194,6 +194,7 @@
                 </executions>
                 <configuration>
                     <quiet>true</quiet>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
 

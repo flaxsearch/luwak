@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.junit.Test;
@@ -51,16 +52,18 @@ public class TestSimilarities {
             };
 
             InputDocument doc = InputDocument.builder("doc")
-                    .addField("field", "this is a test", ANALYZER).build();
-            InputDocument docWithSim = InputDocument.builder("docWithSim")
-                    .addField("field", "this is a test", ANALYZER)
-                    .setSimilarity(similarity).build();
+                    .addField("field", "this is a test", new StandardAnalyzer()).build();
+
+            DocumentBatch batch = new DocumentBatch.Builder()
+                    .add(doc)
+                    .setSimilarity(similarity)
+                    .build();
 
             Matches<ScoringMatch> standard = monitor.match(doc, ScoringMatcher.FACTORY);
-            Matches<ScoringMatch> withSim = monitor.match(docWithSim, ScoringMatcher.FACTORY);
+            Matches<ScoringMatch> withSim = monitor.match(batch, ScoringMatcher.FACTORY);
 
-            assertThat(Iterables.getFirst(standard, null).getScore())
-                    .isEqualTo(Iterables.getFirst(withSim, null).getScore() / 1000);
+            assertThat(Iterables.getFirst(standard.getMatches("doc"), null).getScore())
+                    .isEqualTo(Iterables.getFirst(withSim.getMatches("doc"), null).getScore() / 1000);
         }
     }
 }

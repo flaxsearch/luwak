@@ -12,7 +12,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanExtractor;
 import org.apache.lucene.search.spans.SpanRewriter;
 import uk.co.flax.luwak.CandidateMatcher;
-import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
 
 /*
@@ -42,39 +42,49 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
     private final SpanRewriter rewriter;
 
-    public HighlightingMatcher(InputDocument doc, SpanRewriter rewriter) {
-        super(doc);
+    /**
+     * Create a new HighlightingMatcher for a provided DocumentBatch, using a SpanRewriter
+     * @param docs the batch to match
+     * @param rewriter the SpanRewriter to use
+     */
+    public HighlightingMatcher(DocumentBatch docs, SpanRewriter rewriter) {
+        super(docs);
         this.rewriter = rewriter;
     }
 
     @Override
-    protected HighlightsMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+    protected void doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         HighlightsMatch match = doMatch(queryId, matchQuery);
         if (match != null)
-            this.addMatch(queryId, match);
-        return match;
+            this.addMatch(match);
     }
 
     @Override
-    protected void addMatch(String queryId, HighlightsMatch match) {
-        HighlightsMatch previousMatch = this.matches(queryId);
+    protected void addMatch(HighlightsMatch match) {
+        HighlightsMatch previousMatch = this.matches(match.getDocId(), match.getDocId());
         if (previousMatch == null) {
-            super.addMatch(queryId, match);
+            super.addMatch(match);
             return;
         }
-        super.addMatch(queryId, HighlightsMatch.merge(queryId, previousMatch, match));
+        super.addMatch(HighlightsMatch.merge(match.getQueryId(), match.getDocId(), previousMatch, match));
     }
 
+    @Override
     public HighlightsMatch resolve(HighlightsMatch match1, HighlightsMatch match2) {
-        return HighlightsMatch.merge(match1.getQueryId(), match1, match2);
+        return HighlightsMatch.merge(match1.getQueryId(), match1.getDocId(), match1, match2);
     }
 
-    protected static class HighlightCollector implements SpanCollector {
+    protected class HighlightCollector implements SpanCollector {
 
-        final HighlightsMatch match;
+        HighlightsMatch match;
+        final String queryId;
 
         public HighlightCollector(String queryId) {
-            match = new HighlightsMatch(queryId);
+            this.queryId = queryId;
+        }
+
+        void setMatch(int doc) {
+            this.match = new HighlightsMatch(queryId, docs.resolveDocId(doc));
         }
 
         @Override
@@ -88,17 +98,19 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
         }
     }
 
+    /** Find the highlights for a specific query */
     protected HighlightsMatch findHighlights(String queryId, Query query) throws IOException {
 
         final HighlightCollector collector = new HighlightCollector(queryId);
 
-        doc.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
+        docs.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
 
             Scorer scorer;
 
             @Override
             public void collect(int i) throws IOException {
                 try {
+                    collector.setMatch(i);
                     SpanExtractor.collect(scorer, collector, true);
                 }
                 catch (Exception e) {
@@ -121,23 +133,23 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     protected HighlightsMatch doMatch(String queryId, Query query) throws IOException {
-        if (doc.getSearcher().count(query) == 0)
+        if (docs.getSearcher().count(query) == 0)
             return null;
         return findHighlights(queryId, query);
     }
 
     public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {
         @Override
-        public HighlightingMatcher createMatcher(InputDocument doc) {
-            return new HighlightingMatcher(doc, new SpanRewriter());
+        public HighlightingMatcher createMatcher(DocumentBatch docs) {
+            return new HighlightingMatcher(docs, new SpanRewriter());
         }
     };
 
     public static MatcherFactory<HighlightsMatch> factory(final SpanRewriter rewriter) {
         return new MatcherFactory<HighlightsMatch>() {
             @Override
-            public CandidateMatcher<HighlightsMatch> createMatcher(InputDocument doc) {
-                return new HighlightingMatcher(doc, rewriter);
+            public CandidateMatcher<HighlightsMatch> createMatcher(DocumentBatch docs) {
+                return new HighlightingMatcher(docs, rewriter);
             }
         };
     }

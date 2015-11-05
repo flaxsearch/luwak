@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -56,19 +56,19 @@ public class TestCachePurging {
             assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
 
             InputDocument doc = InputDocument.builder("doc1")
-                    .addField("field", "test1 test2 test3", new WhitespaceAnalyzer()).build();
-            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(3);
+                    .addField("field", "test1 test2 test3", new StandardAnalyzer()).build();
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount("doc1")).isEqualTo(3);
 
             monitor.deleteById("1");
             assertThat(monitor.getQueryCount()).isEqualTo(2);
             assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
-            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount()).isEqualTo(2);
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount("doc1")).isEqualTo(2);
 
             monitor.purgeCache();
             assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
 
             Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
-            assertThat(result.getMatchCount()).isEqualTo(2);
+            assertThat(result.getMatchCount("doc1")).isEqualTo(2);
         }
     }
 
@@ -122,11 +122,10 @@ public class TestCachePurging {
                 finishUpdating.await();
 
                 assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
-                InputDocument doc = InputDocument.builder("doc1")
-                        .addField("field", "test", new WhitespaceAnalyzer()).build();
+                InputDocument doc = InputDocument.builder("doc1").addField("field", "test", new StandardAnalyzer()).build();
                 Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
                 assertThat(matcher.getErrors()).isEmpty();
-                assertThat(matcher.getMatchCount()).isEqualTo(340);
+                assertThat(matcher.getMatchCount("doc1")).isEqualTo(340);
             }
             finally {
                 executor.shutdownNow();

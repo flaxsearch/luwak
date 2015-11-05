@@ -7,9 +7,9 @@ import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
-import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 
@@ -88,14 +88,14 @@ public class PresearcherComponent {
      * Make changes to the presearcher query built from an InputDocument.  By default,
      * does nothing.
      *
-     * @param doc the InputDocument
+     * @param reader a LeafReader over the input documents index
      * @param presearcherQuery the input query built from the InputDocument
      *
      * @throws java.io.IOException on I/O errors
      *
      * @return an adjusted query
      */
-    public Query adjustPresearcherQuery(InputDocument doc, Query presearcherQuery) throws IOException {
+    public Query adjustPresearcherQuery(LeafReader reader, Query presearcherQuery) throws IOException {
         return presearcherQuery;
     }
 

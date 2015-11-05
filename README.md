@@ -37,10 +37,14 @@ Monitor monitor = new Monitor(new LuceneQueryParser("field"), new TermFilteredPr
 MonitorQuery mq = new MonitorQuery("query1", "field:text");
 monitor.update(mq);
 
+// match one document at a time
 InputDocument doc = InputDocument.builder("doc1")
                         .addField(textfield, document, new StandardAnalyzer())
                         .build();
 Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+
+// or match a batch of documents
+Matches<QueryMatch> matches = monitor.match(DocumentBatch.of(listOfDocuments), SimpleMatcher.FACTORY);
 ```
 
 Adding queries

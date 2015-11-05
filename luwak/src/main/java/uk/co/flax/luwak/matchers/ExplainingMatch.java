@@ -23,8 +23,8 @@ public class ExplainingMatch extends QueryMatch {
 
     private final Explanation explanation;
 
-    public ExplainingMatch(String queryId, Explanation explanation) {
-        super(queryId);
+    public ExplainingMatch(String queryId, String docId, Explanation explanation) {
+        super(queryId, docId);
         this.explanation = explanation;
     }
 

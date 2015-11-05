@@ -11,7 +11,6 @@ import org.apache.lucene.search.*;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -64,11 +63,12 @@ public class TestHighlightingMatcher {
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
 
-        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"), HighlightingMatcher.FACTORY);
+        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"),
+                HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
-                .hasMatchCount(1)
-                .matchesQuery("query1")
+                .hasMatchCount("doc1", 1)
+                .matchesQuery("query1", "doc1")
                     .inField(textfield)
                         .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
 
@@ -87,37 +87,13 @@ public class TestHighlightingMatcher {
         Matches<HighlightsMatch> matcher = monitor.match(doc, HighlightingMatcher.FACTORY);
 
         assertThat(matcher)
-                .hasMatchCount(1)
-                .matchesQuery("query1")
+                .hasMatchCount("doc1", 1)
+                .matchesQuery("query1", "doc1")
                     .inField("field1")
                         .withHit(new HighlightsMatch.Hit(3, 10, 3, 14))
                     .inField("field2")
                         .withHit(new HighlightsMatch.Hit(5, 26, 5, 30));
 
-    }
-
-    @Test
-    @Ignore("TODO: Separate highlighter queries")
-    public void testHighlighterQuery() throws IOException {
-
-        InputDocument docWithMatch = buildDoc("1", "this is a test document");
-        InputDocument docWithNoMatch = buildDoc("2", "this is a document");
-        InputDocument docWithNoHighlighterMatch = buildDoc("3", "this is a test");
-
-        monitor.update(new MonitorQuery("1", "test"));
-
-        // TODO: Highlight on standard query if no match on highlight query
-        assertThat(monitor.match(docWithNoHighlighterMatch, HighlightingMatcher.FACTORY))
-                .matchesQuery("1").inField(textfield)
-                .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
-
-        assertThat(monitor.match(docWithMatch, HighlightingMatcher.FACTORY))
-                .matchesQuery("1")
-                .inField(textfield)
-                .withHit(new HighlightsMatch.Hit(4, 15, 4, 23));
-
-        assertThat(monitor.match(docWithNoMatch, HighlightingMatcher.FACTORY))
-                .doesNotMatchQuery("1");
     }
 
     @Test
@@ -148,9 +124,9 @@ public class TestHighlightingMatcher {
                 new MonitorQuery("3", "document"),
                 new MonitorQuery("4", "foo"));
 
-        assertThat(monitor.match(buildDoc("1", "this is a test document"), HighlightingMatcher.FACTORY))
+        assertThat(monitor.match(buildDoc("doc1", "this is a test document"), HighlightingMatcher.FACTORY))
                 .hasQueriesRunCount(4)
-                .hasMatchCount(2)
+                .hasMatchCount("doc1", 2)
                 .hasErrorCount(1);
     }
 
@@ -169,9 +145,9 @@ public class TestHighlightingMatcher {
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "hello world"), HighlightingMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(1)
-                .hasMatchCount(1);
+                .hasMatchCount("1", 1);
 
-        Assertions.assertThat(matches.matches("1").getHitCount()).isEqualTo(1);
+        Assertions.assertThat(matches.matches("1", "1").getHitCount()).isEqualTo(1);
 
     }
 
@@ -194,7 +170,7 @@ public class TestHighlightingMatcher {
 
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term22 term4"), HighlightingMatcher.FACTORY);
         assertThat(matches)
-                .matchesQuery("1")
+                .matchesQuery("1", "1")
                 .withHitCount(2);
 
     }
@@ -216,7 +192,7 @@ public class TestHighlightingMatcher {
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2 term3"), HighlightingMatcher.FACTORY);
 
         assertThat(matches)
-                .matchesQuery("1")
+                .matchesQuery("1", "1")
                 .withHitCount(2);
     }
 
@@ -238,7 +214,7 @@ public class TestHighlightingMatcher {
         monitor.update(new MonitorQuery("1", ""));
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2"), HighlightingMatcher.FACTORY);
 
-        assertThat(matches).matchesQuery("1").withHitCount(1);
+        assertThat(matches).matchesQuery("1", "1").withHitCount(1);
 
     }
 

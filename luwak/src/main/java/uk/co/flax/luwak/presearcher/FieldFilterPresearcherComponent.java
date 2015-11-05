@@ -8,6 +8,7 @@ import org.apache.lucene.analysis.miscellaneous.EmptyTokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -16,7 +17,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
-import uk.co.flax.luwak.InputDocument;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -57,9 +57,9 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
 
     @Override
-    public Query adjustPresearcherQuery(InputDocument doc, Query presearcherQuery) throws IOException {
+    public Query adjustPresearcherQuery(LeafReader reader, Query presearcherQuery) throws IOException {
 
-        Query filterClause = buildFilterClause(doc);
+        Query filterClause = buildFilterClause(reader);
         if (filterClause == null)
             return presearcherQuery;
 
@@ -69,9 +69,9 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         return bq.build();
     }
 
-    private Query buildFilterClause(InputDocument doc) throws IOException {
+    private Query buildFilterClause(LeafReader reader) throws IOException {
 
-        Terms terms = doc.asAtomicReader().fields().terms(field);
+        Terms terms = reader.fields().terms(field);
         if (terms == null)
             return null;
 
@@ -80,7 +80,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
         BytesRef term;
         TermsEnum te = terms.iterator();
         while ((term = te.next()) != null) {
-            bq.add(new TermQuery(new Term(field, term.clone())), BooleanClause.Occur.SHOULD);
+            bq.add(new TermQuery(new Term(field, BytesRef.deepCopyOf(term))), BooleanClause.Occur.SHOULD);
         }
 
         BooleanQuery built = bq.build();

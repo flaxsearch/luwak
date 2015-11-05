@@ -31,20 +31,20 @@ public class MatchesAssert extends AbstractAssert<MatchesAssert, Matches<?>> {
         return new MatchesAssert(matches);
     }
 
-    public MatchesAssert matchesQuery(String queryId) {
-        Assertions.assertThat(actual.matches(queryId))
+    public MatchesAssert matchesQuery(String queryId, String docId) {
+        Assertions.assertThat(actual.matches(queryId, docId))
                 .overridingErrorMessage("Did not match query %s", queryId)
                 .isNotNull();
         return this;
     }
 
-    public MatchesAssert matches(String docid) {
-        Assertions.assertThat(actual.docId()).isEqualTo(docid);
+    public MatchesAssert matchesDoc(String docid) {
+        Assertions.assertThat(actual.getMatches(docid)).isNotEmpty();
         return this;
     }
 
-    public MatchesAssert hasMatchCount(int count) {
-        Assertions.assertThat(actual.getMatchCount()).isEqualTo(count);
+    public MatchesAssert hasMatchCount(String docid, int count) {
+        Assertions.assertThat(actual.getMatchCount(docid)).isEqualTo(count);
         return this;
     }
 

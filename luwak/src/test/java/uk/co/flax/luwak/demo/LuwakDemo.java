@@ -55,13 +55,10 @@ public class LuwakDemo {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher())) {
             addQueries(monitor, queriesFile);
-
-            for (InputDocument doc : buildDocs(inputDirectory)) {
-                Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
-                outputMatches(matches);
-            }
+            DocumentBatch batch = DocumentBatch.of(buildDocs(inputDirectory));
+            Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);
+            outputMatches(matches);
         }
-
     }
 
     static void addQueries(Monitor monitor, String queriesFile) throws Exception {
@@ -91,7 +88,7 @@ public class LuwakDemo {
                  InputStreamReader reader = new InputStreamReader(fis, Charsets.UTF_8)) {
                 content = CharStreams.toString(reader);
                 InputDocument doc = InputDocument.builder(filePath.toString())
-                        .addField(FIELD, content, ANALYZER)
+                        .addField(FIELD, content, new StandardAnalyzer())
                         .build();
                 docs.add(doc);
             }
@@ -100,10 +97,16 @@ public class LuwakDemo {
     }
 
     static void outputMatches(Matches<HighlightsMatch> matches) {
-        logger.info("Matches from {} [{} queries run]", matches.docId(), matches.getQueriesRun());
-        for (HighlightsMatch match : matches) {
-            logger.info("\tQuery: {} ({} hits)", match.getQueryId(), match.getHitCount());
+
+        logger.info("Matched batch of {} documents in {} milliseconds with {} queries run",
+                matches.getBatchSize(), matches.getSearchTime(), matches.getQueriesRun());
+        for (DocumentMatches<HighlightsMatch> docMatches : matches) {
+            logger.info("Matches from {}", docMatches.getDocId());
+            for (HighlightsMatch match : docMatches) {
+                logger.info("\tQuery: {} ({} hits)", match.getQueryId(), match.getHitCount());
+            }
         }
+
     }
 
 }

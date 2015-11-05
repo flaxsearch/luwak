@@ -22,6 +22,7 @@ import java.util.Set;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import uk.co.flax.luwak.DocumentMatches;
 import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.QueryMatch;
 
@@ -32,24 +33,26 @@ public class ValidatorResults<T extends QueryMatch> extends BenchmarkResults<T> 
     private Multimap<String, T> missingMatches = HashMultimap.create();
     private Multimap<String, T> extraMatches = HashMultimap.create();
 
-    public void add(Matches<T> matches, Set<T> expectedMatches) {
+    public void add(Matches<T> matches, String docId, Set<T> expectedMatches) {
         super.add(matches);
 
-        Set<T> actualMatches = Sets.newHashSet(matches);
+        total++;
+        DocumentMatches<T> docMatches = matches.getMatches(docId);
+        if (docMatches == null) {
+            missingMatches.putAll(docId, expectedMatches);
+            return;
+        }
+
+        Set<T> actualMatches = Sets.newHashSet(docMatches);
         Sets.SetView<T> extras = Sets.difference(expectedMatches, actualMatches);
         Sets.SetView<T> missing = Sets.difference(actualMatches, expectedMatches);
 
         if (extras.size() == 0 && missing.size() == 0)
             correctMatches++;
         else {
-            missingMatches.putAll(matches.docId(), missing);
-            extraMatches.putAll(matches.docId(), extras);
+            missingMatches.putAll(docMatches.getDocId(), missing);
+            extraMatches.putAll(docMatches.getDocId(), extras);
         }
-
-        total++;
-    }
-
-    public static class DocumentResults {
 
     }
 

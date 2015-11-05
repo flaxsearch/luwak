@@ -2,6 +2,7 @@ package uk.co.flax.luwak.assertions;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.Assertions;
+import uk.co.flax.luwak.DocumentMatches;
 import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.matchers.HighlightsMatch;
 
@@ -30,12 +31,12 @@ public class HighlightingMatchAssert extends AbstractAssert<HighlightingMatchAss
         super(actual, HighlightingMatchAssert.class);
     }
 
-    public HighlightingMatchHitsAssert matchesQuery(String queryId) {
-        for (HighlightsMatch match : actual) {
+    public HighlightingMatchHitsAssert matchesQuery(String queryId, String docId) {
+        for (HighlightsMatch match : actual.getMatches(docId)) {
             if (match.getQueryId().equals(queryId))
-                return new HighlightingMatchHitsAssert(match);
+                return new HighlightingMatchHitsAssert(match, this);
         }
-        fail("Document " + actual.docId() + " did not match query " + queryId);
+        fail("Document " + docId + " did not match query " + queryId);
         return null;
     }
 
@@ -43,13 +44,8 @@ public class HighlightingMatchAssert extends AbstractAssert<HighlightingMatchAss
         return new HighlightingMatchAssert(actual);
     }
 
-    public HighlightingMatchAssert matches(String docid) {
-        Assertions.assertThat(actual.docId()).isEqualTo(docid);
-        return this;
-    }
-
-    public HighlightingMatchAssert hasMatchCount(int count) {
-        Assertions.assertThat(actual.getMatchCount()).isEqualTo(count);
+    public HighlightingMatchAssert hasMatchCount(String docId, int count) {
+        Assertions.assertThat(actual.getMatchCount(docId)).isEqualTo(count);
         return this;
     }
 
@@ -66,9 +62,12 @@ public class HighlightingMatchAssert extends AbstractAssert<HighlightingMatchAss
         return this;
     }
 
-    public HighlightingMatchAssert doesNotMatchQuery(String queryId) {
-        for (HighlightsMatch match : actual) {
-            Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
+    public HighlightingMatchAssert doesNotMatchQuery(String queryId, String docId) {
+        DocumentMatches<HighlightsMatch> matches = actual.getMatches(docId);
+        if (matches != null) {
+            for (HighlightsMatch match : actual.getMatches(docId)) {
+                Assertions.assertThat(match.getQueryId()).isNotEqualTo(queryId);
+            }
         }
         return this;
     }

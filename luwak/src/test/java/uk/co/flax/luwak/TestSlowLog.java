@@ -81,19 +81,19 @@ public class TestSlowLog {
             Matches<QueryMatch> matches = monitor.match(doc1, SimpleMatcher.FACTORY);
             System.out.println(matches.getSlowLog());
             assertThat(matches.getSlowLog().toString())
-                .contains("1 [")
-                .contains("3 [")
-                .doesNotContain("2 [");
+                    .contains("1 [")
+                    .contains("3 [")
+                    .doesNotContain("2 [");
 
             monitor.setSlowLogLimit(1);
             assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog().toString())
-                .contains("1 [")
-                .contains("2 [")
-                .contains("3 [");
+                    .contains("1 [")
+                    .contains("2 [")
+                    .contains("3 [");
 
             monitor.setSlowLogLimit(2000000000000l);
             assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
-                .isEmpty();
+                    .isEmpty();
         }
     }
 }

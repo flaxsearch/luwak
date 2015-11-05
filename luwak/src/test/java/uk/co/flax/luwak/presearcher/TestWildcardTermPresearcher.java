@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
@@ -38,12 +39,8 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "/hell.*/"));
 
-        InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "well hello there", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
-                .hasMatchCount(1);
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "well hello there"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 1);
 
     }
 
@@ -52,11 +49,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "hello"));
 
-        InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "hellopolis", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "hellopolis"), SimpleMatcher.FACTORY))
                 .hasQueriesRunCount(0);
 
     }
@@ -67,12 +60,12 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         monitor.update(new MonitorQuery("1", "/a.*/"));
 
         InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcherComponent.DEFAULT_MAX_TOKEN_SIZE + 1), WHITESPACE)
+                .addField(TEXTFIELD, Strings.repeat("a", WildcardNGramPresearcherComponent.DEFAULT_MAX_TOKEN_SIZE + 1), new KeywordAnalyzer())
                 .build();
 
         assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
                 .hasQueriesRunCount(1)
-                .matchesQuery("1");
+                .matchesQuery("1", "doc1");
 
     }
 
@@ -81,12 +74,8 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "foo"));
 
-        InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "Foo foo", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
-                .hasMatchCount(1);
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "Foo foo"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 1);
 
     }
 

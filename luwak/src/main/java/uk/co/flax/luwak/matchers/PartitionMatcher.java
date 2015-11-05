@@ -70,18 +70,17 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
     private final List<MatchTask> tasks = new ArrayList<>();
 
-    public PartitionMatcher(InputDocument doc, ExecutorService executor, MatcherFactory<T> matcherFactory, int threads) {
-        super(doc);
+    public PartitionMatcher(DocumentBatch docs, ExecutorService executor, MatcherFactory<T> matcherFactory, int threads) {
+        super(docs);
         this.executor = executor;
         this.matcherFactory = matcherFactory;
         this.threads = threads;
-        this.resolvingMatcher = matcherFactory.createMatcher(doc);
+        this.resolvingMatcher = matcherFactory.createMatcher(docs);
     }
 
     @Override
-    protected T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+    protected void doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         tasks.add(new MatchTask(queryId, matchQuery, metadata));
-        return null;
     }
 
     @Override
@@ -94,7 +93,7 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
 
         List<Callable<Matches<T>>> workers = new ArrayList<>(threads);
         for (List<MatchTask> taskset : CollectionUtils.partition(tasks, threads)) {
-            CandidateMatcher<T> matcher = matcherFactory.createMatcher(doc);
+            CandidateMatcher<T> matcher = matcherFactory.createMatcher(docs);
             matcher.setSlowLogLimit(this.slowlog.getLimit());
             workers.add(new MatcherWorker(taskset, matcher));
         }
@@ -102,8 +101,10 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         try {
             for (Future<Matches<T>> future : executor.invokeAll(workers)) {
                 Matches<T> matches = future.get();
-                for (T match : matches) {
-                    addMatch(match.getQueryId(), match);
+                for (DocumentMatches<T> docMatches : matches) {
+                    for (T match : docMatches) {
+                        addMatch(match);
+                    }
                 }
                 this.slowlog.addAll(matches.getSlowLog());
             }
@@ -152,8 +153,8 @@ public class PartitionMatcher<T extends QueryMatch> extends CandidateMatcher<T> 
         }
 
         @Override
-        public PartitionMatcher<T> createMatcher(InputDocument doc) {
-            return new PartitionMatcher<>(doc, executor, matcherFactory, threads);
+        public PartitionMatcher<T> createMatcher(DocumentBatch docs) {
+            return new PartitionMatcher<>(docs, executor, matcherFactory, threads);
         }
     }
 

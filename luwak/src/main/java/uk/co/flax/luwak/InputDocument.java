@@ -1,12 +1,18 @@
 package uk.co.flax.luwak;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.memory.MemoryIndex;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
-import org.apache.lucene.search.similarities.Similarity;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableField;
 
 /**
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -30,6 +36,15 @@ import org.apache.lucene.search.similarities.Similarity;
  */
 public class InputDocument {
 
+    private static final FieldType FIELD_TYPE = new FieldType();
+    static {
+        FIELD_TYPE.setStored(false);
+        FIELD_TYPE.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+    }
+
+    /** The field name luwak uses for its internal id */
+    public static final String ID_FIELD = "_luwak_id";
+
     /**
      * Create a new fluent {@link uk.co.flax.luwak.InputDocument.Builder} object.
      * @param id the id
@@ -40,19 +55,14 @@ public class InputDocument {
     }
 
     private final String id;
-
-    private final MemoryIndex index = new MemoryIndex(true);
-    private IndexSearcher searcher;
+    private final Document luceneDocument;
+    private final PerFieldAnalyzerWrapper analyzers;
 
     // protected constructor - use a Builder to create objects
-    protected InputDocument(String id) {
+    protected InputDocument(String id, Document luceneDocument, PerFieldAnalyzerWrapper analyzers) {
         this.id = id;
-    }
-
-    private void finish(Similarity similarity) {
-        index.setSimilarity(similarity);
-        index.freeze();
-        searcher = index.createSearcher();
+        this.luceneDocument = luceneDocument;
+        this.analyzers = analyzers;
     }
 
     /**
@@ -63,16 +73,18 @@ public class InputDocument {
         return id;
     }
 
-    public IndexSearcher getSearcher() {
-        return searcher;
+    /**
+     * @return a representation of this InputDocument as a lucene {@link Document}
+     */
+    public Document getDocument() {
+        return luceneDocument;
     }
 
     /**
-     * Get an atomic reader over the internal index
-     * @return an {@link org.apache.lucene.index.LeafReader} over the internal index
+     * @return a {@link PerFieldAnalyzerWrapper} describing how the different fields will be analysed
      */
-    public LeafReader asAtomicReader() {
-        return searcher.getIndexReader().leaves().get(0).reader();
+    public PerFieldAnalyzerWrapper getAnalyzers() {
+        return analyzers;
     }
 
     /**
@@ -80,28 +92,43 @@ public class InputDocument {
      */
     public static class Builder {
 
-        private final InputDocument doc;
-        private Similarity similarity = new DefaultSimilarity();
+        private final String id;
+        private final Document doc = new Document();
+        private Map<String, Analyzer> analyzers = new HashMap<>();
+        private Analyzer defaultAnalyzer = new KeywordAnalyzer();
 
         /**
          * Create a new Builder for an InputDocument with the given id
          * @param id the id of the InputDocument
          */
         public Builder(String id) {
-            this.doc = new InputDocument(id);
+            this.id = id;
+        }
+
+        public Builder setDefaultAnalyzer(Analyzer analyzer) {
+            this.defaultAnalyzer = analyzer;
+            return this;
         }
 
         /**
-         * Add a field to the InputDocument
+         * Add a text field to the InputDocument
+         *
+         * Positions and Offsets are recorded, but the field value is not stored.
          *
          * @param field the field name
          * @param text the text content of the field
-         * @param analyzer the {@link Analyzer} to use for this field
+         * @param analyzer the {@link Analyzer} that should be used to analyse this field
          *
          * @return the Builder object
+         *
+         * N.B. Analysis is not actually run until this InputDocument is added to a {@link DocumentBatch},
+         * so if this method is called multiple times for the same field but with different Analyzers, the
+         * last Analyzer to be passed in will be used to analyze all of the values.
          */
         public Builder addField(String field, String text, Analyzer analyzer) {
-            doc.index.addField(field, text, analyzer);
+            checkFieldName(field);
+            doc.add(new Field(field, text, FIELD_TYPE));
+            analyzers.put(field, analyzer);
             return this;
         }
 
@@ -109,22 +136,26 @@ public class InputDocument {
          * Add a field to the InputDocument
          *
          * @param field the field name
-         * @param tokenStream a tokenstream containing the field contents
-         *                    
+         * @param ts a {@link TokenStream} containing token values for this field
+         *
          * @return the Builder object
          */
-        public Builder addField(String field, TokenStream tokenStream) {
-            doc.index.addField(field, tokenStream);
+        public Builder addField(String field, TokenStream ts) {
+            checkFieldName(field);
+            doc.add(new Field(field, ts, FIELD_TYPE));
             return this;
         }
 
         /**
-         * Set the {@code Similarity} to be used when scoring this InputDocument
-         * @param similarity the Similarity
+         * Add a field to the InputDocument
+         *
+         * @param field a lucene {@link IndexableField}
+         *
          * @return the Builder object
          */
-        public Builder setSimilarity(Similarity similarity) {
-            this.similarity = similarity;
+        public Builder addField(IndexableField field) {
+            checkFieldName(field.name());
+            doc.add(field);
             return this;
         }
 
@@ -133,10 +164,21 @@ public class InputDocument {
          * @return the InputDocument
          */
         public InputDocument build() {
-            doc.finish(this.similarity);
-            return doc;
+            doc.add(new StringField(ID_FIELD, id, Field.Store.YES));
+            PerFieldAnalyzerWrapper analyzerWrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzers);
+            return new InputDocument(id, doc, analyzerWrapper);
         }
 
+    }
+
+    /**
+     * Check that a field name does not clash with internal fields required by luwak
+     * @param fieldName the field name to check
+     * @throws IllegalArgumentException if the field name is reserved
+     */
+    public static void checkFieldName(String fieldName) {
+        if (ID_FIELD.equals(fieldName))
+            throw new IllegalArgumentException(ID_FIELD + " is a reserved field name");
     }
 
 }

@@ -3,12 +3,9 @@ package uk.co.flax.luwak.presearcher;
 import java.io.IOException;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queries.TermsQuery;
-import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
@@ -51,14 +48,11 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                        new MonitorQuery("3", "field:\"hello there world\""),
                        new MonitorQuery("4", "field:\"this and that\""));
 
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField("field", "hello world and goodbye", WHITESPACE)
-                .build();
-
-        Matches<QueryMatch> matches = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matches = monitor.match(buildDoc("doc1", "field", "hello world and goodbye"),
+                                                        SimpleMatcher.FACTORY);
         assertThat(matches)
                 .hasQueriesRunCount(2)
-                .matchesQuery("1");
+                .matchesQuery("1", "doc1");
 
     }
 
@@ -67,19 +61,16 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "field:(+foo +bar +(badger cormorant))"));
 
-        InputDocument doc1 = buildDoc("doc1", "field", "a badger walked into a bar");
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
-                .hasMatchCount(0)
+        assertThat(monitor.match(buildDoc("doc1", "field", "a badger walked into a bar"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 0)
                 .hasQueriesRunCount(0);
 
-        InputDocument doc2 = buildDoc("doc2", "field", "foo badger cormorant");
-        assertThat(monitor.match(doc2, SimpleMatcher.FACTORY))
-                .hasMatchCount(0)
+        assertThat(monitor.match(buildDoc("doc2", "field", "foo badger cormorant"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc2", 0)
                 .hasQueriesRunCount(0);
 
-        InputDocument doc3 = buildDoc("doc3", "field", "bar badger foo");
-        assertThat(monitor.match(doc3, SimpleMatcher.FACTORY))
-                .hasMatchCount(1);
+        assertThat(monitor.match(buildDoc("doc3", "field", "bar badger foo"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc3", 1);
 
     }
 
@@ -98,10 +89,10 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
             try (IndexReader reader = DirectoryReader.open(writer, false)) {
 
                 InputDocument doc = InputDocument.builder("doc1")
-                        .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
+                        .addField("f", "this is a test document", WHITESPACE).build();
+                DocumentBatch docs = DocumentBatch.of(doc);
 
-                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, new QueryTermFilter(reader));
-
+                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(docs.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new BooleanQuery.Builder()
                                         .add(must(new TermsQuery(new Term("f_0", "test"))))

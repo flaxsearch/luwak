@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanQuery;
@@ -50,15 +50,11 @@ public class TestTermPresearcher extends PresearcherTestBase {
         MonitorQuery query3 = new MonitorQuery("3", "\"a document\"");  // will be selected but not match
         monitor.update(query1, query2, query3);
 
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a test document", WHITESPACE)
-                .build();
-
-        Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
+        Matches<QueryMatch> matcher = monitor.match(buildDoc("doc1", TEXTFIELD, "this is a test document"), SimpleMatcher.FACTORY);
         assertThat(matcher)
-                .hasMatchCount(1)
+                .hasMatchCount("doc1", 1)
                 .selectedQueries("2", "3")
-                .matchesQuery("2")
+                .matchesQuery("2", "doc1")
                 .hasQueriesRunCount(2);
 
     }
@@ -68,20 +64,12 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "document -test"));
 
-        InputDocument doc1 = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "this is a test document", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
-                .hasMatchCount(0)
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "this is a test document"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 0)
                 .hasQueriesRunCount(1);
 
-        InputDocument doc2 = InputDocument.builder("doc2")
-                .addField(TEXTFIELD, "weeble sclup test", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc2, SimpleMatcher.FACTORY))
-                .hasMatchCount(0)
+        assertThat(monitor.match(buildDoc("doc2", TEXTFIELD, "weeble sclup test"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc2", 0)
                 .hasQueriesRunCount(0);
     }
 
@@ -90,12 +78,8 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
         monitor.update(new MonitorQuery("1", "/hell./"));
 
-        InputDocument doc = InputDocument.builder("doc1")
-                .addField(TEXTFIELD, "hello", WHITESPACE)
-                .build();
-
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
-                .hasMatchCount(1)
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "hello"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 1)
                 .hasQueriesRunCount(1);
 
     }
@@ -131,10 +115,11 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
             try (IndexReader reader = DirectoryReader.open(writer, false)) {
 
-                InputDocument doc = InputDocument.builder("doc1")
-                        .addField("f", "this is a test document", new WhitespaceAnalyzer()).build();
+                DocumentBatch batch = DocumentBatch.of(
+                        InputDocument.builder("doc1").addField("f", "this is a test document", new StandardAnalyzer()).build()
+                );
 
-                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(doc, new QueryTermFilter(reader));
+                BooleanQuery q = (BooleanQuery) presearcher.buildQuery(batch.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new TermsQuery(new Term("f", "test"))))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))

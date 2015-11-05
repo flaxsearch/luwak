@@ -32,9 +32,9 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
         this.matchingTerms = matchingTerms;
     }
 
-    public PresearcherMatch<T> match(String id) {
-        if (matchingTerms.containsKey(id))
-            return new PresearcherMatch<>(id, matchingTerms.get(id).toString(), matcher.matches(id));
+    public PresearcherMatch<T> match(String queryId, String docId) {
+        if (matchingTerms.containsKey(queryId))
+            return new PresearcherMatch<>(queryId, matchingTerms.get(queryId).toString(), matcher.matches(queryId, docId));
         return null;
     }
 
@@ -54,7 +54,7 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
             @Override
             public PresearcherMatch<T> next() {
                 String id = ids.next();
-                return new PresearcherMatch<>(id, matchingTerms.get(id).toString(), matcher.matches(id));
+                return new PresearcherMatch<>(id, matchingTerms.get(id).toString(), matcher.matches(id, ""));
             }
 
             @Override

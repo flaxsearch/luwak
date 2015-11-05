@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -33,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ConcurrentMatcherTestBase {
 
+    public static final Analyzer ANALYZER = new StandardAnalyzer();
+
     protected abstract <T extends QueryMatch>
         MatcherFactory<T> matcherFactory(ExecutorService executor, MatcherFactory<T> factory, int threads);
 
@@ -48,12 +50,12 @@ public abstract class ConcurrentMatcherTestBase {
 
             ExecutorService executor = Executors.newFixedThreadPool(10);
 
-            InputDocument doc = InputDocument.builder("1").addField("field", "test", new KeywordAnalyzer()).build();
+            DocumentBatch batch = DocumentBatch.of(InputDocument.builder("1").addField("field", "test", ANALYZER).build());
 
             Matches<QueryMatch> matches
-            = monitor.match(doc, matcherFactory(executor, SimpleMatcher.FACTORY, 10));
+            = monitor.match(batch, matcherFactory(executor, SimpleMatcher.FACTORY, 10));
 
-            assertThat(matches.getMatchCount()).isEqualTo(1000);
+            assertThat(matches.getMatchCount("1")).isEqualTo(1000);
         }
     }
 
@@ -70,17 +72,17 @@ public abstract class ConcurrentMatcherTestBase {
 
             ExecutorService executor = Executors.newFixedThreadPool(4);
 
-            InputDocument doc = InputDocument.builder("1")
-                    .addField("field", "test doc doc", new WhitespaceAnalyzer())
-                    .build();
+            DocumentBatch batch = DocumentBatch.of(InputDocument.builder("1")
+                    .addField("field", "test doc doc", ANALYZER)
+                    .build());
 
             Matches<ScoringMatch> matches
-            = monitor.match(doc, matcherFactory(executor, ScoringMatcher.FACTORY, 10));
+                = monitor.match(batch, matcherFactory(executor, ScoringMatcher.FACTORY, 10));
 
-            assertThat(matches.getMatchCount()).isEqualTo(10);
+            assertThat(matches.getMatchCount("1")).isEqualTo(10);
             assertThat(matches.getQueriesRun()).isEqualTo(30);
             assertThat(matches.getErrors()).isEmpty();
-            for (ScoringMatch match : matches) {
+            for (ScoringMatch match : matches.getMatches("1")) {
                 // The queries are all split into three by the QueryDecomposer, and the
                 // 'test' and 'doc' parts will match.  'test' will have a higher score,
                 // because of it's lower termfreq.  We need to check that each query ends
@@ -98,12 +100,12 @@ public abstract class ConcurrentMatcherTestBase {
         try (Monitor monitor = new Monitor(new TestSlowLog.SlowQueryParser(250), new MatchAllPresearcher())) {
             monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
 
-            InputDocument doc1 = InputDocument.builder("doc1").build();
+            DocumentBatch batch = DocumentBatch.of(InputDocument.builder("doc1").build());
 
             MatcherFactory<QueryMatch> factory = matcherFactory(executor, SimpleMatcher.FACTORY, 10);
 
-            Matches<QueryMatch> matches = monitor.match(doc1, factory);
-            assertThat(matches.getMatchCount())
+            Matches<QueryMatch> matches = monitor.match(batch, factory);
+            assertThat(matches.getMatchCount("doc1"))
                     .isEqualTo(3);
             assertThat(matches.getSlowLog().toString())
                 .contains("1 [")
@@ -111,13 +113,13 @@ public abstract class ConcurrentMatcherTestBase {
                 .doesNotContain("2 [");
 
             monitor.setSlowLogLimit(1);
-            assertThat(monitor.match(doc1, factory).getSlowLog().toString())
+            assertThat(monitor.match(batch, factory).getSlowLog().toString())
                 .contains("1 [")
                 .contains("2 [")
                 .contains("3 [");
 
             monitor.setSlowLogLimit(2000000000000l);
-            assertThat(monitor.match(doc1, factory).getSlowLog())
+            assertThat(monitor.match(batch, factory).getSlowLog())
                 .isEmpty();
         }
     }

@@ -16,8 +16,10 @@ package uk.co.flax.luwak;
  * limitations under the License.
  */
 
+import java.util.Objects;
+
 /**
- * Represents a match for a specific query
+ * Represents a match for a specific query and document
  *
  * Derived classes may contain more information (such as scores, highlights, etc)
  *
@@ -29,12 +31,16 @@ public class QueryMatch {
 
     private final String queryId;
 
+    private final String docId;
+
     /**
-     * Creates a new QueryMatch for a specific query
+     * Creates a new QueryMatch for a specific query and document
      * @param queryId the query id
+     * @param docId the document id
      */
-    public QueryMatch(String queryId) {
-        this.queryId = queryId;
+    public QueryMatch(String queryId, String docId) {
+        this.queryId = Objects.requireNonNull(queryId);
+        this.docId = Objects.requireNonNull(docId);
     }
 
     /**
@@ -44,20 +50,23 @@ public class QueryMatch {
         return queryId;
     }
 
+    /**
+     * @return the docid of this match
+     */
+    public String getDocId() {
+        return docId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof QueryMatch)) return false;
-
         QueryMatch that = (QueryMatch) o;
-
-        if (queryId != null ? !queryId.equals(that.queryId) : that.queryId != null) return false;
-
-        return true;
+        return Objects.equals(queryId, that.queryId) && Objects.equals(docId, that.docId);
     }
 
     @Override
     public int hashCode() {
-        return queryId != null ? queryId.hashCode() : 0;
+        return Objects.hash(queryId, docId);
     }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.Query;
 
 /*
@@ -28,11 +29,11 @@ import org.apache.lucene.search.Query;
  */
 public abstract class CandidateMatcher<T extends QueryMatch> {
 
-    protected final InputDocument doc;
-
-    private final List<MatchError> errors = new ArrayList<>();
-    private final Map<String, T> matches = new HashMap<>();
     private final Set<String> presearcherHits = new HashSet<>();
+    protected final DocumentBatch docs;
+
+    private final List<MatchError> errors = new LinkedList<>();
+    private final Map<String, MatchHolder<T>> matches = new HashMap<>();
 
     private long queryBuildTime = -1;
     private long searchTime = System.nanoTime();
@@ -40,12 +41,16 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     protected final SlowLog slowlog = new SlowLog();
 
+    private static class MatchHolder<T> {
+        Map<String, T> matches = new HashMap<>();
+    }
+
     /**
      * Creates a new CandidateMatcher for the supplied InputDocument
-     * @param doc the document to run queries against
+     * @param docs the documents to run queries against
      */
-    public CandidateMatcher(InputDocument doc) {
-        this.doc = doc;
+    public CandidateMatcher(DocumentBatch docs) {
+        this.docs = docs;
     }
 
     /**
@@ -55,12 +60,11 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @param queryId the query id
      * @param matchQuery the query to run
      * @param metadata the query metadata
-     * @return a QueryMatch object if the query matched, otherwise null
      * @throws IOException on IO errors
      */
-    public final T matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+    public final void matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         presearcherHits.add(queryId);
-        return doMatchQuery(queryId, matchQuery, metadata);
+        doMatchQuery(queryId, matchQuery, metadata);
     }
 
     /**
@@ -69,21 +73,30 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      * @param queryId       the query id
      * @param matchQuery    the query to run
      * @param metadata      the query metadata
-     * @return              a QueryMatch object if the query matched, otherwise null
      * @throws IOException  on error
      */
-    protected abstract T doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;
+    protected abstract void doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;
+
+    private void addMatch(String queryId, String docId, T match) {
+        MatchHolder<T> docMatches = matches.get(docId);
+        if (docMatches == null) {
+            docMatches = new MatchHolder<>();
+            matches.put(docId, docMatches);
+        }
+        if (docMatches.matches.containsKey(queryId)) {
+            docMatches.matches.put(queryId, resolve(match, docMatches.matches.get(queryId)));
+        }
+        else {
+            docMatches.matches.put(queryId, match);
+        }
+    }
 
     /**
      * Record a match
-     * @param queryId   the id of the matching query
      * @param match     a QueryMatch object
      */
-    protected void addMatch(String queryId, T match) {
-        if (matches.containsKey(queryId))
-            matches.put(queryId, resolve(match, matches.get(queryId)));
-        else
-            matches.put(queryId, match);
+    protected void addMatch(T match) {
+        addMatch(match.getQueryId(), match.getDocId(), match);
     }
 
     /**
@@ -101,13 +114,6 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      */
     public void reportError(MatchError e) {
         this.errors.add(e);
-    }
-
-    /**
-     * @return the InputDocument for this CandidateMatcher
-     */
-    public InputDocument getDocument() {
-        return doc;
     }
 
     /**
@@ -129,18 +135,38 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     /**
-     * Returns the QueryMatch for the given query, or null if it did not match
+     * Returns the QueryMatch for the given document and query, or null if it did not match
+     * @param docId the document id
      * @param queryId the query id
-     * @return the QueryMatch for the given query, or null if it did not match
+     * @return the QueryMatch for the given document and query, or null if it did not match
      */
-    protected T matches(String queryId) {
-        return matches.get(queryId);
+    protected T matches(String docId, String queryId) {
+        MatchHolder<T> docMatches = matches.get(docId);
+        if (docMatches == null)
+            return null;
+        return docMatches.matches.get(queryId);
     }
 
     /**
      * @return the matches from this matcher
      */
     public Matches<T> getMatches() {
-        return new Matches<>(doc.getId(), presearcherHits, matches, errors, queryBuildTime, searchTime, queriesRun, slowlog);
+        Map<String, DocumentMatches<T>> results = new HashMap<>();
+        for (InputDocument doc : docs) {
+            String id = doc.getId();
+            if (matches.containsKey(id))
+                results.put(id, new DocumentMatches<>(id, matches.get(id).matches.values()));
+            else
+                results.put(id, DocumentMatches.<T>noMatches(id));
+        }
+        return new Matches<>(results, presearcherHits, errors, queryBuildTime, searchTime, queriesRun, docs.getBatchSize(), slowlog);
+    }
+
+    /**
+     * Get a {@link LeafReader} over the documents in this matcher's {@link DocumentBatch}
+     * @throws IOException on I/O error
+     */
+    public LeafReader getIndexReader() throws IOException {
+        return docs.getIndexReader();
     }
 }

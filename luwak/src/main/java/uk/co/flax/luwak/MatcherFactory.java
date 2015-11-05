@@ -27,6 +27,6 @@ public interface MatcherFactory<T extends QueryMatch> {
      * @param doc an {@link InputDocument} to match.
      * @return the CandidateMatcher
      */
-    CandidateMatcher<T> createMatcher(InputDocument doc);
+    CandidateMatcher<T> createMatcher(DocumentBatch doc);
 
 }

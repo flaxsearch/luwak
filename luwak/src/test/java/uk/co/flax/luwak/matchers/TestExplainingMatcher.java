@@ -18,8 +18,7 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Matches;
@@ -32,19 +31,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestExplainingMatcher {
 
-    public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
-
     @Test
     public void testExplainingMatcher() throws IOException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));
 
-            InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", ANALYZER).build();
+            InputDocument doc1 = InputDocument.builder("doc1").addField("field", "test", new StandardAnalyzer()).build();
 
             Matches<ExplainingMatch> matches = monitor.match(doc1, ExplainingMatcher.FACTORY);
-            assertThat(matches.matches("1")).isNotNull();
-            assertThat(matches.matches("1").getExplanation()).isNotNull();
+            assertThat(matches.matches("1", "doc1")).isNotNull();
+            assertThat(matches.matches("1", "doc1").getExplanation()).isNotNull();
         }
     }
 }

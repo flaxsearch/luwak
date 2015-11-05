@@ -3,6 +3,7 @@ package uk.co.flax.luwak;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.Query;
 
 /**
@@ -36,12 +37,12 @@ import org.apache.lucene.search.Query;
 public abstract class Presearcher {
 
     /**
-     * Build a query for a Monitor's queryindex from an InputDocument.
-     * @param inputDocument the document to query for
-     * @param queryIndexContext a {@link QueryTermFilter} for the queryindex
+     * Build a query for a Monitor's queryindex from a LeafReader over a {@link DocumentBatch}.
+     * @param reader a {@link LeafReader} over the input {@link DocumentBatch} index
+     * @param queryTermFilter a {@link QueryTermFilter} for the queryindex
      * @return a Query to run over a Monitor's queryindex
      */
-    public abstract Query buildQuery(InputDocument inputDocument, QueryTermFilter queryIndexContext);
+    public abstract Query buildQuery(LeafReader reader, QueryTermFilter queryTermFilter);
 
     /**
      * Build a lucene Document to index the query in a Monitor's queryindex

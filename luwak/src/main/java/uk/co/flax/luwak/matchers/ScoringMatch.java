@@ -16,14 +16,20 @@ package uk.co.flax.luwak.matchers;
  * limitations under the License.
  */
 
+import org.apache.lucene.search.similarities.Similarity;
 import uk.co.flax.luwak.QueryMatch;
 
+/**
+ * A QueryMatch that reports scores for each match
+ *
+ * @see uk.co.flax.luwak.DocumentBatch.Builder#setSimilarity(Similarity) 
+ */
 public class ScoringMatch extends QueryMatch {
 
     private final float score;
 
-    public ScoringMatch(String queryId, float score) {
-        super(queryId);
+    public ScoringMatch(String queryId, String docId, float score) {
+        super(queryId, docId);
         this.score = score;
     }
 

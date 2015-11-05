@@ -66,10 +66,12 @@ public class StandardBenchmark {
                 monitor.update(loadQueries());
                 System.out.println("Loaded queries in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " ms");
                 // run through once to warm up
-                Benchmark.run(monitor, loadDocuments(), PresearcherMatcher.FACTORY);
+                Benchmark.run(monitor, loadDocuments(), 10, PresearcherMatcher.FACTORY);
                 for (MatcherFactory<? extends QueryMatch> factory : MATCHERS) {
-                    System.out.println("Benchmarking presearcher " + presearcher.toString() + " with matcher " + factory.toString());
-                    System.out.println(Benchmark.run(monitor, loadDocuments(), factory));
+                    for (int batchSize : new int[]{ 1, 50, 100, 1000 }) {
+                        System.out.println("Benchmarking presearcher " + presearcher.toString() + " with matcher " + factory.toString() + " and batchsize " + batchSize);
+                        System.out.println(Benchmark.run(monitor, loadDocuments(), batchSize, factory));
+                    }
                 }
             }
         }

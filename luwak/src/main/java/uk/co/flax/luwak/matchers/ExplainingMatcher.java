@@ -1,14 +1,12 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 import uk.co.flax.luwak.CandidateMatcher;
-import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
 
 /*
@@ -27,27 +25,32 @@ import uk.co.flax.luwak.MatcherFactory;
  * limitations under the License.
  */
 
+/**
+ * Return {@link Explanation}s for each match
+ */
 public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
 
+    /** A factory for ExplainingMatchers */
     public static final MatcherFactory<ExplainingMatch> FACTORY = new MatcherFactory<ExplainingMatch>() {
         @Override
-        public ExplainingMatcher createMatcher(InputDocument doc) {
-            return new ExplainingMatcher(doc);
+        public ExplainingMatcher createMatcher(DocumentBatch docs) {
+            return new ExplainingMatcher(docs);
         }
     };
 
-    public ExplainingMatcher(InputDocument doc) {
-        super(doc);
+    /** Create a new ExplainingMatcher for the provided DocumentBatch */
+    public ExplainingMatcher(DocumentBatch docs) {
+        super(docs);
     }
 
     @Override
-    protected ExplainingMatch doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
-        Explanation explanation = doc.getSearcher().explain(matchQuery, 0);
-        if (!explanation.isMatch())
-            return null;
-        ExplainingMatch result = new ExplainingMatch(queryId, explanation);
-        addMatch(queryId, result);
-        return result;
+    public void doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
+        int maxDocs = docs.getIndexReader().maxDoc();
+        for (int i = 0; i < maxDocs; i++) {
+            Explanation explanation = docs.getSearcher().explain(matchQuery, i);
+            if (explanation.isMatch())
+                addMatch(new ExplainingMatch(queryId, docs.resolveDocId(i), explanation));
+        }
     }
 
     @Override
