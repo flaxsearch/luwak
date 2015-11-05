@@ -1,14 +1,24 @@
 Luwak 1.3.0
 ===========
 
+The major change here is the introduction of the batching API, allowing users to
+match several documents at once.  In general this will improve throughput at the
+expense of latency, although as always you should measure timings carefully.
+
 API changes:
 
-* Presearcher.buildQuery now takes a QueryTermFilter rather than an
-  IndexReaderContext
+* Added Monitor.match(DocumentBatch, MatcherFactory) and
+  Monitor.debug(DocumentBatch, MatcherFactory) in addition to the existing
+  InputDocument methods.
+* QueryMatch now takes a document ID as well as a query ID
+* Matches<T> exposes DocumentMatches<T> objects for document in an input batch
+* Presearcher.buildQuery() now takes a QueryTermFilter rather than an
+  IndexReaderContext for filtering out terms, and a LeafReader over a batch's
+  document index rather than an InputDocument
 
 New features:
 
-* You can now configure different Similarity implementations on an InputDocument
+* You can now configure Similarity implementations on a DocumentBatch
 * Query metadata is passed to CandidateMatcher.doMatchQuery()
 * DisjunctionMaxQuery can be highlighted
 * DisjunctionMaxQuery can be decomposed and indexed separately
