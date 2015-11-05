@@ -140,7 +140,7 @@ public class TestCachePurging {
     @Test
     public void testBackgroundPurges() throws IOException, InterruptedException {
 
-        MonitorConfiguration config = new MonitorConfiguration().setPurgeFrequency(1, TimeUnit.SECONDS);
+        QueryIndexConfiguration config = new QueryIndexConfiguration().setPurgeFrequency(1, TimeUnit.SECONDS);
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher(), config)) {
 
             assertThat(monitor.getStats().lastPurged).isEqualTo(-1);

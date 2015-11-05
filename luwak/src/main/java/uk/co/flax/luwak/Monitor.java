@@ -95,7 +95,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher,
-                   IndexWriter indexWriter, MonitorConfiguration configuration) throws IOException {
+                   IndexWriter indexWriter, QueryIndexConfiguration configuration) throws IOException {
 
         this.queryParser = queryParser;
         this.presearcher = presearcher;
@@ -122,7 +122,6 @@ public class Monitor implements Closeable {
         }, purgeFrequency, purgeFrequency, configuration.getPurgeFrequencyUnits());
 
         this.commitBatchSize = configuration.getQueryUpdateBufferSize();
-        this.slowLogLimit = configuration.getSlowLogLimit();
     }
 
     /**
@@ -132,7 +131,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new MonitorConfiguration());
+        this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), new QueryIndexConfiguration());
     }
 
     /**
@@ -142,7 +141,7 @@ public class Monitor implements Closeable {
      * @param config the monitor configuration
      * @throws IOException on IO errors
      */
-    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, MonitorConfiguration config) throws IOException {
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, QueryIndexConfiguration config) throws IOException {
         this(queryParser, presearcher, defaultIndexWriter(new RAMDirectory()), config);
     }
 
@@ -154,7 +153,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory) throws IOException {
-        this(queryParser, presearcher, defaultIndexWriter(directory), new MonitorConfiguration());
+        this(queryParser, presearcher, defaultIndexWriter(directory), new QueryIndexConfiguration());
     }
 
     /**
@@ -165,7 +164,7 @@ public class Monitor implements Closeable {
      * @param config the monitor configuration
      * @throws IOException on IO errors
      */
-    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory, MonitorConfiguration config) throws IOException {
+    public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, Directory directory, QueryIndexConfiguration config) throws IOException {
         this(queryParser, presearcher, defaultIndexWriter(directory), config);
     }
 
@@ -177,7 +176,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public Monitor(MonitorQueryParser queryParser, Presearcher presearcher, IndexWriter indexWriter) throws IOException {
-        this(queryParser, presearcher, indexWriter, new MonitorConfiguration());
+        this(queryParser, presearcher, indexWriter, new QueryIndexConfiguration());
     }
 
     private static IndexWriter defaultIndexWriter(Directory directory) throws IOException {

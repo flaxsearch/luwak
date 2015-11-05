@@ -72,7 +72,7 @@ public class TestMonitorPersistence {
     @Test
     public void testMonitorCanAvoidStoringQueries() throws IOException {
 
-        MonitorConfiguration config = new MonitorConfiguration().storeQueries(false);
+        QueryIndexConfiguration config = new QueryIndexConfiguration().storeQueries(false);
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),

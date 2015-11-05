@@ -19,21 +19,20 @@ package uk.co.flax.luwak;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Encapsulates various configuration settings for a Monitor
+ * Encapsulates various configuration settings for a Monitor's query index
  */
-public class MonitorConfiguration {
+public class QueryIndexConfiguration {
 
     private int queryUpdateBufferSize = 5000;
     private long purgeFrequency = 5;
     private TimeUnit purgeFrequencyUnits = TimeUnit.MINUTES;
-    private int slowLogLimit = 2000000;
     private QueryDecomposer queryDecomposer = new QueryDecomposer();
     private boolean storeQueries = true;
 
     /**
      * Set the QueryDecomposer to be used by the Monitor
      */
-    public MonitorConfiguration setQueryDecomposer(QueryDecomposer queryDecomposer) {
+    public QueryIndexConfiguration setQueryDecomposer(QueryDecomposer queryDecomposer) {
         this.queryDecomposer = queryDecomposer;
         return this;
     }
@@ -50,7 +49,7 @@ public class MonitorConfiguration {
      * @param frequency the frequency value
      * @param units     the frequency units
      */
-    public MonitorConfiguration setPurgeFrequency(long frequency, TimeUnit units) {
+    public QueryIndexConfiguration setPurgeFrequency(long frequency, TimeUnit units) {
         this.purgeFrequency = frequency;
         this.purgeFrequencyUnits = units;
         return this;
@@ -73,7 +72,7 @@ public class MonitorConfiguration {
     /**
      * Set how many queries will be buffered in memory before being committed to the queryindex
      */
-    public MonitorConfiguration setQueryUpdateBufferSize(int size) {
+    public QueryIndexConfiguration setQueryUpdateBufferSize(int size) {
         this.queryUpdateBufferSize = size;
         return this;
     }
@@ -91,7 +90,7 @@ public class MonitorConfiguration {
      * If you don't need to call Monitor.getQuery() at all, you can save some memory
      * by setting this to {@code false}.
      */
-    public MonitorConfiguration storeQueries(boolean storeQueries) {
+    public QueryIndexConfiguration storeQueries(boolean storeQueries) {
         this.storeQueries = storeQueries;
         return this;
     }
@@ -103,20 +102,4 @@ public class MonitorConfiguration {
         return storeQueries;
     }
 
-    /**
-     * Set the initial slow log limit of this Monitor
-     *
-     * @see SlowLog
-     */
-    public MonitorConfiguration setSlowLogLimit(int limit) {
-        this.slowLogLimit = limit;
-        return this;
-    }
-
-    /**
-     * Get the slow log limit
-     */
-    public int getSlowLogLimit() {
-        return slowLogLimit;
-    }
 }
