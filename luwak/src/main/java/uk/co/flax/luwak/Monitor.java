@@ -70,7 +70,7 @@ public class Monitor implements Closeable {
     private final Object commitLock = new Object();
 
     /* The current query cache */
-    private Map<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
+    private volatile Map<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
     // NB this is not final because it can be replaced by purgeCache()
 
     public static final class FIELDS {
@@ -423,7 +423,9 @@ public class Monitor implements Closeable {
         match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
             @Override
             protected void doMatch(int doc, String id, BytesRef hash) {
-                newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
+                QueryCacheEntry entry = queries.get(hash);
+                if (entry != null)
+                    newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
             }
         });
 
@@ -753,7 +755,8 @@ public class Monitor implements Closeable {
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
                 QueryCacheEntry entry = queries.get(hash);
-                matcher.matchQuery(queryId, entry.matchQuery, entry.metadata);
+                if (entry != null)
+                    matcher.matchQuery(queryId, entry.matchQuery, entry.metadata);
             }
             catch (Exception e) {
                 matcher.reportError(new MatchError(queryId, e));
