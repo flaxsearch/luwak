@@ -63,14 +63,14 @@ public class Monitor implements Closeable {
     private final boolean storeQueries;
 
     /* Used to cache updates while a purge is ongoing */
-    private volatile Map<BytesRef, CacheEntry> purgeCache = null;
+    private volatile Map<BytesRef, QueryCacheEntry> purgeCache = null;
 
     /* Used to lock around the creation of the purgeCache */
     private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
     private final Object commitLock = new Object();
 
     /* The current query cache */
-    private Map<BytesRef, CacheEntry> queries = new ConcurrentHashMap<>();
+    private Map<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
     // NB this is not final because it can be replaced by purgeCache()
 
     public static final class FIELDS {
@@ -213,9 +213,16 @@ public class Monitor implements Closeable {
     }
 
     /**
+     * @return Statistics for the internal query index and cache
+     */
+    public QueryCacheStats getQueryCacheStats() {
+        return new QueryCacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
+    }
+
+    /**
      * Statistics for the query cache and query index
      */
-    public static class CacheStats {
+    public static class QueryCacheStats {
 
         /** Total number of queries in the query index */
         public final int queries;
@@ -226,34 +233,51 @@ public class Monitor implements Closeable {
         /** Time the query cache was last purged */
         public final long lastPurged;
 
-        public CacheStats(int queries, int cachedQueries, long lastPurged) {
+        public QueryCacheStats(int queries, int cachedQueries, long lastPurged) {
             this.queries = queries;
             this.cachedQueries = cachedQueries;
             this.lastPurged = lastPurged;
         }
     }
 
-    protected static class CacheEntry {
+    /**
+     * An entry in the query cache
+     */
+    public static class QueryCacheEntry {
 
+        /** The (possibly partial due to decomposition) query */
         public final Query matchQuery;
+
+        /** A hash value for lookups */
         public final BytesRef hash;
+
+        /** The metadata from the entry's parent {@link MonitorQuery} */
         public final Map<String,String> metadata;
 
-        public CacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
+        private QueryCacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
             this.hash = hash;
             this.matchQuery = matchQuery;
             this.metadata = metadata;
         }
     }
 
-    protected static class Indexable {
-        final String id;
-        final CacheEntry cacheEntry;
-        final Document document;
+    /**
+     * An indexable query to be added to the Monitor's queryindex
+     */
+    public static class Indexable {
 
-        private Indexable(String id, CacheEntry cacheEntry, Document document) {
+        /** The id of the parent {@link MonitorQuery} */
+        public final String id;
+
+        /** The {@link QueryCacheEntry} to be indexed */
+        public final QueryCacheEntry queryCacheEntry;
+
+        /** A representation of the {@link QueryCacheEntry} as a lucene {@link Document} */
+        public final Document document;
+
+        private Indexable(String id, QueryCacheEntry queryCacheEntry, Document document) {
             this.id = id;
-            this.cacheEntry = cacheEntry;
+            this.queryCacheEntry = queryCacheEntry;
             this.document = document;
         }
     }
@@ -276,7 +300,7 @@ public class Monitor implements Closeable {
                 BytesRef serializedMQ = mqDV.get(doc);
                 MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
                 try {
-                    for (CacheEntry ce : decomposeQuery(mq)) {
+                    for (QueryCacheEntry ce : decomposeQuery(mq)) {
                         queries.put(ce.hash, ce);
                     }
                 } catch (Exception e) {
@@ -286,13 +310,7 @@ public class Monitor implements Closeable {
         });
 
         if (parseErrors.size() != 0)
-            throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);}
-
-    /**
-     * @return Statistics for the internal query index and cache
-     */
-    public CacheStats getStats() {
-        return new CacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
+            throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);
     }
 
     private void commit(List<Indexable> updates) throws IOException {
@@ -302,10 +320,10 @@ public class Monitor implements Closeable {
             try {
                 if (updates != null) {
                     for (Indexable update : updates) {
-                        this.queries.put(update.cacheEntry.hash, update.cacheEntry);
+                        this.queries.put(update.queryCacheEntry.hash, update.queryCacheEntry);
                         writer.addDocument(update.document);
                         if (purgeCache != null)
-                            purgeCache.put(update.cacheEntry.hash, update.cacheEntry);
+                            purgeCache.put(update.queryCacheEntry.hash, update.queryCacheEntry);
                     }
                 }
                 writer.commit();
@@ -381,7 +399,7 @@ public class Monitor implements Closeable {
             are added to the new query cache, and the update log itself is removed.
          */
 
-        final Map<BytesRef, CacheEntry> newCache = new ConcurrentHashMap<>();
+        final Map<BytesRef, QueryCacheEntry> newCache = new ConcurrentHashMap<>();
 
         purgeLock.writeLock().lock();
         try {
@@ -446,8 +464,8 @@ public class Monitor implements Closeable {
         for (MonitorQuery query : queries) {
             try {
                 writer.deleteDocuments(new Term(FIELDS.del, query.getId()));
-                for (CacheEntry cacheEntry : decomposeQuery(query)) {
-                    updates.add(new Indexable(query.getId(), cacheEntry, buildIndexableQuery(query.getId(), query, cacheEntry)));
+                for (QueryCacheEntry queryCacheEntry : decomposeQuery(query)) {
+                    updates.add(new Indexable(query.getId(), queryCacheEntry, buildIndexableQuery(query.getId(), query, queryCacheEntry)));
                 }
             } catch (Exception e) {
                 errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
@@ -462,19 +480,19 @@ public class Monitor implements Closeable {
         return errors;
     }
 
-    private Iterable<CacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
+    private Iterable<QueryCacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
 
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
 
         BytesRef rootHash = query.hash();
 
         int upto = 0;
-        List<CacheEntry> cacheEntries = new LinkedList<>();
+        List<QueryCacheEntry> cacheEntries = new LinkedList<>();
         for (Query subquery : decomposer.decompose(q)) {
             BytesRefBuilder subHash = new BytesRefBuilder();
             subHash.append(rootHash);
             subHash.append(new BytesRef("_" + upto++));
-            cacheEntries.add(new CacheEntry(subHash.toBytesRef(), subquery, query.getMetadata()));
+            cacheEntries.add(new QueryCacheEntry(subHash.toBytesRef(), subquery, query.getMetadata()));
         }
 
         return cacheEntries;
@@ -690,7 +708,7 @@ public class Monitor implements Closeable {
      * @param query the (possibly partial after decomposition) query to be indexed
      * @return a Document that will be indexed in the Monitor's queryindex
      */
-    protected Document buildIndexableQuery(String id, MonitorQuery mq, CacheEntry query) {
+    protected Document buildIndexableQuery(String id, MonitorQuery mq, QueryCacheEntry query) {
         Document doc = presearcher.indexQuery(query.matchQuery, mq.getMetadata());
         doc.add(new StringField(FIELDS.id, id, Field.Store.NO));
         doc.add(new StringField(FIELDS.del, id, Field.Store.NO));
@@ -712,7 +730,7 @@ public class Monitor implements Closeable {
         @Override
         protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
             try {
-                CacheEntry entry = queries.get(hash);
+                QueryCacheEntry entry = queries.get(hash);
                 matcher.matchQuery(queryId, entry.matchQuery, entry.metadata);
             }
             catch (Exception e) {
@@ -732,9 +750,9 @@ public class Monitor implements Closeable {
         protected BinaryDocValues mqDV;
         protected LeafReader reader;
 
-        protected Map<BytesRef, CacheEntry> queries;
+        protected Map<BytesRef, QueryCacheEntry> queries;
 
-        void setQueryMap(Map<BytesRef, CacheEntry> queries) {
+        void setQueryMap(Map<BytesRef, QueryCacheEntry> queries) {
             this.queries = queries;
         }
 

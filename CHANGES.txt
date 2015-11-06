@@ -22,6 +22,7 @@ API changes:
 * Monitor state updates can now be watched by registering
   QueryIndexUpdateListeners.  The beforeCommit() and afterCommit() methods are
   removed.
+* Monitor.getStats() is renamed to Monitor.getQueryCacheStats()
 
 New features:
 

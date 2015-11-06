@@ -63,7 +63,7 @@ public class TestCachePurging {
             monitor.update(queries);
             assertThat(monitor.getQueryCount()).isEqualTo(3);
             assertThat(monitor.getDisjunctCount()).isEqualTo(4);
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
+            assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(4);
 
             InputDocument doc = InputDocument.builder("doc1")
                     .addField("field", "test1 test2 test3", new StandardAnalyzer()).build();
@@ -71,11 +71,11 @@ public class TestCachePurging {
 
             monitor.deleteById("1");
             assertThat(monitor.getQueryCount()).isEqualTo(2);
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(4);
+            assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(4);
             assertThat(monitor.match(doc, SimpleMatcher.FACTORY).getMatchCount("doc1")).isEqualTo(2);
 
             monitor.purgeCache();
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(2);
+            assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(2);
 
             Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
             assertThat(result.getMatchCount("doc1")).isEqualTo(2);
@@ -125,7 +125,7 @@ public class TestCachePurging {
                     monitor.deleteById(Integer.toString(i));
                 }
 
-                assertThat(monitor.getStats().cachedQueries).isEqualTo(200);
+                assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(200);
 
                 logger.trace("Starting cache purge");
                 startUpdating.countDown();
@@ -133,7 +133,7 @@ public class TestCachePurging {
                 logger.trace("Finished cache purge");
                 finishUpdating.await();
 
-                assertThat(monitor.getStats().cachedQueries).isEqualTo(340);
+                assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(340);
                 InputDocument doc = InputDocument.builder("doc1").addField("field", "test", new StandardAnalyzer()).build();
                 Matches<QueryMatch> matcher = monitor.match(doc, SimpleMatcher.FACTORY);
                 assertThat(matcher.getErrors()).isEmpty();
@@ -155,19 +155,19 @@ public class TestCachePurging {
         QueryIndexConfiguration config = new QueryIndexConfiguration().setPurgeFrequency(1, TimeUnit.SECONDS);
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher(), config)) {
 
-            assertThat(monitor.getStats().lastPurged).isEqualTo(-1);
+            assertThat(monitor.getQueryCacheStats().lastPurged).isEqualTo(-1);
 
             for (int i = 0; i < 100; i++) {
                 monitor.update(newMonitorQuery(i));
             }
             monitor.deleteById("5");
-            assertThat(monitor.getStats().queries).isEqualTo(99);
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(100);
+            assertThat(monitor.getQueryCacheStats().queries).isEqualTo(99);
+            assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(100);
 
             TimeUnit.SECONDS.sleep(2);
-            assertThat(monitor.getStats().queries).isEqualTo(99);
-            assertThat(monitor.getStats().cachedQueries).isEqualTo(99);
-            assertThat(monitor.getStats().lastPurged).isGreaterThan(0);
+            assertThat(monitor.getQueryCacheStats().queries).isEqualTo(99);
+            assertThat(monitor.getQueryCacheStats().cachedQueries).isEqualTo(99);
+            assertThat(monitor.getQueryCacheStats().lastPurged).isGreaterThan(0);
         }
     }
 }
