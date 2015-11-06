@@ -318,8 +318,8 @@ public class Monitor implements Closeable {
     }
 
     private void commit(List<Indexable> updates) throws IOException {
+        beforeCommit(updates);
         synchronized (commitLock) {
-            beforeCommit(updates);
             purgeLock.readLock().lock();
             try {
                 if (updates != null) {
@@ -335,8 +335,8 @@ public class Monitor implements Closeable {
             } finally {
                 purgeLock.readLock().unlock();
             }
-            afterCommit(updates);
         }
+        afterCommit(updates);
     }
 
     private void afterPurge() {
