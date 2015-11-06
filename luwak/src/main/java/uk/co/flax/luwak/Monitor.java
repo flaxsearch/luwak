@@ -323,6 +323,13 @@ public class Monitor implements Closeable {
             purgeLock.readLock().lock();
             try {
                 if (updates != null) {
+                    Set<String> ids = new HashSet<>();
+                    for (Indexable update : updates) {
+                        ids.add(update.id);
+                    }
+                    for (String id : ids) {
+                        writer.deleteDocuments(new Term(FIELDS.del, id));
+                    }
                     for (Indexable update : updates) {
                         this.queries.put(update.queryCacheEntry.hash, update.queryCacheEntry);
                         writer.addDocument(update.document);
@@ -467,7 +474,6 @@ public class Monitor implements Closeable {
 
         for (MonitorQuery query : queries) {
             try {
-                writer.deleteDocuments(new Term(FIELDS.del, query.getId()));
                 for (QueryCacheEntry queryCacheEntry : decomposeQuery(query)) {
                     updates.add(new Indexable(query.getId(), queryCacheEntry, buildIndexableQuery(query.getId(), query, queryCacheEntry)));
                 }
