@@ -738,7 +738,8 @@ public class Monitor implements Closeable {
         doc.add(new StringField(FIELDS.del, id, Field.Store.NO));
         doc.add(new SortedDocValuesField(FIELDS.id, new BytesRef(id)));
         doc.add(new BinaryDocValuesField(FIELDS.hash, query.hash));
-        doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
+        if (storeQueries)
+            doc.add(new BinaryDocValuesField(FIELDS.mq, MonitorQuery.serialize(mq)));
         return doc;
     }
 
