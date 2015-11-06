@@ -15,6 +15,13 @@ API changes:
 * Presearcher.buildQuery() now takes a QueryTermFilter rather than an
   IndexReaderContext for filtering out terms, and a LeafReader over a batch's
   document index rather than an InputDocument
+* Various queryindex configuration options (commit batch size, cache purge
+  frequency, whether or not to store queries, which QueryDecomposer to use) are
+  now encapsulated in a QueryIndexConfiguration object, passed to the Monitor
+  constructor.
+* Monitor state updates can now be watched by registering
+  QueryIndexUpdateListeners.  The beforeCommit() and afterCommit() methods are
+  removed.
 
 New features:
 
@@ -27,6 +34,8 @@ New features:
 * ConcurrentQueryLoader allows more efficient query loading on startup
 * WildcardNGramPresearcherComponent makes it easier to adjust its max token
   length
+* You can choose not to store MonitorQueries in the Monitor for some memory
+  savings, by setting QueryIndexConfiguration.storeQueries(false).
 
 Bug fixes:
 
