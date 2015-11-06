@@ -589,16 +589,30 @@ public class Monitor implements Closeable {
         return match(DocumentBatch.of(doc), factory);
     }
 
+    // Gets an IndexSearcher and sets the associated query cache on the passed-in collector
+    // This is done within a readlock on the purge cache to ensure that a background purge
+    // doesn't change the cache state getween the searcher being acquired and the map being set.
+    private IndexSearcher getSearcher(MonitorQueryCollector collector) throws IOException {
+        try {
+            purgeLock.readLock().lock();
+            IndexSearcher searcher = manager.acquire();
+            collector.setQueryMap(this.queries);
+            return searcher;
+        }
+        finally {
+            purgeLock.readLock().unlock();
+        }
+    }
+
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
 
         long buildTime = System.nanoTime();
         MatchingCollector<T> collector = new MatchingCollector<>(matcher);
         IndexSearcher searcher = null;
         try {
-            searcher = manager.acquire();
+            searcher = getSearcher(collector);
             Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(searcher.getIndexReader()));
             buildTime = (System.nanoTime() - buildTime) / 1000000;
-            collector.setQueryMap(this.queries);
             searcher.search(query, collector);
         }
         finally {
@@ -611,8 +625,7 @@ public class Monitor implements Closeable {
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
         try {
-            searcher = manager.acquire();
-            collector.setQueryMap(this.queries);
+            searcher = getSearcher(collector);
             searcher.search(query, collector);
         }
         finally {
@@ -684,9 +697,8 @@ public class Monitor implements Closeable {
             throws IOException {
         IndexSearcher searcher = null;
         try {
-            searcher = manager.acquire();
             PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
-            collector.setQueryMap(queries);
+            searcher = getSearcher(collector);
             Query presearcherQuery = new ForceNoBulkScoringQuery(
                     SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(searcher.getIndexReader())))
             );
