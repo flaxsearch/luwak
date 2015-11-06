@@ -152,23 +152,24 @@ public class TestMonitor {
         }
 
         final int[] expectedSizes = new int[]{ 5001, 5001, 353 };
-        final AtomicInteger call = new AtomicInteger();
-        final AtomicInteger total = new AtomicInteger();
+        final AtomicInteger callCount = new AtomicInteger();
+        final AtomicInteger updateCount = new AtomicInteger();
 
-        Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher()) {
+        QueryIndexUpdateListener listener = new QueryIndexUpdateListener() {
 
             @Override
-            protected void beforeCommit(List<Indexable> updates) {
-                int i = call.getAndIncrement();
-                total.addAndGet(updates.size());
-                Assertions.assertThat(updates.size()).isEqualTo(expectedSizes[i]);
+            public void afterUpdate(List<Monitor.Indexable> updates) {
+                int calls = callCount.getAndIncrement();
+                updateCount.addAndGet(updates.size());
+                Assertions.assertThat(updates.size()).isEqualTo(expectedSizes[calls]);
             }
-
         };
 
-        monitor.update(queries);
-        Assertions.assertThat(total.get()).isEqualTo(10355);
-
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD, ANALYZER), new MatchAllPresearcher())) {
+            monitor.addQueryIndexUpdateListener(listener);
+            monitor.update(queries);
+            Assertions.assertThat(updateCount.get()).isEqualTo(10355);
+        }
     }
 
     @Test

@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Rule;
@@ -44,12 +45,21 @@ public class TestCachePurging {
     @Test
     public void testQueryCacheCanBePurged() throws IOException {
 
+        final AtomicInteger purgeCount = new AtomicInteger();
+        QueryIndexUpdateListener listener = new QueryIndexUpdateListener() {
+            @Override
+            public void onPurge() {
+                purgeCount.incrementAndGet();
+            }
+        };
+
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             MonitorQuery[] queries = new MonitorQuery[] {
                     new MonitorQuery("1", "test1 test4"),
                     new MonitorQuery("2", "test2"),
                     new MonitorQuery("3", "test3")
             };
+            monitor.addQueryIndexUpdateListener(listener);
             monitor.update(queries);
             assertThat(monitor.getQueryCount()).isEqualTo(3);
             assertThat(monitor.getDisjunctCount()).isEqualTo(4);
@@ -69,6 +79,8 @@ public class TestCachePurging {
 
             Matches<QueryMatch> result = monitor.match(doc, SimpleMatcher.FACTORY);
             assertThat(result.getMatchCount("doc1")).isEqualTo(2);
+
+            assertThat(purgeCount.get()).isGreaterThan(0);
         }
     }
 

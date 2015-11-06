@@ -52,6 +52,8 @@ public class Monitor implements Closeable {
     private final IndexWriter writer;
     private final SearcherManager manager;
 
+    private final List<QueryIndexUpdateListener> listeners = new ArrayList<>();
+
     // package-private for testing
     final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
 
@@ -115,8 +117,8 @@ public class Monitor implements Closeable {
                 try {
                     purgeCache();
                 }
-                catch (Exception e) {
-                    // TODO: How to deal with exceptions here?
+                catch (Throwable e) {
+                    afterPurgeError(e);
                 }
             }
         }, purgeFrequency, purgeFrequency, configuration.getPurgeFrequencyUnits());
@@ -189,6 +191,10 @@ public class Monitor implements Closeable {
 
         return new IndexWriter(directory, iwc);
 
+    }
+
+    public void addQueryIndexUpdateListener(QueryIndexUpdateListener listener) {
+        listeners.add(listener);
     }
 
     private class TermsHashBuilder extends SearcherFactory {
@@ -311,17 +317,43 @@ public class Monitor implements Closeable {
         }
     }
 
-    /**
-     * Called before a commit
-     * @param updates the list of updates that will be committed (null for deletes)
-     */
-    protected void beforeCommit(List<Indexable> updates) {}
+    private void afterPurge() {
+        for (QueryIndexUpdateListener listener : listeners) {
+            listener.onPurge();
+        }
+    }
 
-    /**
-     * Called after a commit
-     * @param updates the list of updates that have been committed (null for deletes)
-     */
-    protected void afterCommit(List<Indexable> updates) {}
+    private void afterPurgeError(Throwable t) {
+        for (QueryIndexUpdateListener listener : listeners) {
+            listener.onPurgeError(t);
+        }
+    }
+
+    private void beforeCommit(List<Indexable> updates) {
+        if (updates == null) {
+            for (QueryIndexUpdateListener listener : listeners) {
+                listener.beforeDelete();
+            }
+        }
+        else {
+            for (QueryIndexUpdateListener listener : listeners) {
+                listener.beforeUpdate(updates);
+            }
+        }
+    }
+
+    private void afterCommit(List<Indexable> updates) {
+        if (updates == null) {
+            for (QueryIndexUpdateListener listener : listeners) {
+                listener.afterDelete();
+            }
+        }
+        else {
+            for (QueryIndexUpdateListener listener : listeners) {
+                listener.afterUpdate(updates);
+            }
+        }
+    }
 
     /**
      * Remove unused queries from the query cache.
@@ -376,6 +408,8 @@ public class Monitor implements Closeable {
         finally {
             purgeLock.writeLock().unlock();
         }
+
+        afterPurge();
     }
 
     /**
