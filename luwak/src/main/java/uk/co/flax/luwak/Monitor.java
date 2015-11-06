@@ -193,6 +193,10 @@ public class Monitor implements Closeable {
 
     }
 
+    /**
+     * Register a {@link QueryIndexUpdateListener} that will be notified whenever changes
+     * are made to the Monitor's queryindex
+     */
     public void addQueryIndexUpdateListener(QueryIndexUpdateListener listener) {
         listeners.add(listener);
     }
