@@ -6,11 +6,11 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.assertj.core.api.Assertions;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
+import static org.assertj.core.api.Fail.fail;
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
@@ -49,36 +49,52 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
     public static final Analyzer ANALYZER = new StandardAnalyzer();
 
     @Test
-    @Ignore("This doesn't work with batches yet")
     public void testBatchFiltering() throws IOException {
 
         monitor.update(new MonitorQuery("1", "test", ImmutableMap.of("language", "en")),
-                new MonitorQuery("2", "test", ImmutableMap.of("language", "de")),
+                new MonitorQuery("2", "wahl", ImmutableMap.of("language", "de")),
                 new MonitorQuery("3", "wibble", ImmutableMap.of("language", "en")),
                 new MonitorQuery("4", "*:*", ImmutableMap.of("language", "de")),
                 new MonitorQuery("5", "*:*", ImmutableMap.of("language", "es")));
 
-        DocumentBatch batch = DocumentBatch.of(
-                InputDocument.builder("enDoc")
-                    .addField(TEXTFIELD, "this is a test", ANALYZER)
-                    .addField("language", "en", ANALYZER)
-                    .build(),
-                InputDocument.builder("deDoc")
-                    .addField(TEXTFIELD, "das ist ein test", ANALYZER)
-                    .addField("language", "de", ANALYZER)
-                    .build(),
-                InputDocument.builder("bothDoc")
-                    .addField(TEXTFIELD, "this is ein test", ANALYZER)
-                    .addField("language", "en", ANALYZER)
-                    .addField("language", "de", ANALYZER)
-                    .build());
+        DocumentBatch enBatch = DocumentBatch.of(
+                InputDocument.builder("en1")
+                        .addField(TEXTFIELD, "this is a test", ANALYZER)
+                        .addField("language", "en", ANALYZER)
+                        .build(),
+                InputDocument.builder("en2")
+                        .addField(TEXTFIELD, "this is a wibble", ANALYZER)
+                        .addField("language", "en", ANALYZER)
+                        .build(),
+                InputDocument.builder("en3")
+                        .addField(TEXTFIELD, "wahl is a misspelling of whale", ANALYZER)
+                        .addField("language", "en", ANALYZER)
+                        .build()
+        );
+        assertThat(monitor.match(enBatch, SimpleMatcher.FACTORY))
+                .hasMatchCount("en1", 1)
+                .matchesQuery("1", "en1")
+                .hasMatchCount("en2", 1)
+                .matchesQuery("3", "en2")
+                .hasMatchCount("en3", 0)
+                .hasQueriesRunCount(2);
+    }
 
-        assertThat(monitor.match(batch, SimpleMatcher.FACTORY))
-                .matchesQuery("1", "enDoc")
-                .hasMatchCount("enDoc", 1)
-                .hasMatchCount("deDoc", 2)
-                .hasMatchCount("bothDoc", 3)
-                .hasQueriesRunCount(3);
+    @Test
+    public void testBatchesWithDissimilarFieldValuesThrowExceptions() throws IOException {
+
+        DocumentBatch batch = DocumentBatch.of(
+                InputDocument.builder("1").addField(TEXTFIELD, "test", ANALYZER).addField("language", "en", ANALYZER).build(),
+                InputDocument.builder("2").addField(TEXTFIELD, "test", ANALYZER).addField("language", "de", ANALYZER).build()
+        );
+
+        try {
+            monitor.match(batch, SimpleMatcher.FACTORY);
+            fail("Expected an IllegalArgumentException for mixed-filter-field-value DocumentBatch");
+        }
+        catch (IllegalArgumentException e) {
+            Assertions.assertThat(e.getMessage()).contains("language:");
+        }
 
     }
 

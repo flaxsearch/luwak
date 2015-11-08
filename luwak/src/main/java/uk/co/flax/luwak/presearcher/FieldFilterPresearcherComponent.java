@@ -40,6 +40,10 @@ import org.apache.lucene.util.BytesRef;
  *
  * Queries are assigned field values by passing them as part of the metadata
  * on a MonitorQuery.
+ *
+ * N.B. DocumentBatches used with this presearcher component must all have the
+ * same value in the filter field, otherwise an IllegalArgumentException will
+ * be thrown
  */
 public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
@@ -77,9 +81,16 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
         BooleanQuery.Builder bq = new BooleanQuery.Builder();
 
+        int docsInBatch = reader.maxDoc();
+
         BytesRef term;
         TermsEnum te = terms.iterator();
         while ((term = te.next()) != null) {
+            // we need to check that every document in the batch has the same field values, otherwise
+            // this filtering will not work
+            if (te.docFreq() != docsInBatch)
+                throw new IllegalArgumentException("Some documents in this batch do not have a term value of "
+                                                    + field + ":" + Term.toString(term));
             bq.add(new TermQuery(new Term(field, BytesRef.deepCopyOf(term))), BooleanClause.Occur.SHOULD);
         }
 
