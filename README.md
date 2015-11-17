@@ -22,7 +22,7 @@ Get the artifacts
 <dependency>
   <groupId>com.github.flaxsearch</groupId>
   <artifactId>luwak</artifactId>
-  <version>1.2.0</version>
+  <version>1.3.0</version>
 </dependency>
 ```
 
