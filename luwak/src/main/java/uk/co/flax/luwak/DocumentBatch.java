@@ -55,13 +55,17 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
 
     /**
      * Create a DocumentBatch containing a single InputDocument
+     * @param doc the document to add
+     * @return the batch containing the input document
      */
-    public static DocumentBatch of(InputDocument doc) throws IOException {
+    public static DocumentBatch of(InputDocument doc) {
         return new DocumentBatch.Builder().add(doc).build();
     }
 
     /**
      * Create a DocumentBatch containing a set of InputDocuments
+     * @param docs Collection of documents to add
+     * @return the batch containing the input documents
      */
     public static DocumentBatch of(Collection<InputDocument> docs) {
         return new DocumentBatch.Builder().addAll(docs).build();
@@ -69,8 +73,10 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
 
     /**
      * Create a DocumentBatch containing a set of InputDocuments
+     * @param docs list of documents to add
+     * @return the batch containing the input documents
      */
-    public static DocumentBatch of(InputDocument... docs) throws IOException {
+    public static DocumentBatch of(InputDocument... docs) {
         return of(Arrays.asList(docs));
     }
 
@@ -82,25 +88,36 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
         private Similarity similarity = new BM25Similarity();
         private List<InputDocument> documents = new ArrayList<>();
 
-        /** Add an InputDocument */
+        /** Add an InputDocument
+         * @param doc Single document to add
+         * @return the current builder object
+         */
         public Builder add(InputDocument doc) {
             documents.add(doc);
             return this;
         }
 
-        /** Add a collection of InputDocuments */
+        /** Add a collection of InputDocuments
+         * @param docs Collection of documents to add
+         * @return the current builder object
+         */
         public Builder addAll(Collection<InputDocument> docs) {
             documents.addAll(docs);
             return this;
         }
 
-        /** Set the {@link Similarity} to be used for scoring this batch */
+        /** Set the {@link Similarity} to be used for scoring this batch
+         * @param similarity the {@link Similarity} to be used for scoring this batch
+         * @return the current builder object
+         */
         public Builder setSimilarity(Similarity similarity) {
             this.similarity = similarity;
             return this;
         }
 
-        /** Create the DocumentBatch */
+        /** Create the DocumentBatch
+         * @return the newly created DocumentBatch
+         */
         public DocumentBatch build() {
             if (documents.size() == 0)
                 throw new IllegalStateException("Cannot build DocumentBatch with zero documents");

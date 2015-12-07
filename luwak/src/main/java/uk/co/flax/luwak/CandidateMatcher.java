@@ -165,6 +165,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     /**
      * Get a {@link LeafReader} over the documents in this matcher's {@link DocumentBatch}
+     * @return a {@link LeafReader} over the documents in this matcher's {@link DocumentBatch}
      * @throws IOException on I/O error
      */
     public LeafReader getIndexReader() throws IOException {

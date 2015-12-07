@@ -73,6 +73,7 @@ public class Matches<T extends QueryMatch> implements Iterable<DocumentMatches<T
     }
 
     /**
+     * @param docId document id to check
      * @return all matches for a particular document
      */
     public DocumentMatches<T> getMatches(String docId) {
@@ -87,6 +88,7 @@ public class Matches<T extends QueryMatch> implements Iterable<DocumentMatches<T
     }
 
     /**
+     * @param docId document id to check
      * @return the number of queries that matched for a given document
      */
     public int getMatchCount(String docId) {
