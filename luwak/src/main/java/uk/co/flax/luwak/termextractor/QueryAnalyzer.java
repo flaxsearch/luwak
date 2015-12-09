@@ -170,8 +170,4 @@ public class QueryAnalyzer {
         return queryTree.advancePhase(weightor, advancer);
     }
 
-    public String getAnyToken() {
-        return "__ANYTOKEN__";
-    }
-
 }
