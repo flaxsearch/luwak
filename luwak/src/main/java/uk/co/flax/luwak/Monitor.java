@@ -47,7 +47,7 @@ public class Monitor implements Closeable {
     protected final Presearcher presearcher;
     protected final QueryDecomposer decomposer;
 
-    private final QueryIndex queryIndex;
+    protected final QueryIndex queryIndex;
 
     private final List<QueryIndexUpdateListener> listeners = new ArrayList<>();
 

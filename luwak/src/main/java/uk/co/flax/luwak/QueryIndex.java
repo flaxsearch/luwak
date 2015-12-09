@@ -217,6 +217,7 @@ class QueryIndex {
         public BinaryDocValues mq;
         public Scorer scorer;
         public int doc;
+        public LeafReader reader;
     }
 
     /**
@@ -249,6 +250,7 @@ class QueryIndex {
 
         @Override
         public void doSetNextReader(LeafReaderContext context) throws IOException {
+            this.dataValues.reader = context.reader();
             this.dataValues.hash = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
             this.dataValues.id = context.reader().getSortedDocValues(Monitor.FIELDS.id);
             this.dataValues.mq = context.reader().getBinaryDocValues(Monitor.FIELDS.mq);
