@@ -484,41 +484,30 @@ public class Monitor implements Closeable {
         return match(DocumentBatch.of(doc), factory);
     }
 
-    // Gets an IndexSearcher and sets the associated query cache on the passed-in collector
-    // This is done within a readlock on the purge cache to ensure that a background purge
-    // doesn't change the cache state getween the searcher being acquired and the map being set.
-    private static IndexSearcher getSearcher(WriterAndCache wacRef, MonitorQueryCollector collector) throws IOException {
-        final WriterAndCache.SearcherAndQueries saq = wacRef.getSearcher();
-        collector.setQueryMap(saq.queries);
-        return saq.searcher;
-    }
-
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
 
         long buildTime = System.nanoTime();
+        
         MatchingCollector<T> collector = new MatchingCollector<>(matcher);
-        IndexSearcher searcher = null;
-        try {
-            searcher = getSearcher(wac, collector);
-            Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(searcher.getIndexReader()));
+
+        try (final WriterAndCache.Searcher saq = wac.getSearcher(collector)) {
+            
+            Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(saq.getIndexReader()));
+            
             buildTime = (System.nanoTime() - buildTime) / 1000000;
-            searcher.search(query, collector);
+            
+            saq.search(query, collector);
         }
-        finally {
-            wac.release(searcher);
-        }
+
         matcher.finish(buildTime, collector.getQueryCount());
 
     }
     
     public static void match(WriterAndCache wacRef, Query query, MonitorQueryCollector collector) throws IOException {
-        IndexSearcher searcher = null;
-        try {
-            searcher = getSearcher(wacRef, collector);
-            searcher.search(query, collector);
-        }
-        finally {
-            wacRef.release(searcher);
+        
+        try (final WriterAndCache.Searcher saq = wacRef.getSearcher(collector)) {
+            
+            saq.search(query, collector);
         }
     }
 
@@ -588,18 +577,18 @@ public class Monitor implements Closeable {
      */
     public <T extends QueryMatch> PresearcherMatches<T> debug(DocumentBatch docs, MatcherFactory<T> factory)
             throws IOException {
-        IndexSearcher searcher = null;
-        try {
-            PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
-            searcher = getSearcher(wac, collector);
+
+        PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
+        
+        try (final WriterAndCache.Searcher saq = wac.getSearcher(collector)) {
+
             Query presearcherQuery = new ForceNoBulkScoringQuery(
-                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(searcher.getIndexReader())))
+                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(saq.getIndexReader())))
             );
-            searcher.search(presearcherQuery, collector);
+            
+            saq.search(presearcherQuery, collector);
+            
             return collector.getMatches();
-        }
-        finally {
-            wac.release(searcher);
         }
     }
 
@@ -660,7 +649,7 @@ public class Monitor implements Closeable {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public static abstract class MonitorQueryCollector extends SimpleCollector {
+    public static abstract class MonitorQueryCollector extends SimpleCollector implements WriterAndCache.WithQueryMap {
 
         protected BinaryDocValues hashDV;
         protected SortedDocValues idDV;
@@ -669,7 +658,8 @@ public class Monitor implements Closeable {
 
         protected Map<BytesRef, QueryCacheEntry> queries;
 
-        void setQueryMap(Map<BytesRef, QueryCacheEntry> queries) {
+        @Override
+        public void setQueryMap(Map<BytesRef, QueryCacheEntry> queries) {
             this.queries = queries;
         }
 

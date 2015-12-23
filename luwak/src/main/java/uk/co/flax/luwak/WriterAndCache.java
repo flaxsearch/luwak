@@ -10,9 +10,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.LiveIndexWriterConfig;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherFactory;
@@ -75,19 +76,22 @@ public class WriterAndCache {
         }
     }
     
+    public interface WithQueryMap {
+        public void setQueryMap(Map<BytesRef, QueryCacheEntry> queries);
+    }
+    
     // Gets an IndexSearcher and sets the associated query cache on the passed-in collector
     // This is done within a readlock on the purge cache to ensure that a background purge
     // doesn't change the cache state getween the searcher being acquired and the map being set.
-    public SearcherAndQueries getSearcher() throws IOException {
+    public Searcher getSearcher(WithQueryMap qm) throws IOException {
+        
+        purgeLock.readLock().lock();
         try {
-            purgeLock.readLock().lock();
+            if (qm != null) {
+                qm.setQueryMap(queries);
+            }
             
-            SearcherAndQueries saq = new SearcherAndQueries();
-            
-            saq.searcher = manager.acquire();
-            saq.queries = queries;
-            
-            return saq;
+            return new Searcher(manager.acquire(), this);
         }
         finally {
             purgeLock.readLock().unlock();
@@ -149,7 +153,7 @@ public class WriterAndCache {
     
     
     // ---------------------------------------------
-    //  Proxy trivial atomic operations...
+    //  Proxy trivial operations...
     // ---------------------------------------------
 
     public void closeWhileHandlingException() throws IOException {
@@ -179,17 +183,6 @@ public class WriterAndCache {
     public void release(IndexSearcher searcher) throws IOException {
         manager.release(searcher);
     }
-
-    /**
-     * This should be used only at startup when no scans run.
-     */
-    public void addCacheEntry(BytesRef hash, QueryCacheEntry ce) {
-        queries.put(hash, ce);            
-    }
-    
-    public LiveIndexWriterConfig getConfig() {
-        return this.writer.getConfig();
-    }
     
     // ---------------------------------------------
     //  Helper classes...
@@ -216,11 +209,28 @@ public class WriterAndCache {
         }
     }
     
-    public static class SearcherAndQueries {
-        /**
-         * Consider this field C++ const.
-         */
-        public Map<BytesRef, QueryCacheEntry> queries;
-        public IndexSearcher searcher;
+    public static class Searcher implements AutoCloseable {
+        
+        private IndexSearcher searcher;
+
+        private WriterAndCache wac;
+        
+        private Searcher(IndexSearcher searcher, WriterAndCache wac) {
+            this.searcher = searcher;
+            this.wac = wac;
+        }
+        
+        public IndexReader getIndexReader() {
+            return searcher.getIndexReader();
+        }
+        
+        public void search(Query query, Collector results) throws IOException {
+            searcher.search(query, results);
+        }
+        
+        @Override
+        public void close() throws IOException {
+            wac.release(searcher);            
+        }
     }
 }
