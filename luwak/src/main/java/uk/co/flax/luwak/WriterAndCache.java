@@ -149,7 +149,7 @@ public class WriterAndCache {
     
     
     // ---------------------------------------------
-    //  Proxy trivial atomic operations...
+    //  Proxy trivial operations...
     // ---------------------------------------------
 
     public void closeWhileHandlingException() throws IOException {
@@ -178,17 +178,6 @@ public class WriterAndCache {
 
     public void release(IndexSearcher searcher) throws IOException {
         manager.release(searcher);
-    }
-
-    /**
-     * This should be used only at startup when no scans run.
-     */
-    public void addCacheEntry(BytesRef hash, QueryCacheEntry ce) {
-        queries.put(hash, ce);            
-    }
-    
-    public LiveIndexWriterConfig getConfig() {
-        return this.writer.getConfig();
     }
     
     // ---------------------------------------------
