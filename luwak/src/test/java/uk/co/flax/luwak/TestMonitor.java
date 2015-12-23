@@ -158,7 +158,7 @@ public class TestMonitor {
         QueryIndexUpdateListener listener = new QueryIndexUpdateListener() {
 
             @Override
-            public void afterUpdate(List<Monitor.Indexable> updates) {
+            public void afterUpdate(List<Indexable> updates) {
                 int calls = callCount.getAndIncrement();
                 updateCount.addAndGet(updates.size());
                 Assertions.assertThat(updates.size()).isEqualTo(expectedSizes[calls]);

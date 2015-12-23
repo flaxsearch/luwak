@@ -3,11 +3,9 @@ package uk.co.flax.luwak;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.document.*;
@@ -20,7 +18,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.IOUtils;
+
+import uk.co.flax.luwak.WriterAndCache.QueryCacheEntry;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 
 /*
@@ -48,9 +47,8 @@ public class Monitor implements Closeable {
     protected final MonitorQueryParser queryParser;
     protected final Presearcher presearcher;
     protected final QueryDecomposer decomposer;
-
-    private final IndexWriter writer;
-    private final SearcherManager manager;
+    
+    private final WriterAndCache wac;
 
     private final List<QueryIndexUpdateListener> listeners = new ArrayList<>();
 
@@ -61,17 +59,6 @@ public class Monitor implements Closeable {
 
     private final long commitBatchSize;
     private final boolean storeQueries;
-
-    /* Used to cache updates while a purge is ongoing */
-    private volatile Map<BytesRef, QueryCacheEntry> purgeCache = null;
-
-    /* Used to lock around the creation of the purgeCache */
-    private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
-    private final Object commitLock = new Object();
-
-    /* The current query cache */
-    private volatile Map<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
-    // NB this is not final because it can be replaced by purgeCache()
 
     public static final class FIELDS {
         public static final String id = "_id";
@@ -102,9 +89,8 @@ public class Monitor implements Closeable {
         this.queryParser = queryParser;
         this.presearcher = presearcher;
         this.decomposer = configuration.getQueryDecomposer();
-        this.writer = indexWriter;
-
-        this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
+        
+        this.wac = new WriterAndCache(indexWriter, new TermsHashBuilder());
 
         this.storeQueries = configuration.storeQueries();
         prepareQueryCache(this.storeQueries);
@@ -181,7 +167,8 @@ public class Monitor implements Closeable {
         this(queryParser, presearcher, indexWriter, new QueryIndexConfiguration());
     }
 
-    private static IndexWriter defaultIndexWriter(Directory directory) throws IOException {
+    // package-private for testing
+    static IndexWriter defaultIndexWriter(Directory directory) throws IOException {
 
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
         TieredMergePolicy mergePolicy = new TieredMergePolicy();
@@ -220,7 +207,7 @@ public class Monitor implements Closeable {
      * @return Statistics for the internal query index and cache
      */
     public QueryCacheStats getQueryCacheStats() {
-        return new QueryCacheStats(this.writer.numDocs(), this.queries.size(), lastPurged);
+        return new QueryCacheStats(wac.numDocs(), wac.cacheSize(), lastPurged);
     }
 
     /**
@@ -241,48 +228,6 @@ public class Monitor implements Closeable {
             this.queries = queries;
             this.cachedQueries = cachedQueries;
             this.lastPurged = lastPurged;
-        }
-    }
-
-    /**
-     * An entry in the query cache
-     */
-    public static class QueryCacheEntry {
-
-        /** The (possibly partial due to decomposition) query */
-        public final Query matchQuery;
-
-        /** A hash value for lookups */
-        public final BytesRef hash;
-
-        /** The metadata from the entry's parent {@link MonitorQuery} */
-        public final Map<String,String> metadata;
-
-        private QueryCacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
-            this.hash = hash;
-            this.matchQuery = matchQuery;
-            this.metadata = metadata;
-        }
-    }
-
-    /**
-     * An indexable query to be added to the Monitor's queryindex
-     */
-    public static class Indexable {
-
-        /** The id of the parent {@link MonitorQuery} */
-        public final String id;
-
-        /** The {@link QueryCacheEntry} to be indexed */
-        public final QueryCacheEntry queryCacheEntry;
-
-        /** A representation of the {@link QueryCacheEntry} as a lucene {@link Document} */
-        public final Document document;
-
-        private Indexable(String id, QueryCacheEntry queryCacheEntry, Document document) {
-            this.id = id;
-            this.queryCacheEntry = queryCacheEntry;
-            this.document = document;
         }
     }
 
@@ -319,30 +264,9 @@ public class Monitor implements Closeable {
 
     private void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
-        synchronized (commitLock) {
-            purgeLock.readLock().lock();
-            try {
-                if (updates != null) {
-                    Set<String> ids = new HashSet<>();
-                    for (Indexable update : updates) {
-                        ids.add(update.id);
-                    }
-                    for (String id : ids) {
-                        writer.deleteDocuments(new Term(FIELDS.del, id));
-                    }
-                    for (Indexable update : updates) {
-                        this.queries.put(update.queryCacheEntry.hash, update.queryCacheEntry);
-                        writer.addDocument(update.document);
-                        if (purgeCache != null)
-                            purgeCache.put(update.queryCacheEntry.hash, update.queryCacheEntry);
-                    }
-                }
-                writer.commit();
-                manager.maybeRefresh();
-            } finally {
-                purgeLock.readLock().unlock();
-            }
-        }
+        
+        wac.commit(updates, FIELDS.del);
+        
         afterCommit(updates);
     }
 
@@ -383,7 +307,7 @@ public class Monitor implements Closeable {
             }
         }
     }
-
+    
     /**
      * Remove unused queries from the query cache.
      *
@@ -392,54 +316,23 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public synchronized void purgeCache() throws IOException {
-
-        /*
-            Note on implementation
-
-            The purge works by scanning the query index and creating a new query cache populated
-            for each query in the index.  When the scan is complete, the old query cache is swapped
-            for the new, allowing it to be garbage-collected.
-
-            In order to not drop cached queries that have been added while a purge is ongoing,
-            we use a ReadWriteLock to guard the creation and removal of an update log.  Commits take
-            the read lock.  If the update log has been created, then a purge is ongoing, and queries
-            are added to the update log within the read lock guard.
-
-            The purge takes the write lock when creating the update log, and then when swapping out
-            the old query cache.  Within the second write lock guard, the contents of the update log
-            are added to the new query cache, and the update log itself is removed.
-         */
-
-        final Map<BytesRef, QueryCacheEntry> newCache = new ConcurrentHashMap<>();
-
-        purgeLock.writeLock().lock();
-        try {
-            purgeCache = new ConcurrentHashMap<>();
-        }
-        finally {
-            purgeLock.writeLock().unlock();
-        }
-
-        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+        
+        wac.purgeCache(new WriterAndCache.CachePopulator() {
             @Override
-            protected void doMatch(int doc, String id, BytesRef hash) {
-                QueryCacheEntry entry = queries.get(hash);
-                if (entry != null)
-                    newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
+            public void populateCacheWithIndex(final ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException {
+                match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+                    @Override
+                    protected void doMatch(int doc, String id, BytesRef hash) {
+                        QueryCacheEntry entry = queries.get(hash);
+                        if (entry != null)
+                            newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
+                    }
+                });
             }
         });
-
-        purgeLock.writeLock().lock();
-        try {
-            newCache.putAll(purgeCache);
-            purgeCache = null;
-            Monitor.this.queries = newCache;
-            lastPurged = System.nanoTime();
-        }
-        finally {
-            purgeLock.writeLock().unlock();
-        }
-
+        
+        lastPurged = System.nanoTime();
+        
         afterPurge();
     }
 
@@ -460,7 +353,7 @@ public class Monitor implements Closeable {
     @Override
     public void close() throws IOException {
         purgeExecutor.shutdown();
-        IOUtils.closeWhileHandlingException(manager, writer, writer.getDirectory());
+        wac.closeWhileHandlingException();
     }
 
     /**
@@ -527,7 +420,7 @@ public class Monitor implements Closeable {
      */
     public void delete(Iterable<MonitorQuery> queries) throws IOException {
         for (MonitorQuery mq : queries) {
-            writer.deleteDocuments(new Term(Monitor.FIELDS.del, mq.getId()));
+            wac.deleteDocuments(new Term(Monitor.FIELDS.del, mq.getId()));
         }
         commit(null);
     }
@@ -539,7 +432,7 @@ public class Monitor implements Closeable {
      */
     public void deleteById(Iterable<String> queryIds) throws IOException {
         for (String queryId : queryIds) {
-            writer.deleteDocuments(new Term(FIELDS.del, queryId));
+            wac.deleteDocuments(new Term(FIELDS.del, queryId));
         }
         commit(null);
     }
@@ -558,7 +451,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public void clear() throws IOException {
-        writer.deleteDocuments(new MatchAllDocsQuery());
+        wac.deleteDocuments(new MatchAllDocsQuery());
         commit(null);
     }
 
@@ -594,16 +487,10 @@ public class Monitor implements Closeable {
     // Gets an IndexSearcher and sets the associated query cache on the passed-in collector
     // This is done within a readlock on the purge cache to ensure that a background purge
     // doesn't change the cache state getween the searcher being acquired and the map being set.
-    private IndexSearcher getSearcher(MonitorQueryCollector collector) throws IOException {
-        try {
-            purgeLock.readLock().lock();
-            IndexSearcher searcher = manager.acquire();
-            collector.setQueryMap(this.queries);
-            return searcher;
-        }
-        finally {
-            purgeLock.readLock().unlock();
-        }
+    private static IndexSearcher getSearcher(WriterAndCache wacRef, MonitorQueryCollector collector) throws IOException {
+        final WriterAndCache.SearcherAndQueries saq = wacRef.getSearcher();
+        collector.setQueryMap(saq.queries);
+        return saq.searcher;
     }
 
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
@@ -612,27 +499,31 @@ public class Monitor implements Closeable {
         MatchingCollector<T> collector = new MatchingCollector<>(matcher);
         IndexSearcher searcher = null;
         try {
-            searcher = getSearcher(collector);
+            searcher = getSearcher(wac, collector);
             Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(searcher.getIndexReader()));
             buildTime = (System.nanoTime() - buildTime) / 1000000;
             searcher.search(query, collector);
         }
         finally {
-            manager.release(searcher);
+            wac.release(searcher);
         }
         matcher.finish(buildTime, collector.getQueryCount());
 
     }
-
-    private void match(Query query, MonitorQueryCollector collector) throws IOException {
+    
+    public static void match(WriterAndCache wacRef, Query query, MonitorQueryCollector collector) throws IOException {
         IndexSearcher searcher = null;
         try {
-            searcher = getSearcher(collector);
+            searcher = getSearcher(wacRef, collector);
             searcher.search(query, collector);
         }
         finally {
-            manager.release(searcher);
+            wacRef.release(searcher);
         }
+    }
+
+    private void match(Query query, MonitorQueryCollector collector) throws IOException {
+        match(wac, query, collector);
     }
 
     /**
@@ -660,7 +551,7 @@ public class Monitor implements Closeable {
      * @return the number of queries (after decomposition) stored in this Monitor
      */
     public int getDisjunctCount() {
-        return writer.numDocs();
+        return wac.numDocs();
     }
 
     /**
@@ -700,7 +591,7 @@ public class Monitor implements Closeable {
         IndexSearcher searcher = null;
         try {
             PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
-            searcher = getSearcher(collector);
+            searcher = getSearcher(wac, collector);
             Query presearcherQuery = new ForceNoBulkScoringQuery(
                     SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(searcher.getIndexReader())))
             );
@@ -708,7 +599,7 @@ public class Monitor implements Closeable {
             return collector.getMatches();
         }
         finally {
-            manager.release(searcher);
+            wac.release(searcher);
         }
     }
 

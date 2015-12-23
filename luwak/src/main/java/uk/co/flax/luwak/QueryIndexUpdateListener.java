@@ -22,9 +22,9 @@ import java.util.List;
  */
 public abstract class QueryIndexUpdateListener {
 
-    public void beforeUpdate(List<Monitor.Indexable> updates) {}
+    public void beforeUpdate(List<Indexable> updates) {}
 
-    public void afterUpdate(List<Monitor.Indexable> updates) {}
+    public void afterUpdate(List<Indexable> updates) {}
 
     public void beforeDelete() {}
 
