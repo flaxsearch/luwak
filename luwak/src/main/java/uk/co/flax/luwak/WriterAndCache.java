@@ -36,7 +36,7 @@ public class WriterAndCache {
     private final Object commitLock = new Object();
 
     /* The current query cache */
-    private volatile Map<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
+    private volatile ConcurrentMap<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
     // NB this is not final because it can be replaced by purgeCache()
     
     public WriterAndCache(IndexWriter indexWriter, SearcherFactory searcherFactory) throws IOException {
@@ -91,11 +91,15 @@ public class WriterAndCache {
                 qm.setQueryMap(queries);
             }
             
-            return new Searcher(manager.acquire(), this);
+            return new Searcher(manager, queries);
         }
         finally {
             purgeLock.readLock().unlock();
         }
+    }
+    
+    public Searcher getSearcher() throws IOException {
+        return getSearcher(null);
     }
     
     public interface CachePopulator {
@@ -179,10 +183,6 @@ public class WriterAndCache {
     public void deleteDocuments(Query query) throws IOException {
         writer.deleteDocuments(query);            
     }
-
-    public void release(IndexSearcher searcher) throws IOException {
-        manager.release(searcher);
-    }
     
     // ---------------------------------------------
     //  Helper classes...
@@ -211,15 +211,22 @@ public class WriterAndCache {
     
     public static class Searcher implements AutoCloseable {
         
-        private IndexSearcher searcher;
+        private final ConcurrentMap<BytesRef, QueryCacheEntry> queries;
 
-        private WriterAndCache wac;
+        private final IndexSearcher searcher;
+
+        private final SearcherManager manager;
         
-        private Searcher(IndexSearcher searcher, WriterAndCache wac) {
-            this.searcher = searcher;
-            this.wac = wac;
+        private Searcher(SearcherManager manager, ConcurrentMap<BytesRef, QueryCacheEntry> queries) throws IOException {
+            this.queries = queries;
+            this.manager = manager;
+            this.searcher = manager.acquire();
         }
         
+        public QueryCacheEntry getCached(BytesRef hash) {
+            return queries.get(hash);
+        }
+
         public IndexReader getIndexReader() {
             return searcher.getIndexReader();
         }
@@ -230,7 +237,7 @@ public class WriterAndCache {
         
         @Override
         public void close() throws IOException {
-            wac.release(searcher);            
+            manager.release(searcher);
         }
     }
 }
