@@ -225,7 +225,7 @@ public class Monitor implements Closeable {
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
             public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                queryIndex.scan(new QueryIndex.QueryMatcher() {
+                queryIndex.scan(new QueryIndex.QueryCollector() {
                     @Override
                     public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                         BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
@@ -300,7 +300,7 @@ public class Monitor implements Closeable {
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
             public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                queryIndex.scan(new QueryIndex.QueryMatcher() {
+                queryIndex.scan(new QueryIndex.QueryCollector() {
                     @Override
                     public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                         if (query != null)
@@ -477,7 +477,7 @@ public class Monitor implements Closeable {
     }
 
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
-        StandardMatcher<T> collector = new StandardMatcher<>(matcher);
+        StandardQueryCollector<T> collector = new StandardQueryCollector<>(matcher);
         long buildTime = queryIndex.search(new PresearcherQueryBuilder(matcher.getIndexReader()), collector);
         matcher.finish(buildTime, collector.queryCount);
     }
@@ -493,7 +493,7 @@ public class Monitor implements Closeable {
         if (storeQueries == false)
             throw new IllegalStateException("Cannot call getQuery() as queries are not stored");
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
-        queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), new QueryIndex.QueryMatcher() {
+        queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), new QueryIndex.QueryCollector() {
             @Override
             public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                 BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
@@ -524,7 +524,7 @@ public class Monitor implements Closeable {
      */
     public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();
-        queryIndex.scan(new QueryIndex.QueryMatcher() {
+        queryIndex.scan(new QueryIndex.QueryCollector() {
             @Override
             public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                 ids.add(id);
@@ -552,12 +552,12 @@ public class Monitor implements Closeable {
     }
 
     // For each query selected by the presearcher, pass on to a CandidateMatcher
-    private static class StandardMatcher<T extends QueryMatch> implements QueryIndex.QueryMatcher {
+    private static class StandardQueryCollector<T extends QueryMatch> implements QueryIndex.QueryCollector {
 
         final CandidateMatcher<T> matcher;
         int queryCount = 0;
 
-        private StandardMatcher(CandidateMatcher<T> matcher) {
+        private StandardQueryCollector(CandidateMatcher<T> matcher) {
             this.matcher = matcher;
         }
 
@@ -586,7 +586,7 @@ public class Monitor implements Closeable {
      */
     public <T extends QueryMatch> PresearcherMatches<T> debug(final DocumentBatch docs, MatcherFactory<T> factory)
             throws IOException {
-        PresearcherMatcher<T> collector = new PresearcherMatcher<>(factory.createMatcher(docs));
+        PresearcherQueryCollector<T> collector = new PresearcherQueryCollector<>(factory.createMatcher(docs));
         QueryIndex.QueryBuilder queryBuilder = new PresearcherQueryBuilder(docs.getIndexReader()){
             @Override
             public Query buildQuery(QueryTermFilter termFilter) throws IOException {
@@ -610,11 +610,11 @@ public class Monitor implements Closeable {
         return debug(DocumentBatch.of(doc), factory);
     }
 
-    private class PresearcherMatcher<T extends QueryMatch> extends StandardMatcher<T> {
+    private class PresearcherQueryCollector<T extends QueryMatch> extends StandardQueryCollector<T> {
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-        private PresearcherMatcher(CandidateMatcher<T> matcher) {
+        private PresearcherQueryCollector(CandidateMatcher<T> matcher) {
             super(matcher);
         }
 

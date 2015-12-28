@@ -87,11 +87,11 @@ class QueryIndex {
         Query buildQuery(QueryTermFilter termFilter) throws IOException;
     }
 
-    public long scan(QueryMatcher matcher) throws IOException {
+    public long scan(QueryCollector matcher) throws IOException {
         return search(new MatchAllDocsQuery(), matcher);
     }
 
-    public long search(final Query query, QueryMatcher matcher) throws IOException {
+    public long search(final Query query, QueryCollector matcher) throws IOException {
         QueryBuilder builder = new QueryBuilder() {
             @Override
             public Query buildQuery(QueryTermFilter termFilter) throws IOException {
@@ -101,7 +101,7 @@ class QueryIndex {
         return search(builder, matcher);
     }
 
-    public long search(QueryBuilder queryBuilder, QueryMatcher matcher) throws IOException {
+    public long search(QueryBuilder queryBuilder, QueryCollector matcher) throws IOException {
         purgeLock.readLock().lock();
         IndexSearcher searcher = null;
         try {
@@ -119,8 +119,8 @@ class QueryIndex {
         }
     }
     
-    public interface CachePopulator {
-        public void populateCacheWithIndex(Map<BytesRef, QueryCacheEntry> newCache) throws IOException;
+    interface CachePopulator {
+        void populateCacheWithIndex(Map<BytesRef, QueryCacheEntry> newCache) throws IOException;
     }
     
     /**
@@ -201,7 +201,7 @@ class QueryIndex {
         writer.deleteDocuments(query);            
     }
 
-    public interface QueryMatcher {
+    public interface QueryCollector {
 
         void matchQuery(String id, QueryCacheEntry query, DataValues dataValues) throws IOException;
 
@@ -246,10 +246,10 @@ class QueryIndex {
     public static final class MonitorQueryCollector extends SimpleCollector {
 
         private final Map<BytesRef, QueryCacheEntry> queries;
-        private final QueryMatcher matcher;
+        private final QueryCollector matcher;
         private final DataValues dataValues = new DataValues();
 
-        public MonitorQueryCollector(Map<BytesRef, QueryCacheEntry> queries, QueryMatcher matcher) {
+        public MonitorQueryCollector(Map<BytesRef, QueryCacheEntry> queries, QueryCollector matcher) {
             this.queries = queries;
             this.matcher = matcher;
         }

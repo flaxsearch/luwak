@@ -201,7 +201,7 @@ public class TestQueryIndex {
                 
                 @Override
                 public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                    queryIndex.scan(new QueryIndex.QueryMatcher() {
+                    queryIndex.scan(new QueryIndex.QueryCollector() {
                         @Override
                         public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                             newCache.put(BytesRef.deepCopyOf(query.hash), query);
@@ -250,7 +250,7 @@ public class TestQueryIndex {
     private int[] getSumOfIds() throws IOException {
         
         final int[] sum = new int[]{ 0, 0 };
-        queryIndex.scan(new QueryIndex.QueryMatcher() {
+        queryIndex.scan(new QueryIndex.QueryCollector() {
             @Override
             public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
                 assertThat(query).isNotNull();
