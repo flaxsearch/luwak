@@ -1,8 +1,5 @@
 package uk.co.flax.luwak;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.lucene.document.BinaryDocValuesField;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.SortedDocValuesField;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -26,15 +19,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import uk.co.flax.luwak.Monitor.FIELDS;
 import uk.co.flax.luwak.Monitor.MonitorQueryCollector;
-import uk.co.flax.luwak.WriterAndCache.QueryCacheEntry;
+import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 /**
  * Run with {@code mvn test -Dtests.slow=true}
  */
-public class TestWriterAndCache {
+public class TestQueryIndex {
 
     private final static double FREQUENCY_ADD_PERTHOUSAND = 485;
     private final static double FREQUENCY_DELETE_PERTHOUSAND = 485;
@@ -46,19 +41,19 @@ public class TestWriterAndCache {
     
     private final static int MAX_ID = 100;
     
-    private static final Logger logger = LoggerFactory.getLogger(TestWriterAndCache.class);
+    private static final Logger logger = LoggerFactory.getLogger(TestQueryIndex.class);
     
     private static final String SYSPROP_SLOW = "tests.slow";
     
     private volatile boolean running = true;
     
-    private WriterAndCache dut;
+    private QueryIndex dut;
 
     @Before
     public void setUp() throws IOException {
         Assume.assumeTrue(System.getProperty(SYSPROP_SLOW, "").equalsIgnoreCase("true"));
 
-        dut = new WriterAndCache();
+        dut = new QueryIndex();
     }
     
     @Test
@@ -82,7 +77,7 @@ public class TestWriterAndCache {
     
     /**
      * Tests adding/removing entries from multiple threads.
-     * To run just this, {@code mvn test -Dtests.slow=true -Dtest=TestWriterAndCache#testHighConcurrency}
+     * To run just this, {@code mvn test -Dtests.slow=true -Dtest=TestQueryIndex#testHighConcurrency}
      * @throws Exception
      */
     @Test
@@ -205,7 +200,7 @@ public class TestWriterAndCache {
         
         private void purgeCache() throws IOException {
             
-            dut.purgeCache(new WriterAndCache.CachePopulator() {
+            dut.purgeCache(new QueryIndex.CachePopulator() {
                 
                 @Override
                 public void populateCacheWithIndex(final ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException {

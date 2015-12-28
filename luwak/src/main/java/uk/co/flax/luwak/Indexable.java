@@ -2,7 +2,7 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.document.Document;
 
-import uk.co.flax.luwak.WriterAndCache.QueryCacheEntry;
+import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 
 /**
  * An indexable query to be added to the Monitor's queryindex

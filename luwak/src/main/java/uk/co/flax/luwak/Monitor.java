@@ -19,7 +19,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 
-import uk.co.flax.luwak.WriterAndCache.QueryCacheEntry;
+import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 
 /*
@@ -48,7 +48,7 @@ public class Monitor implements Closeable {
     protected final Presearcher presearcher;
     protected final QueryDecomposer decomposer;
     
-    private final WriterAndCache wac;
+    private final QueryIndex queryIndex;
 
     private final List<QueryIndexUpdateListener> listeners = new ArrayList<>();
 
@@ -90,7 +90,7 @@ public class Monitor implements Closeable {
         this.presearcher = presearcher;
         this.decomposer = configuration.getQueryDecomposer();
         
-        this.wac = new WriterAndCache(indexWriter, new TermsHashBuilder());
+        this.queryIndex = new QueryIndex(indexWriter, new TermsHashBuilder());
 
         this.storeQueries = configuration.storeQueries();
         prepareQueryCache(this.storeQueries);
@@ -207,7 +207,7 @@ public class Monitor implements Closeable {
      * @return Statistics for the internal query index and cache
      */
     public QueryCacheStats getQueryCacheStats() {
-        return new QueryCacheStats(wac.numDocs(), wac.cacheSize(), lastPurged);
+        return new QueryCacheStats(queryIndex.numDocs(), queryIndex.cacheSize(), lastPurged);
     }
 
     /**
@@ -265,7 +265,7 @@ public class Monitor implements Closeable {
     private void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
         
-        wac.commit(updates, FIELDS.del);
+        queryIndex.commit(updates, FIELDS.del);
         
         afterCommit(updates);
     }
@@ -317,7 +317,7 @@ public class Monitor implements Closeable {
      */
     public synchronized void purgeCache() throws IOException {
         
-        wac.purgeCache(new WriterAndCache.CachePopulator() {
+        queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
             public void populateCacheWithIndex(final ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException {
                 match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
@@ -353,7 +353,7 @@ public class Monitor implements Closeable {
     @Override
     public void close() throws IOException {
         purgeExecutor.shutdown();
-        wac.closeWhileHandlingException();
+        queryIndex.closeWhileHandlingException();
     }
 
     /**
@@ -420,7 +420,7 @@ public class Monitor implements Closeable {
      */
     public void delete(Iterable<MonitorQuery> queries) throws IOException {
         for (MonitorQuery mq : queries) {
-            wac.deleteDocuments(new Term(Monitor.FIELDS.del, mq.getId()));
+            queryIndex.deleteDocuments(new Term(Monitor.FIELDS.del, mq.getId()));
         }
         commit(null);
     }
@@ -432,7 +432,7 @@ public class Monitor implements Closeable {
      */
     public void deleteById(Iterable<String> queryIds) throws IOException {
         for (String queryId : queryIds) {
-            wac.deleteDocuments(new Term(FIELDS.del, queryId));
+            queryIndex.deleteDocuments(new Term(FIELDS.del, queryId));
         }
         commit(null);
     }
@@ -451,7 +451,7 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public void clear() throws IOException {
-        wac.deleteDocuments(new MatchAllDocsQuery());
+        queryIndex.deleteDocuments(new MatchAllDocsQuery());
         commit(null);
     }
 
@@ -490,7 +490,7 @@ public class Monitor implements Closeable {
         
         MatchingCollector<T> collector = new MatchingCollector<>(matcher);
 
-        try (final WriterAndCache.Searcher saq = wac.getSearcher(collector)) {
+        try (final QueryIndex.Searcher saq = queryIndex.getSearcher(collector)) {
             
             Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(saq.getIndexReader()));
             
@@ -503,16 +503,16 @@ public class Monitor implements Closeable {
 
     }
     
-    public static void match(WriterAndCache wacRef, Query query, MonitorQueryCollector collector) throws IOException {
+    public static void match(QueryIndex wacRef, Query query, MonitorQueryCollector collector) throws IOException {
         
-        try (final WriterAndCache.Searcher saq = wacRef.getSearcher(collector)) {
+        try (final QueryIndex.Searcher saq = wacRef.getSearcher(collector)) {
             
             saq.search(query, collector);
         }
     }
 
     private void match(Query query, MonitorQueryCollector collector) throws IOException {
-        match(wac, query, collector);
+        match(queryIndex, query, collector);
     }
 
     /**
@@ -540,7 +540,7 @@ public class Monitor implements Closeable {
      * @return the number of queries (after decomposition) stored in this Monitor
      */
     public int getDisjunctCount() {
-        return wac.numDocs();
+        return queryIndex.numDocs();
     }
 
     /**
@@ -580,7 +580,7 @@ public class Monitor implements Closeable {
 
         PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
         
-        try (final WriterAndCache.Searcher saq = wac.getSearcher(collector)) {
+        try (final QueryIndex.Searcher saq = queryIndex.getSearcher(collector)) {
 
             Query presearcherQuery = new ForceNoBulkScoringQuery(
                     SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(saq.getIndexReader())))
@@ -649,7 +649,7 @@ public class Monitor implements Closeable {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public static abstract class MonitorQueryCollector extends SimpleCollector implements WriterAndCache.WithQueryMap {
+    public static abstract class MonitorQueryCollector extends SimpleCollector implements QueryIndex.WithQueryMap {
 
         protected BinaryDocValues hashDV;
         protected SortedDocValues idDV;

@@ -22,12 +22,11 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 
-public class WriterAndCache {
+class QueryIndex {
     
     private final IndexWriter writer;
     private final SearcherManager manager;
 
-    
     /* Used to cache updates while a purge is ongoing */
     private volatile Map<BytesRef, QueryCacheEntry> purgeCache = null;
 
@@ -39,13 +38,13 @@ public class WriterAndCache {
     private volatile ConcurrentMap<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
     // NB this is not final because it can be replaced by purgeCache()
     
-    public WriterAndCache(IndexWriter indexWriter, SearcherFactory searcherFactory) throws IOException {
+    public QueryIndex(IndexWriter indexWriter, SearcherFactory searcherFactory) throws IOException {
         this.writer = indexWriter;
 
         this.manager = new SearcherManager(writer, true, searcherFactory);
     }
     
-    public WriterAndCache() throws IOException {
+    public QueryIndex() throws IOException {
         this(Monitor.defaultIndexWriter(new RAMDirectory()), new SearcherFactory());
     }
 
