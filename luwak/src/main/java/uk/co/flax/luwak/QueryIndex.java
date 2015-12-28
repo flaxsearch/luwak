@@ -210,27 +210,6 @@ class QueryIndex {
     // ---------------------------------------------
     //  Helper classes...
     // ---------------------------------------------
-    
-    /**
-     * An entry in the query cache
-     */
-    public static class QueryCacheEntry {
-
-        /** The (possibly partial due to decomposition) query */
-        public final Query matchQuery;
-
-        /** A hash value for lookups */
-        public final BytesRef hash;
-
-        /** The metadata from the entry's parent {@link MonitorQuery} */
-        public final Map<String,String> metadata;
-
-        public QueryCacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
-            this.hash = hash;
-            this.matchQuery = matchQuery;
-            this.metadata = metadata;
-        }
-    }
 
     public static final class DataValues {
         public BinaryDocValues hash;

@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.Monitor.FIELDS;
-import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;

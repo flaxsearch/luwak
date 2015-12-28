@@ -17,7 +17,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
-import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 
 /*

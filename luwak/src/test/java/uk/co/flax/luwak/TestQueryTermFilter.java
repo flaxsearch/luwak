@@ -38,7 +38,7 @@ public class TestQueryTermFilter {
     private static final String FIELD = "f";
 
     private static List<Indexable> indexable(String id, String query) {
-        QueryIndex.QueryCacheEntry e = new QueryIndex.QueryCacheEntry(
+        QueryCacheEntry e = new QueryCacheEntry(
                 new BytesRef(id.getBytes(StandardCharsets.UTF_8)),
                 new TermQuery(new Term(FIELD, query)),
                 new HashMap<String, String>()
