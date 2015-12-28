@@ -264,9 +264,7 @@ public class Monitor implements Closeable {
 
     private void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
-        
         queryIndex.commit(updates, FIELDS.del);
-        
         afterCommit(updates);
     }
 
@@ -315,7 +313,7 @@ public class Monitor implements Closeable {
      *
      * @throws IOException on IO errors
      */
-    public synchronized void purgeCache() throws IOException {
+    public void purgeCache() throws IOException {
         
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
@@ -332,7 +330,6 @@ public class Monitor implements Closeable {
         });
         
         lastPurged = System.nanoTime();
-        
         afterPurge();
     }
 
