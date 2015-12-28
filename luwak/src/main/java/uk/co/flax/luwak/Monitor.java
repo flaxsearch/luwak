@@ -3,7 +3,6 @@ package uk.co.flax.luwak;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -18,7 +17,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
-
 import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
 
@@ -242,22 +240,25 @@ public class Monitor implements Closeable {
 
         // load any queries that have already been added to the queryindex
         final List<Exception> parseErrors = new LinkedList<>();
-
-        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+        queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
-            public void doMatch(int doc, String queryId, BytesRef hash) {
-                BytesRef serializedMQ = mqDV.get(doc);
-                MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
-                try {
-                    for (QueryCacheEntry ce : decomposeQuery(mq)) {
-                        queries.put(ce.hash, ce);
+            public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
+                queryIndex.scan(new QueryIndex.QueryMatcher() {
+                    @Override
+                    public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                        BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+                        MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
+                        try {
+                            for (QueryCacheEntry ce : decomposeQuery(mq)) {
+                                newCache.put(ce.hash, ce);
+                            }
+                        } catch (Exception e) {
+                            parseErrors.add(e);
+                        }
                     }
-                } catch (Exception e) {
-                    parseErrors.add(e);
-                }
+                });
             }
         });
-
         if (parseErrors.size() != 0)
             throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);
     }
@@ -314,16 +315,14 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public void purgeCache() throws IOException {
-        
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
-            public void populateCacheWithIndex(final ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+            public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
+                queryIndex.scan(new QueryIndex.QueryMatcher() {
                     @Override
-                    protected void doMatch(int doc, String id, BytesRef hash) {
-                        QueryCacheEntry entry = queries.get(hash);
-                        if (entry != null)
-                            newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
+                    public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                        if (query != null)
+                            newCache.put(BytesRef.deepCopyOf(query.hash), query);
                     }
                 });
             }
@@ -481,35 +480,24 @@ public class Monitor implements Closeable {
         return match(DocumentBatch.of(doc), factory);
     }
 
+    private class PresearcherQueryBuilder implements QueryIndex.QueryBuilder {
+
+        final LeafReader batchIndexReader;
+
+        private PresearcherQueryBuilder(LeafReader batchIndexReader) {
+            this.batchIndexReader = batchIndexReader;
+        }
+
+        @Override
+        public Query buildQuery(IndexReader reader) throws IOException {
+            return presearcher.buildQuery(batchIndexReader, termFilters.get(reader));
+        }
+    }
+
     private <T extends QueryMatch> void match(CandidateMatcher<T> matcher) throws IOException {
-
-        long buildTime = System.nanoTime();
-        
-        MatchingCollector<T> collector = new MatchingCollector<>(matcher);
-
-        try (final QueryIndex.Searcher saq = queryIndex.getSearcher(collector)) {
-            
-            Query query = presearcher.buildQuery(matcher.getIndexReader(), termFilters.get(saq.getIndexReader()));
-            
-            buildTime = (System.nanoTime() - buildTime) / 1000000;
-            
-            saq.search(query, collector);
-        }
-
-        matcher.finish(buildTime, collector.getQueryCount());
-
-    }
-    
-    public static void match(QueryIndex wacRef, Query query, MonitorQueryCollector collector) throws IOException {
-        
-        try (final QueryIndex.Searcher saq = wacRef.getSearcher(collector)) {
-            
-            saq.search(query, collector);
-        }
-    }
-
-    private void match(Query query, MonitorQueryCollector collector) throws IOException {
-        match(queryIndex, query, collector);
+        StandardMatcher<T> collector = new StandardMatcher<>(matcher);
+        long buildTime = queryIndex.search(new PresearcherQueryBuilder(matcher.getIndexReader()), collector);
+        matcher.finish(buildTime, collector.queryCount);
     }
 
     /**
@@ -519,14 +507,14 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      * @throws IllegalStateException if queries are not stored in the queryindex
      */
-    public MonitorQuery getQuery(String queryId) throws IOException {
+    public MonitorQuery getQuery(final String queryId) throws IOException {
         if (storeQueries == false)
             throw new IllegalStateException("Cannot call getQuery() as queries are not stored");
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
-        match(new TermQuery(new Term(FIELDS.id, queryId)), new MonitorQueryCollector() {
+        queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), new QueryIndex.QueryMatcher() {
             @Override
-            public void doMatch(int doc, String queryId, BytesRef hash) {
-                BytesRef serializedMQ = mqDV.get(doc);
+            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
                 queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
             }
         });
@@ -554,52 +542,13 @@ public class Monitor implements Closeable {
      */
     public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();
-        match(new MatchAllDocsQuery(), new MonitorQueryCollector() {
+        queryIndex.scan(new QueryIndex.QueryMatcher() {
             @Override
-            public void doMatch(int doc, String queryId, BytesRef hash) {
-                ids.add(queryId);
+            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                ids.add(id);
             }
         });
         return ids;
-    }
-
-    /**
-     * Match a DocumentBatch against the queries stored in the Monitor, also returning information
-     * about which queries were selected by the presearcher, and why.
-     * @param docs a DocumentBatch to match against the index
-     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
-     * @param <T> the type of QueryMatch produced by the CandidateMatcher
-     * @return a {@link PresearcherMatches} object containing debug information
-     * @throws IOException on IO errors
-     */
-    public <T extends QueryMatch> PresearcherMatches<T> debug(DocumentBatch docs, MatcherFactory<T> factory)
-            throws IOException {
-
-        PresearcherMatchCollector<T> collector = new PresearcherMatchCollector<>(factory.createMatcher(docs));
-        
-        try (final QueryIndex.Searcher saq = queryIndex.getSearcher(collector)) {
-
-            Query presearcherQuery = new ForceNoBulkScoringQuery(
-                    SpanRewriter.INSTANCE.rewrite(presearcher.buildQuery(docs.getIndexReader(), termFilters.get(saq.getIndexReader())))
-            );
-            
-            saq.search(presearcherQuery, collector);
-            
-            return collector.getMatches();
-        }
-    }
-
-    /**
-     * Match a single {@link InputDocument} against the queries stored in the Monitor, also returning information
-     * about which queries were selected by the presearcher, and why.
-     * @param doc an InputDocument to match against the index
-     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
-     * @param <T> the type of QueryMatch produced by the CandidateMatcher
-     * @return a {@link PresearcherMatches} object containing debug information
-     * @throws IOException on IO errors
-     */
-    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory) throws IOException {
-        return debug(DocumentBatch.of(doc), factory);
     }
 
     /**
@@ -621,84 +570,69 @@ public class Monitor implements Closeable {
     }
 
     // For each query selected by the presearcher, pass on to a CandidateMatcher
-    private static class MatchingCollector<T extends QueryMatch> extends MonitorQueryCollector {
+    private static class StandardMatcher<T extends QueryMatch> implements QueryIndex.QueryMatcher {
 
         final CandidateMatcher<T> matcher;
+        int queryCount = 0;
 
-        private MatchingCollector(CandidateMatcher<T> matcher) {
+        private StandardMatcher(CandidateMatcher<T> matcher) {
             this.matcher = matcher;
         }
 
         @Override
-        protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
+        public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+            if (query == null)
+                return;
             try {
-                QueryCacheEntry entry = queries.get(hash);
-                if (entry != null)
-                    matcher.matchQuery(queryId, entry.matchQuery, entry.metadata);
+                queryCount++;
+                matcher.matchQuery(id, query.matchQuery, query.metadata);
             }
             catch (Exception e) {
-                matcher.reportError(new MatchError(queryId, e));
+                matcher.reportError(new MatchError(id, e));
             }
         }
-
     }
 
     /**
-     * A Collector that decodes the stored query for each document hit.
+     * Match a DocumentBatch against the queries stored in the Monitor, also returning information
+     * about which queries were selected by the presearcher, and why.
+     * @param docs a DocumentBatch to match against the index
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of QueryMatch produced by the CandidateMatcher
+     * @return a {@link PresearcherMatches} object containing debug information
+     * @throws IOException on IO errors
      */
-    public static abstract class MonitorQueryCollector extends SimpleCollector implements QueryIndex.WithQueryMap {
-
-        protected BinaryDocValues hashDV;
-        protected SortedDocValues idDV;
-        protected BinaryDocValues mqDV;
-        protected LeafReader reader;
-
-        protected Map<BytesRef, QueryCacheEntry> queries;
-
-        @Override
-        public void setQueryMap(Map<BytesRef, QueryCacheEntry> queries) {
-            this.queries = queries;
-        }
-
-        protected int queryCount = 0;
-
-        @Override
-        public void collect(int doc) throws IOException {
-            BytesRef hash = hashDV.get(doc);
-            BytesRef id = idDV.get(doc);
-            queryCount++;
-            doMatch(doc, id.utf8ToString(), hash);
-        }
-
-        protected abstract void doMatch(int doc, String queryId, BytesRef queryHash) throws IOException;
-
-        @Override
-        public void doSetNextReader(LeafReaderContext context) throws IOException {
-            this.reader = context.reader();
-            this.hashDV = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
-            this.idDV = context.reader().getSortedDocValues(FIELDS.id);
-            this.mqDV = context.reader().getBinaryDocValues(FIELDS.mq);
-        }
-
-        @Override
-        public boolean needsScores() {
-            return false;
-        }
-
-        public int getQueryCount() {
-            return queryCount;
-        }
-
+    public <T extends QueryMatch> PresearcherMatches<T> debug(final DocumentBatch docs, MatcherFactory<T> factory)
+            throws IOException {
+        PresearcherMatcher<T> collector = new PresearcherMatcher<>(factory.createMatcher(docs));
+        QueryIndex.QueryBuilder queryBuilder = new PresearcherQueryBuilder(docs.getIndexReader()){
+            @Override
+            public Query buildQuery(IndexReader reader) throws IOException {
+                return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(reader)));
+            }
+        };
+        queryIndex.search(queryBuilder, collector);
+        return collector.getMatches();
     }
 
-    private class PresearcherMatchCollector<T extends QueryMatch> extends MatchingCollector<T> {
+    /**
+     * Match a single {@link InputDocument} against the queries stored in the Monitor, also returning information
+     * about which queries were selected by the presearcher, and why.
+     * @param doc an InputDocument to match against the index
+     * @param factory a {@link MatcherFactory} to use to create a {@link CandidateMatcher} for the match run
+     * @param <T> the type of QueryMatch produced by the CandidateMatcher
+     * @return a {@link PresearcherMatches} object containing debug information
+     * @throws IOException on IO errors
+     */
+    public <T extends QueryMatch> PresearcherMatches<T> debug(InputDocument doc, MatcherFactory<T> factory) throws IOException {
+        return debug(DocumentBatch.of(doc), factory);
+    }
 
-        private String currentId;
-        private Scorer scorer;
+    private class PresearcherMatcher<T extends QueryMatch> extends StandardMatcher<T> {
 
         public final Map<String, StringBuilder> matchingTerms = new HashMap<>();
 
-        private PresearcherMatchCollector(CandidateMatcher<T> matcher) {
+        private PresearcherMatcher(CandidateMatcher<T> matcher) {
             super(matcher);
         }
 
@@ -707,26 +641,14 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public void setScorer(Scorer scorer) throws IOException {
-            this.scorer = scorer;
-        }
-
-        @Override
-        public boolean needsScores() {
-            return true;
-        }
-
-        @Override
-        protected void doMatch(int doc, String queryId, BytesRef hash) throws IOException {
-
-            currentId = queryId;
+        public void matchQuery(final String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
 
             SpanCollector collector = new SpanCollector() {
                 @Override
                 public void collectLeaf(PostingsEnum postingsEnum, int position, Term term) throws IOException {
-                    if (!matchingTerms.containsKey(currentId))
-                        matchingTerms.put(currentId, new StringBuilder());
-                    matchingTerms.get(currentId)
+                    if (!matchingTerms.containsKey(id))
+                        matchingTerms.put(id, new StringBuilder());
+                    matchingTerms.get(id)
                             .append(" ")
                             .append(term.field())
                             .append(":")
@@ -739,9 +661,9 @@ public class Monitor implements Closeable {
                 }
             };
 
-            SpanExtractor.collect(scorer, collector, false);
+            SpanExtractor.collect(dataValues.scorer, collector, false);
 
-            super.doMatch(doc, queryId, hash);
+            super.matchQuery(id, query, dataValues);
         }
 
     }

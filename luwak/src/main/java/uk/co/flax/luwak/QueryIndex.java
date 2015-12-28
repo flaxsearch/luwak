@@ -10,14 +10,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherFactory;
-import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
@@ -40,7 +34,6 @@ class QueryIndex {
     
     public QueryIndex(IndexWriter indexWriter, SearcherFactory searcherFactory) throws IOException {
         this.writer = indexWriter;
-
         this.manager = new SearcherManager(writer, true, searcherFactory);
     }
     
@@ -74,35 +67,45 @@ class QueryIndex {
             }
         }
     }
-    
-    public interface WithQueryMap {
-        public void setQueryMap(Map<BytesRef, QueryCacheEntry> queries);
+
+    interface QueryBuilder {
+        Query buildQuery(IndexReader reader) throws IOException;
     }
-    
-    // Gets an IndexSearcher and sets the associated query cache on the passed-in collector
-    // This is done within a readlock on the purge cache to ensure that a background purge
-    // doesn't change the cache state getween the searcher being acquired and the map being set.
-    public Searcher getSearcher(WithQueryMap qm) throws IOException {
-        
-        purgeLock.readLock().lock();
-        try {
-            if (qm != null) {
-                qm.setQueryMap(queries);
+
+    public long scan(QueryMatcher matcher) throws IOException {
+        return search(new MatchAllDocsQuery(), matcher);
+    }
+
+    public long search(final Query query, QueryMatcher matcher) throws IOException {
+        QueryBuilder builder = new QueryBuilder() {
+            @Override
+            public Query buildQuery(IndexReader reader) throws IOException {
+                return query;
             }
-            
-            return new Searcher(manager, queries);
+        };
+        return search(builder, matcher);
+    }
+
+    public long search(QueryBuilder queryBuilder, QueryMatcher matcher) throws IOException {
+        purgeLock.readLock().lock();
+        IndexSearcher searcher = null;
+        try {
+            searcher = manager.acquire();
+            MonitorQueryCollector collector = new MonitorQueryCollector(queries, matcher);
+            long buildTime = System.nanoTime();
+            Query query = queryBuilder.buildQuery(searcher.getIndexReader());
+            buildTime = System.nanoTime() - buildTime;
+            searcher.search(query, collector);
+            return buildTime;
         }
         finally {
             purgeLock.readLock().unlock();
+            manager.release(searcher);
         }
     }
     
-    public Searcher getSearcher() throws IOException {
-        return getSearcher(null);
-    }
-    
     public interface CachePopulator {
-        public void populateCacheWithIndex(ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException;
+        public void populateCacheWithIndex(Map<BytesRef, QueryCacheEntry> newCache) throws IOException;
     }
     
     /**
@@ -182,7 +185,13 @@ class QueryIndex {
     public void deleteDocuments(Query query) throws IOException {
         writer.deleteDocuments(query);            
     }
-    
+
+    public interface QueryMatcher {
+
+        void matchQuery(String id, QueryCacheEntry query, DataValues dataValues) throws IOException;
+
+    }
+
     // ---------------------------------------------
     //  Helper classes...
     // ---------------------------------------------
@@ -207,36 +216,54 @@ class QueryIndex {
             this.metadata = metadata;
         }
     }
-    
-    public static class Searcher implements AutoCloseable {
-        
-        private final ConcurrentMap<BytesRef, QueryCacheEntry> queries;
 
-        private final IndexSearcher searcher;
+    public static final class DataValues {
+        public BinaryDocValues hash;
+        public SortedDocValues id;
+        public BinaryDocValues mq;
+        public Scorer scorer;
+        public int doc;
+    }
 
-        private final SearcherManager manager;
-        
-        private Searcher(SearcherManager manager, ConcurrentMap<BytesRef, QueryCacheEntry> queries) throws IOException {
+    /**
+     * A Collector that decodes the stored query for each document hit.
+     */
+    public static final class MonitorQueryCollector extends SimpleCollector {
+
+        private final Map<BytesRef, QueryCacheEntry> queries;
+        private final QueryMatcher matcher;
+        private final DataValues dataValues = new DataValues();
+
+        public MonitorQueryCollector(Map<BytesRef, QueryCacheEntry> queries, QueryMatcher matcher) {
             this.queries = queries;
-            this.manager = manager;
-            this.searcher = manager.acquire();
-        }
-        
-        public QueryCacheEntry getCached(BytesRef hash) {
-            return queries.get(hash);
+            this.matcher = matcher;
         }
 
-        public IndexReader getIndexReader() {
-            return searcher.getIndexReader();
-        }
-        
-        public void search(Query query, Collector results) throws IOException {
-            searcher.search(query, results);
-        }
-        
         @Override
-        public void close() throws IOException {
-            manager.release(searcher);
+        public void setScorer(Scorer scorer) throws IOException {
+            this.dataValues.scorer = scorer;
         }
+
+        @Override
+        public void collect(int doc) throws IOException {
+            BytesRef hash = dataValues.hash.get(doc);
+            BytesRef id = dataValues.id.get(doc);
+            QueryCacheEntry query = queries.get(hash);
+            dataValues.doc = doc;
+            matcher.matchQuery(id.utf8ToString(), query, dataValues);
+        }
+
+        @Override
+        public void doSetNextReader(LeafReaderContext context) throws IOException {
+            this.dataValues.hash = context.reader().getBinaryDocValues(Monitor.FIELDS.hash);
+            this.dataValues.id = context.reader().getSortedDocValues(Monitor.FIELDS.id);
+            this.dataValues.mq = context.reader().getBinaryDocValues(Monitor.FIELDS.mq);
+        }
+
+        @Override
+        public boolean needsScores() {
+            return true;
+        }
+
     }
 }

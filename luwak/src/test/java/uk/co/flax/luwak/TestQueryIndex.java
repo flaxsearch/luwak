@@ -3,14 +3,13 @@ package uk.co.flax.luwak;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
@@ -20,7 +19,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.Monitor.FIELDS;
-import uk.co.flax.luwak.Monitor.MonitorQueryCollector;
 import uk.co.flax.luwak.QueryIndex.QueryCacheEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,13 +45,12 @@ public class TestQueryIndex {
     
     private volatile boolean running = true;
     
-    private QueryIndex dut;
+    private QueryIndex queryIndex;
 
     @Before
     public void setUp() throws IOException {
         Assume.assumeTrue(System.getProperty(SYSPROP_SLOW, "").equalsIgnoreCase("true"));
-
-        dut = new QueryIndex();
+        queryIndex = new QueryIndex();
     }
     
     @Test
@@ -61,15 +58,15 @@ public class TestQueryIndex {
 
         assertThat(getSumOfIds()[0]).isEqualTo(0);
 
-        dut.commit(createUpdate(12), FIELDS.del);
+        queryIndex.commit(createUpdate(12), FIELDS.del);
         
         assertThat(getSumOfIds()[0]).isEqualTo(12);
         
-        dut.deleteDocuments(createDelete(12));
+        queryIndex.deleteDocuments(createDelete(12));
         
         assertThat(getSumOfIds()[0]).isEqualTo(12);
         
-        dut.commit(null, FIELDS.del);
+        queryIndex.commit(null, FIELDS.del);
         
         assertThat(getSumOfIds()[0]).isEqualTo(0);
         
@@ -111,6 +108,7 @@ public class TestQueryIndex {
             try {
                 Thread.sleep(1);
             } catch (InterruptedException e) {
+                // ok
             }
         }
         
@@ -181,7 +179,6 @@ public class TestQueryIndex {
                     {
                         purgeCache();
                         ++purges;
-                        continue;
                     }
                     
                 } catch (IOException e) {
@@ -191,29 +188,23 @@ public class TestQueryIndex {
         }
         
         private void add() throws IOException {
-            dut.commit(createUpdate(r.nextInt(MAX_ID)), FIELDS.del);
+            queryIndex.commit(createUpdate(r.nextInt(MAX_ID)), FIELDS.del);
         }
         
         private void delete() throws IOException {
-            dut.deleteDocuments(createDelete(r.nextInt(MAX_ID)));
+            queryIndex.deleteDocuments(createDelete(r.nextInt(MAX_ID)));
         }
         
         private void purgeCache() throws IOException {
             
-            dut.purgeCache(new QueryIndex.CachePopulator() {
+            queryIndex.purgeCache(new QueryIndex.CachePopulator() {
                 
                 @Override
-                public void populateCacheWithIndex(final ConcurrentMap<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                    
-                    Monitor.match(dut, new MatchAllDocsQuery(), new MonitorQueryCollector() {
-                        
+                public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
+                    queryIndex.scan(new QueryIndex.QueryMatcher() {
                         @Override
-                        protected void doMatch(int doc, String id, BytesRef hash) {
-                            final QueryCacheEntry entry = queries.get(hash);
-                            
-                            assertThat(entry).isNotNull();
-                            
-                            newCache.put(BytesRef.deepCopyOf(hash), queries.get(hash));
+                        public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                            newCache.put(BytesRef.deepCopyOf(query.hash), query);
                         }
                     });
                 }
@@ -249,6 +240,8 @@ public class TestQueryIndex {
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
+                    Thread.interrupted();
+                    return;
                 }
             }
         }
@@ -257,28 +250,17 @@ public class TestQueryIndex {
     private int[] getSumOfIds() throws IOException {
         
         final int[] sum = new int[]{ 0, 0 };
-        
-        Monitor.match(dut, new MatchAllDocsQuery(), new MonitorQueryCollector() {
-            
+        queryIndex.scan(new QueryIndex.QueryMatcher() {
             @Override
-            protected void doMatch(int doc, String id, BytesRef hash) {
-                
-                final QueryCacheEntry entry = queries.get(hash);
-                
-                assertThat(entry).isNotNull();
-                
-                assertThat(entry.matchQuery).isInstanceOf(TermQuery.class);
-                
-                final String term = ((TermQuery)entry.matchQuery).getTerm().text();
-                
+            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                assertThat(query).isNotNull();
+                assertThat(query.matchQuery).isInstanceOf(TermQuery.class);
+                final String term = ((TermQuery)query.matchQuery).getTerm().text();
                 assertThat(term).isEqualTo(id);
-                
                 sum[0] += Integer.valueOf(id);
-                
                 ++sum[1];
             }
         });
-        
         return sum;
     }
     
