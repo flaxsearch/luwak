@@ -17,30 +17,51 @@ package uk.co.flax.luwak;
  */
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
-import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestQueryTermFilter {
 
+    private static final String FIELD = "f";
+
+    private static List<Indexable> indexable(String id, String query) {
+        QueryIndex.QueryCacheEntry e = new QueryIndex.QueryCacheEntry(
+                new BytesRef(id.getBytes(StandardCharsets.UTF_8)),
+                new TermQuery(new Term(FIELD, query)),
+                new HashMap<String, String>()
+        );
+        Document doc = new Document();
+        doc.add(new StringField(FIELD, query, Field.Store.NO));
+        return ImmutableList.of(
+                new Indexable(id, e, doc)
+        );
+    }
+
     @Test
     public void testFiltersAreRemoved() throws IOException {
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher())) {
-            monitor.update(new MonitorQuery("1", "term"));
-            assertThat(monitor.termFilters.size()).isEqualTo(1);
-            monitor.update(new MonitorQuery("2", "term2"));
-            assertThat(monitor.termFilters.size()).isEqualTo(1);
+        QueryIndex qi = new QueryIndex();
+        qi.commit(indexable("1", "term"), Monitor.FIELDS.del);
+        assertThat(qi.termFilters).hasSize(1);
+        qi.commit(indexable("2", "term2"), Monitor.FIELDS.del);
+        assertThat(qi.termFilters).hasSize(1);
 
-            QueryTermFilter tf = Iterables.getFirst(monitor.termFilters.values(), null);
-            assertThat(tf).isNotNull();
-            assertThat(tf.getTerms("f").size()).isEqualTo(2);
-        }
-
+        QueryTermFilter tf = Iterables.getFirst(qi.termFilters.values(), null);
+        assertThat(tf).isNotNull();
+        assertThat(tf.getTerms(FIELD).size()).isEqualTo(2);
     }
 
 }

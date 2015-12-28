@@ -45,13 +45,10 @@ public class Monitor implements Closeable {
     protected final MonitorQueryParser queryParser;
     protected final Presearcher presearcher;
     protected final QueryDecomposer decomposer;
-    
+
     private final QueryIndex queryIndex;
 
     private final List<QueryIndexUpdateListener> listeners = new ArrayList<>();
-
-    // package-private for testing
-    final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
 
     protected long slowLogLimit = 2000000;
 
@@ -88,7 +85,7 @@ public class Monitor implements Closeable {
         this.presearcher = presearcher;
         this.decomposer = configuration.getQueryDecomposer();
         
-        this.queryIndex = new QueryIndex(indexWriter, new TermsHashBuilder());
+        this.queryIndex = new QueryIndex(indexWriter);
 
         this.storeQueries = configuration.storeQueries();
         prepareQueryCache(this.storeQueries);
@@ -184,21 +181,6 @@ public class Monitor implements Closeable {
      */
     public void addQueryIndexUpdateListener(QueryIndexUpdateListener listener) {
         listeners.add(listener);
-    }
-
-    private class TermsHashBuilder extends SearcherFactory {
-        @Override
-        public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
-            IndexSearcher searcher = super.newSearcher(reader, previousReader);
-            termFilters.put(reader, new QueryTermFilter(reader));
-            reader.addReaderClosedListener(new IndexReader.ReaderClosedListener() {
-                @Override
-                public void onClose(IndexReader reader) throws IOException {
-                    termFilters.remove(reader);
-                }
-            });
-            return searcher;
-        }
     }
 
     /**
@@ -489,8 +471,8 @@ public class Monitor implements Closeable {
         }
 
         @Override
-        public Query buildQuery(IndexReader reader) throws IOException {
-            return presearcher.buildQuery(batchIndexReader, termFilters.get(reader));
+        public Query buildQuery(QueryTermFilter termFilter) throws IOException {
+            return presearcher.buildQuery(batchIndexReader, termFilter);
         }
     }
 
@@ -607,8 +589,8 @@ public class Monitor implements Closeable {
         PresearcherMatcher<T> collector = new PresearcherMatcher<>(factory.createMatcher(docs));
         QueryIndex.QueryBuilder queryBuilder = new PresearcherQueryBuilder(docs.getIndexReader()){
             @Override
-            public Query buildQuery(IndexReader reader) throws IOException {
-                return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(reader)));
+            public Query buildQuery(QueryTermFilter termFilter) throws IOException {
+                return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(termFilter)));
             }
         };
         queryIndex.search(queryBuilder, collector);

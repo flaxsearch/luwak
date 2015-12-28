@@ -1,10 +1,7 @@
 package uk.co.flax.luwak;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -31,14 +28,32 @@ class QueryIndex {
     /* The current query cache */
     private volatile ConcurrentMap<BytesRef, QueryCacheEntry> queries = new ConcurrentHashMap<>();
     // NB this is not final because it can be replaced by purgeCache()
+
+    // package-private for testing
+    final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
     
-    public QueryIndex(IndexWriter indexWriter, SearcherFactory searcherFactory) throws IOException {
+    public QueryIndex(IndexWriter indexWriter) throws IOException {
         this.writer = indexWriter;
-        this.manager = new SearcherManager(writer, true, searcherFactory);
+        this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
     }
     
     public QueryIndex() throws IOException {
-        this(Monitor.defaultIndexWriter(new RAMDirectory()), new SearcherFactory());
+        this(Monitor.defaultIndexWriter(new RAMDirectory()));
+    }
+
+    private class TermsHashBuilder extends SearcherFactory {
+        @Override
+        public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
+            IndexSearcher searcher = super.newSearcher(reader, previousReader);
+            termFilters.put(reader, new QueryTermFilter(reader));
+            reader.addReaderClosedListener(new IndexReader.ReaderClosedListener() {
+                @Override
+                public void onClose(IndexReader reader) throws IOException {
+                    termFilters.remove(reader);
+                }
+            });
+            return searcher;
+        }
     }
 
     public void commit(List<Indexable> updates, String deleteField) throws IOException {
@@ -69,7 +84,7 @@ class QueryIndex {
     }
 
     interface QueryBuilder {
-        Query buildQuery(IndexReader reader) throws IOException;
+        Query buildQuery(QueryTermFilter termFilter) throws IOException;
     }
 
     public long scan(QueryMatcher matcher) throws IOException {
@@ -79,7 +94,7 @@ class QueryIndex {
     public long search(final Query query, QueryMatcher matcher) throws IOException {
         QueryBuilder builder = new QueryBuilder() {
             @Override
-            public Query buildQuery(IndexReader reader) throws IOException {
+            public Query buildQuery(QueryTermFilter termFilter) throws IOException {
                 return query;
             }
         };
@@ -93,7 +108,7 @@ class QueryIndex {
             searcher = manager.acquire();
             MonitorQueryCollector collector = new MonitorQueryCollector(queries, matcher);
             long buildTime = System.nanoTime();
-            Query query = queryBuilder.buildQuery(searcher.getIndexReader());
+            Query query = queryBuilder.buildQuery(termFilters.get(searcher.getIndexReader()));
             buildTime = System.nanoTime() - buildTime;
             searcher.search(query, collector);
             return buildTime;
