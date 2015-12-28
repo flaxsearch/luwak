@@ -56,7 +56,7 @@ class QueryIndex {
         }
     }
 
-    public void commit(List<Indexable> updates, String deleteField) throws IOException {
+    public void commit(List<Indexable> updates) throws IOException {
         synchronized (commitLock) {
             purgeLock.readLock().lock();
             try {
@@ -66,7 +66,7 @@ class QueryIndex {
                         ids.add(update.id);
                     }
                     for (String id : ids) {
-                        writer.deleteDocuments(new Term(deleteField, id));
+                        writer.deleteDocuments(new Term(Monitor.FIELDS.del, id));
                     }
                     for (Indexable update : updates) {
                         this.queries.put(update.queryCacheEntry.hash, update.queryCacheEntry);

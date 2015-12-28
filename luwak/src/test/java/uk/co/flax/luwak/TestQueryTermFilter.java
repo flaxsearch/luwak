@@ -54,9 +54,9 @@ public class TestQueryTermFilter {
     public void testFiltersAreRemoved() throws IOException {
 
         QueryIndex qi = new QueryIndex();
-        qi.commit(indexable("1", "term"), Monitor.FIELDS.del);
+        qi.commit(indexable("1", "term"));
         assertThat(qi.termFilters).hasSize(1);
-        qi.commit(indexable("2", "term2"), Monitor.FIELDS.del);
+        qi.commit(indexable("2", "term2"));
         assertThat(qi.termFilters).hasSize(1);
 
         QueryTermFilter tf = Iterables.getFirst(qi.termFilters.values(), null);

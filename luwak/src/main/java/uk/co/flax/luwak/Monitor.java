@@ -247,7 +247,7 @@ public class Monitor implements Closeable {
 
     private void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
-        queryIndex.commit(updates, FIELDS.del);
+        queryIndex.commit(updates);
         afterCommit(updates);
     }
 

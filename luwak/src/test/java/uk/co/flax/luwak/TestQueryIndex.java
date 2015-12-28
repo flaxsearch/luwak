@@ -58,7 +58,7 @@ public class TestQueryIndex {
 
         assertThat(getSumOfIds()[0]).isEqualTo(0);
 
-        queryIndex.commit(createUpdate(12), FIELDS.del);
+        queryIndex.commit(createUpdate(12));
         
         assertThat(getSumOfIds()[0]).isEqualTo(12);
         
@@ -66,7 +66,7 @@ public class TestQueryIndex {
         
         assertThat(getSumOfIds()[0]).isEqualTo(12);
         
-        queryIndex.commit(null, FIELDS.del);
+        queryIndex.commit(null);
         
         assertThat(getSumOfIds()[0]).isEqualTo(0);
         
@@ -188,7 +188,7 @@ public class TestQueryIndex {
         }
         
         private void add() throws IOException {
-            queryIndex.commit(createUpdate(r.nextInt(MAX_ID)), FIELDS.del);
+            queryIndex.commit(createUpdate(r.nextInt(MAX_ID)));
         }
         
         private void delete() throws IOException {
