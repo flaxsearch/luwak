@@ -15,23 +15,28 @@ package uk.co.flax.luwak;
  *   limitations under the License.
  */
 
-import java.util.List;
+import java.util.Map;
+
+import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 
 /**
- * Base class for reporting events on a Monitor's query index
+ * An entry in the query cache
  */
-public abstract class QueryIndexUpdateListener {
+public class QueryCacheEntry {
 
-    public void beforeUpdate(List<Indexable> updates) {}
+    /** The (possibly partial due to decomposition) query */
+    public final Query matchQuery;
 
-    public void afterUpdate(List<Indexable> updates) {}
+    /** A hash value for lookups */
+    public final BytesRef hash;
 
-    public void beforeDelete() {}
+    /** The metadata from the entry's parent {@link MonitorQuery} */
+    public final Map<String,String> metadata;
 
-    public void afterDelete() {}
-
-    public void onPurge() {}
-
-    public void onPurgeError(Throwable t) {}
-
+    public QueryCacheEntry(BytesRef hash, Query matchQuery, Map<String, String> metadata) {
+        this.hash = hash;
+        this.matchQuery = matchQuery;
+        this.metadata = metadata;
+    }
 }

@@ -27,7 +27,7 @@ import org.apache.lucene.util.BytesRefHash;
 /**
  * Class for recording terms stored in the query index.
  *
- * An instance of QueryTermFilter is passed to {@link Presearcher#buildQuery(InputDocument, QueryTermFilter)},
+ * An instance of QueryTermFilter is passed to {@link Presearcher#buildQuery(LeafReader, QueryTermFilter)},
  * and can be used to restrict the presearcher's disjunction query to terms in the index.
  *
  * @see uk.co.flax.luwak.analysis.BytesRefFilteredTokenFilter
