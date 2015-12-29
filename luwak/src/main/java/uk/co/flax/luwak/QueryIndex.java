@@ -32,12 +32,12 @@ class QueryIndex {
     // package-private for testing
     final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
     
-    public QueryIndex(IndexWriter indexWriter) throws IOException {
+    QueryIndex(IndexWriter indexWriter) throws IOException {
         this.writer = indexWriter;
         this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
     }
     
-    public QueryIndex() throws IOException {
+    QueryIndex() throws IOException {
         this(Monitor.defaultIndexWriter(new RAMDirectory()));
     }
 
@@ -56,7 +56,7 @@ class QueryIndex {
         }
     }
 
-    public void commit(List<Indexable> updates) throws IOException {
+    void commit(List<Indexable> updates) throws IOException {
         synchronized (commitLock) {
             purgeLock.readLock().lock();
             try {
@@ -87,11 +87,11 @@ class QueryIndex {
         Query buildQuery(QueryTermFilter termFilter) throws IOException;
     }
 
-    public long scan(QueryCollector matcher) throws IOException {
+    long scan(QueryCollector matcher) throws IOException {
         return search(new MatchAllDocsQuery(), matcher);
     }
 
-    public long search(final Query query, QueryCollector matcher) throws IOException {
+    long search(final Query query, QueryCollector matcher) throws IOException {
         QueryBuilder builder = new QueryBuilder() {
             @Override
             public Query buildQuery(QueryTermFilter termFilter) throws IOException {
@@ -101,7 +101,7 @@ class QueryIndex {
         return search(builder, matcher);
     }
 
-    public long search(QueryBuilder queryBuilder, QueryCollector matcher) throws IOException {
+    long search(QueryBuilder queryBuilder, QueryCollector matcher) throws IOException {
         purgeLock.readLock().lock();
         IndexSearcher searcher = null;
         try {
@@ -130,7 +130,7 @@ class QueryIndex {
      *
      * @throws IOException on IO errors
      */
-    public synchronized void purgeCache(CachePopulator populator) throws IOException {
+    synchronized void purgeCache(CachePopulator populator) throws IOException {
 
         /*
             Note on implementation
@@ -177,31 +177,31 @@ class QueryIndex {
     //  Proxy trivial operations...
     // ---------------------------------------------
 
-    public void closeWhileHandlingException() throws IOException {
+    void closeWhileHandlingException() throws IOException {
         IOUtils.closeWhileHandlingException(manager, writer, writer.getDirectory());
     }
 
-    public int numDocs() {
+    int numDocs() {
         return writer.numDocs();
     }
 
-    public int numRamDocs() {
+    int numRamDocs() {
         return writer.numRamDocs();
     }
 
-    public int cacheSize() {
+    int cacheSize() {
         return queries.size();
     }
 
-    public void deleteDocuments(Term term) throws IOException {
+    void deleteDocuments(Term term) throws IOException {
         writer.deleteDocuments(term);
     }
 
-    public void deleteDocuments(Query query) throws IOException {
+    void deleteDocuments(Query query) throws IOException {
         writer.deleteDocuments(query);            
     }
 
-    public interface QueryCollector {
+    interface QueryCollector {
 
         void matchQuery(String id, QueryCacheEntry query, DataValues dataValues) throws IOException;
 
@@ -211,7 +211,7 @@ class QueryIndex {
     //  Helper classes...
     // ---------------------------------------------
 
-    public static final class DataValues {
+    static final class DataValues {
         public BinaryDocValues hash;
         public SortedDocValues id;
         public BinaryDocValues mq;
@@ -222,7 +222,7 @@ class QueryIndex {
     /**
      * A Collector that decodes the stored query for each document hit.
      */
-    public static final class MonitorQueryCollector extends SimpleCollector {
+    static final class MonitorQueryCollector extends SimpleCollector {
 
         private final Map<BytesRef, QueryCacheEntry> queries;
         private final QueryCollector matcher;
