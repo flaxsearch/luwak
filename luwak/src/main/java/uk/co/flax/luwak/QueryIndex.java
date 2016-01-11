@@ -102,10 +102,19 @@ class QueryIndex {
     }
 
     long search(QueryBuilder queryBuilder, QueryCollector matcher) throws IOException {
-        purgeLock.readLock().lock();
         IndexSearcher searcher = null;
         try {
-            searcher = manager.acquire();
+            Map<BytesRef, QueryCacheEntry> queries;
+
+            purgeLock.readLock().lock();
+            try {
+                searcher = manager.acquire();
+                queries = this.queries;
+            }
+            finally {
+                purgeLock.readLock().unlock();
+            }
+
             MonitorQueryCollector collector = new MonitorQueryCollector(queries, matcher);
             long buildTime = System.nanoTime();
             Query query = queryBuilder.buildQuery(termFilters.get(searcher.getIndexReader()));
@@ -114,8 +123,9 @@ class QueryIndex {
             return buildTime;
         }
         finally {
-            purgeLock.readLock().unlock();
-            manager.release(searcher);
+            if (searcher != null) {
+                manager.release(searcher);
+            }
         }
     }
     
