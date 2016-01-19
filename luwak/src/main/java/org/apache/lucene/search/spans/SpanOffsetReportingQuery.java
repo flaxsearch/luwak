@@ -19,6 +19,7 @@ package org.apache.lucene.search.spans;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -66,12 +67,24 @@ public class SpanOffsetReportingQuery extends SpanQuery {
         return new SpanOffsetWeight(searcher, in.createWeight(searcher, needsScores));
     }
 
+    /**
+     * Build a map of terms to termcontexts, for use in constructing SpanWeights
+     * @lucene.internal
+     */
+    private static Map<Term, TermContext> termContexts(SpanWeight... weights) {
+        Map<Term, TermContext> terms = new TreeMap<>();
+        for (SpanWeight w : weights) {
+            w.extractTermContexts(terms);
+        }
+        return terms;
+    }
+
     private class SpanOffsetWeight extends SpanWeight {
 
         private final SpanWeight in;
 
         private SpanOffsetWeight(IndexSearcher searcher, SpanWeight in) throws IOException {
-            super(SpanOffsetReportingQuery.this, searcher, getTermContexts(in));
+            super(SpanOffsetReportingQuery.this, searcher, termContexts(in));
             this.in = in;
         }
 
