@@ -5,10 +5,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DisjunctionMaxQuery;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.*;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -46,6 +43,10 @@ public class QueryDecomposer {
             return ((DisjunctionMaxQuery)q).getDisjuncts();
         }
 
+        if (q instanceof BoostQuery) {
+            return decomposeBoostQuery((BoostQuery) q);
+        }
+
         return listOf(q);
     }
 
@@ -62,8 +63,20 @@ public class QueryDecomposer {
      * @return the boosted query
      */
     public static Query boost(Query q, float boost) {
-        q.setBoost(boost * q.getBoost());
-        return q;
+        if (boost == 1.0)
+            return q;
+        return new BoostQuery(q, boost);
+    }
+
+    public Collection<Query> decomposeBoostQuery(BoostQuery q) {
+        if (q.getBoost() == 1.0)
+            return decompose(q.getQuery());
+
+        List<Query> boostedDecomposedQueries = new ArrayList<>();
+        for (Query subq : decompose(q.getQuery())) {
+            boostedDecomposedQueries.add(new BoostQuery(subq, q.getBoost()));
+        }
+        return boostedDecomposedQueries;
     }
 
     /**

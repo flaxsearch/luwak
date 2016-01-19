@@ -90,7 +90,7 @@ public class TestQueryDecomposer {
         assertThat(decomposer.decompose(q("+(hello world)^0.7 -goodbye")))
                 .containsExactly(q("+hello^0.7 -goodbye"), q("+world^0.7 -goodbye"));
         assertThat(decomposer.decompose(q("+(hello^0.5 world)^0.8")))
-                .containsExactly(q("hello^0.4"), q("world^0.8"));
+                .containsExactly(q("(hello^0.5)^0.8"), q("world^0.8"));
     }
 
     @Test

@@ -38,9 +38,8 @@ public class SpanExtractor {
     public static List<Spans> getSpans(Scorer scorer, boolean errorOnNoSpans) {
 
         List<Spans> spans = new ArrayList<>();
-        if (scorer instanceof SpanScorer) {
-            SpanScorer spanScorer = (SpanScorer) scorer;
-            spans.add(spanScorer.spans);
+        if (scorer instanceof Spans) {
+            spans.add((Spans) scorer);
             return spans;
         }
 
