@@ -46,6 +46,8 @@ public class SpanRewriter {
             return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in);
         if (in instanceof TermsQuery)
             return rewriteTermsQuery((TermsQuery) in);
+        if (in instanceof BoostQuery)
+            return rewrite(((BoostQuery) in).getQuery());   // we don't care about boosts for rewriting purposes
 
         return rewriteUnknown(in);
     }

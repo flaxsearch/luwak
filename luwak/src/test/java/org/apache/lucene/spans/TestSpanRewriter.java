@@ -18,7 +18,10 @@ package org.apache.lucene.spans;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.spans.SpanOffsetReportingQuery;
 import org.apache.lucene.search.spans.SpanRewriter;
 import org.junit.Test;
 
@@ -33,6 +36,14 @@ public class TestSpanRewriter {
 
         Query q = new SpanRewriter().rewrite(tq);
         assertThat(q).isInstanceOf(BooleanQuery.class);
+
+    }
+
+    @Test
+    public void testBoostQuery() {
+
+        Query q = new SpanRewriter().rewrite(new BoostQuery(new TermQuery(new Term("f", "t")), 2.0f));
+        assertThat(q).isInstanceOf(SpanOffsetReportingQuery.class);
 
     }
 
