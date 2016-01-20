@@ -18,6 +18,7 @@ package org.apache.lucene.search.spans;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -60,6 +61,20 @@ public class SpanOffsetReportingQuery extends SpanQuery {
         if (in.equals(rewritten))
             return this;
         return new SpanOffsetReportingQuery((SpanQuery)in.rewrite(reader));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        SpanOffsetReportingQuery that = (SpanOffsetReportingQuery) o;
+        return Objects.equals(in, that.in);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), in);
     }
 
     @Override

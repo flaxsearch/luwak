@@ -215,7 +215,39 @@ public class TestHighlightingMatcher {
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2"), HighlightingMatcher.FACTORY);
 
         assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+    }
 
+    @Test
+    public void testWildcardBooleanRewrites() throws Exception {
+
+        final Query wc = new PrefixQuery(new Term(textfield, "term1"));
+
+        final Query wrapper = new BooleanQuery.Builder()
+                .add(wc, BooleanClause.Occur.MUST)
+                .build();
+
+        final Query wrapper2  = new BooleanQuery.Builder()
+                .add(wrapper, BooleanClause.Occur.MUST)
+                .build();
+
+        final BooleanQuery bq = new BooleanQuery.Builder()
+                .add(new PrefixQuery(new Term(textfield, "term2")), BooleanClause.Occur.MUST)
+                .add(wrapper2, BooleanClause.Occur.MUST_NOT)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return bq;
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
+        assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+
+        matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
+        assertThat(matches).matchesQuery("1", "1").withHitCount(1);
     }
 
 }
