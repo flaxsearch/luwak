@@ -72,7 +72,7 @@ public class SpanRewriter {
     }
 
     protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {
-        return forceOffsets(new SpanMultiTermQueryWrapper<>(mtq));
+        return forceOffsets(new XSpanMultiTermQueryWrapper<>(mtq));
     }
 
     protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) {
