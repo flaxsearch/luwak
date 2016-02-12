@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +24,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public abstract class QueryTree {
 
-    protected Set<QueryTree> children = new HashSet<>();
+    protected Set<QueryTree> children = new LinkedHashSet<>();
 
     public QueryTree parent = null;
 
