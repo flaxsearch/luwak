@@ -223,6 +223,7 @@ public class Monitor implements Closeable {
         final List<Exception> parseErrors = new LinkedList<>();
         final Set<BytesRef> seenHashes = new HashSet<>();
         final Set<String> seenIds = new HashSet<>();
+
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
             public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
