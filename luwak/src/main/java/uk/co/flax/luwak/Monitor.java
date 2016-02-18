@@ -221,14 +221,28 @@ public class Monitor implements Closeable {
 
         // load any queries that have already been added to the queryindex
         final List<Exception> parseErrors = new LinkedList<>();
+        final Set<BytesRef> seenHashes = new HashSet<>();
+        final Set<String> seenIds = new HashSet<>();
         queryIndex.purgeCache(new QueryIndex.CachePopulator() {
             @Override
             public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
                 queryIndex.scan(new QueryIndex.QueryCollector() {
                     @Override
                     public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+                        if (seenIds.contains(id)) {
+                            return;
+                        }
+                        seenIds.add(id);
+
                         BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
                         MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
+
+                        BytesRef hash = mq.hash();
+                        if (seenHashes.contains(hash)) {
+                            return;
+                        }
+                        seenHashes.add(hash);
+
                         try {
                             for (QueryCacheEntry ce : decomposeQuery(mq)) {
                                 newCache.put(ce.hash, ce);
