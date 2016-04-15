@@ -136,7 +136,7 @@ public class XSpanMultiTermQueryWrapper<Q extends MultiTermQuery> extends SpanQu
         if (! super.equals(obj)) {
             return false;
         }
-        SpanMultiTermQueryWrapper<?> other = (SpanMultiTermQueryWrapper<?>) obj;
+        XSpanMultiTermQueryWrapper<?> other = (XSpanMultiTermQueryWrapper<?>) obj;
         return query.equals(other.query);
     }
 

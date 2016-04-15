@@ -44,4 +44,15 @@ public class TestSpanRewriter {
 
     }
 
+    @Test
+    public void testMultiTermQueryEquals() {
+
+        WildcardQuery wq = new WildcardQuery(new Term("field", "term"));
+        Query q1 = new SpanRewriter().rewrite(wq);
+        Query q2 = new SpanRewriter().rewrite(wq);
+
+        assertThat(q1).isEqualTo(q2);
+
+    }
+
 }
