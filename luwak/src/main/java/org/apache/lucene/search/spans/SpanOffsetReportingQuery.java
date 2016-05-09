@@ -58,7 +58,7 @@ public class SpanOffsetReportingQuery extends SpanQuery {
     @Override
     public Query rewrite(IndexReader reader) throws IOException {
         SpanQuery rewritten = (SpanQuery) in.rewrite(reader);
-        if (in.equals(rewritten))
+        if (in == rewritten)
             return this;
         return new SpanOffsetReportingQuery((SpanQuery)in.rewrite(reader));
     }

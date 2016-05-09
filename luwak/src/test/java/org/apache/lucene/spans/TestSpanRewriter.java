@@ -18,8 +18,7 @@ package org.apache.lucene.spans;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.SpanOffsetReportingQuery;
-import org.apache.lucene.search.spans.SpanRewriter;
+import org.apache.lucene.search.spans.*;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

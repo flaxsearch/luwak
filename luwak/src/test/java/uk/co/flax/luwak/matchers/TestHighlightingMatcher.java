@@ -8,6 +8,9 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -248,6 +251,26 @@ public class TestHighlightingMatcher {
 
         matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
         assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+    }
+
+    @Test
+    public void testWildcardProximityRewrites() throws Exception {
+        final SpanNearQuery snq = SpanNearQuery.newOrderedNearQuery(textfield)
+                .addClause(new SpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(textfield, "term*"))))
+                .addClause(new SpanTermQuery(new Term(textfield, "foo")))
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return snq;
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+
+        Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 foo"), HighlightingMatcher.FACTORY);
+        assertThat(matches).matchesQuery("1", "1").withHitCount(2);
     }
 
 }
