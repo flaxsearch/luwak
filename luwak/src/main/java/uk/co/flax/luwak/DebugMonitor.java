@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.util.*;
-
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -16,6 +17,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.BytesRef;
 
 /*
  * Copyright (c) 2015 Lemur Consulting Ltd.
@@ -109,6 +111,37 @@ public class DebugMonitor extends Monitor implements Closeable {
      */
     public DebugMonitor(MonitorQueryParser queryParser, Presearcher presearcher, IndexWriter indexWriter) throws IOException {
         super(queryParser, presearcher, indexWriter);
+    }
+
+    public interface MonitorQueryListener {
+        boolean onMonitorQuery(MonitorQuery mq);
+    }
+
+    public void iterateAllQueries(final MonitorQueryListener listener) throws IOException {
+        final AtomicInteger finished = new AtomicInteger();
+
+        final Set<String> seenBefore = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
+        queryIndex.scan(new QueryIndex.QueryCollector() {
+            @Override
+            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
+
+                if (finished.get() != 0) {
+                    return;
+                }
+
+                final BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+                MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
+
+                if (!seenBefore.contains(id)) {
+                    seenBefore.add(id);
+
+                    if (!listener.onMonitorQuery(mq)) {
+                        finished.set(1);
+                    }
+                }
+            }
+        });
     }
 
     public String debugSubscription(String id) throws IOException {
