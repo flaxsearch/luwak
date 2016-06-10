@@ -142,6 +142,7 @@ public class HighlightsMatch extends QueryMatch {
 
         @Override
         public boolean equals(Object obj) {
+            if (this == obj) return true;
             if (!(obj instanceof Hit))
                 return false;
             Hit other = (Hit) obj;
@@ -149,6 +150,15 @@ public class HighlightsMatch extends QueryMatch {
                     this.endOffset == other.endOffset &&
                     this.startPosition == other.startPosition &&
                     this.endPosition == other.endPosition;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = startPosition;
+            result = 31 * result + startOffset;
+            result = 31 * result + endPosition;
+            result = 31 * result + endOffset;
+            return result;
         }
 
         @Override
