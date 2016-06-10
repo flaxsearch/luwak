@@ -25,6 +25,8 @@ import uk.co.flax.luwak.*;
 
 public class Benchmark {
 
+    private Benchmark() {}
+
     public static <T extends QueryMatch> BenchmarkResults<T> run(Monitor monitor, Iterable<InputDocument> documents,
                                                                  int batchsize, MatcherFactory<T> matcherFactory) throws IOException {
         BenchmarkResults<T> results = new BenchmarkResults<>();
