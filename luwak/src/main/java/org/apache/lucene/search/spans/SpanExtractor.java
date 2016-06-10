@@ -28,6 +28,8 @@ import org.apache.lucene.search.Scorer;
  */
 public class SpanExtractor {
 
+    private SpanExtractor() {}
+
     /**
      * Get a list of all Spans made available from the passed-in Scorer
      * @param scorer the scorer to extract spans from
@@ -44,7 +46,7 @@ public class SpanExtractor {
         }
 
         Collection<Scorer.ChildScorer> children = scorer.getChildren();
-        if (errorOnNoSpans && children.size() == 0)
+        if (errorOnNoSpans && children.isEmpty())
             throw new RuntimeException("Couldn't extract SpanScorer from " + scorer.getClass().getCanonicalName());
 
         for (Scorer.ChildScorer child : children) {
