@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
@@ -50,7 +51,8 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
     /** The {@link Similarity} to be used for scoring (if scoring is required) */
     protected final Similarity similarity;
 
-    /** A list of {@link InputDocument} objects to match */
+    /** A list of {@link InputDocument} objects to match.  These documents will be added as a block in the order
+     * provided. */
     protected final List<InputDocument> documents = new ArrayList<>();
 
     /**
@@ -182,9 +184,26 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
 
         private LeafReader build(IndexWriter writer) throws IOException {
 
-            for (InputDocument doc : documents) {
-                writer.addDocument(doc.getDocument());
-            }
+            final Iterator<InputDocument> it = documents.iterator();
+
+            Iterable<? extends Iterable<? extends IndexableField>> wrapped = new Iterable<Iterable<? extends IndexableField>>() {
+                @Override
+                public Iterator<Iterable<? extends IndexableField>> iterator() {
+                    return new Iterator<Iterable<? extends IndexableField>>() {
+                        @Override
+                        public boolean hasNext() {
+                            return it.hasNext();
+                        }
+
+                        @Override
+                        public Iterable<? extends IndexableField> next() {
+                            return it.next().getDocument();
+                        }
+                    };
+                }
+            };
+
+            writer.addDocuments(wrapped);
 
             writer.commit();
             LeafReader reader = SlowCompositeReaderWrapper.wrap(DirectoryReader.open(directory));
