@@ -76,7 +76,7 @@ public class TestMonitorErrorHandling {
 
             InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
             DocumentBatch batch = DocumentBatch.of(doc);
-            Matches matcher = monitor.match(batch, SimpleMatcher.FACTORY);
+            Matches<QueryMatch> matcher = monitor.match(batch, SimpleMatcher.FACTORY);
 
             assertThat(matcher.getErrors()).hasSize(1);
             assertThat(matcher.getMatchCount("doc")).isEqualTo(1);

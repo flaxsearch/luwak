@@ -96,6 +96,7 @@ public class TermFilteredPresearcher extends Presearcher {
                 while (ts.incrementToken()) {
                     queryBuilder.addTerm(field, BytesRef.deepCopyOf(termAtt.getBytesRef()));
                 }
+                ts.close();
 
             }
             Query presearcherQuery = queryBuilder.build();

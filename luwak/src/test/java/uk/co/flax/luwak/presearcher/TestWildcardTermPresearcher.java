@@ -90,28 +90,29 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         PresearcherComponent comp
                 = new WildcardNGramPresearcherComponent("FOO", 10, "__wibble__", Sets.newHashSet("field1"));
 
-        Analyzer input = new WhitespaceAnalyzer();
+        try (Analyzer input = new WhitespaceAnalyzer()) {
 
-        // field1 is in the excluded set, so nothing should happen
-        TokenStreamAssert.assertThat(comp.filterDocumentTokens("field1", input.tokenStream("field1", "hello world")))
-                .nextEquals("hello")
-                .nextEquals("world")
-                .isExhausted();
+            // field1 is in the excluded set, so nothing should happen
+            TokenStreamAssert.assertThat(comp.filterDocumentTokens("field1", input.tokenStream("field1", "hello world")))
+                    .nextEquals("hello")
+                    .nextEquals("world")
+                    .isExhausted();
 
-        // field2 is not excluded
-        TokenStreamAssert.assertThat(comp.filterDocumentTokens("field", input.tokenStream("field", "harm alarm asdasasdasdasd")))
-                .nextEquals("harm")
-                .nextEquals("harmFOO").nextEquals("harFOO").nextEquals("haFOO").nextEquals("hFOO")
-                .nextEquals("armFOO").nextEquals("arFOO").nextEquals("aFOO")
-                .nextEquals("rmFOO").nextEquals("rFOO")
-                .nextEquals("mFOO")
-                .nextEquals("FOO")
-                .nextEquals("alarm")
-                .nextEquals("alarmFOO").nextEquals("alarFOO").nextEquals("alaFOO").nextEquals("alFOO")
-                .nextEquals("larmFOO").nextEquals("larFOO").nextEquals("laFOO").nextEquals("lFOO")
-                .nextEquals("asdasasdasdasd")
-                .nextEquals("__wibble__")
-                .isExhausted();
+            // field2 is not excluded
+            TokenStreamAssert.assertThat(comp.filterDocumentTokens("field", input.tokenStream("field", "harm alarm asdasasdasdasd")))
+                    .nextEquals("harm")
+                    .nextEquals("harmFOO").nextEquals("harFOO").nextEquals("haFOO").nextEquals("hFOO")
+                    .nextEquals("armFOO").nextEquals("arFOO").nextEquals("aFOO")
+                    .nextEquals("rmFOO").nextEquals("rFOO")
+                    .nextEquals("mFOO")
+                    .nextEquals("FOO")
+                    .nextEquals("alarm")
+                    .nextEquals("alarmFOO").nextEquals("alarFOO").nextEquals("alaFOO").nextEquals("alFOO")
+                    .nextEquals("larmFOO").nextEquals("larFOO").nextEquals("laFOO").nextEquals("lFOO")
+                    .nextEquals("asdasasdasdasd")
+                    .nextEquals("__wibble__")
+                    .isExhausted();
+        }
     }
 
 }
