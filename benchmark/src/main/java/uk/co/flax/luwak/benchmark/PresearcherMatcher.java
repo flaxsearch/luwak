@@ -31,6 +31,13 @@ import uk.co.flax.luwak.MatcherFactory;
  */
 public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
 
+    public static final MatcherFactory<PresearcherMatch> FACTORY = new MatcherFactory<PresearcherMatch>() {
+        @Override
+        public CandidateMatcher<PresearcherMatch> createMatcher(DocumentBatch docs) {
+            return new PresearcherMatcher(docs);
+        }
+    };
+
     public PresearcherMatcher(DocumentBatch batch) {
         super(batch);
     }
@@ -47,10 +54,4 @@ public class PresearcherMatcher extends CandidateMatcher<PresearcherMatch> {
         return match1;
     }
 
-    public static final MatcherFactory<PresearcherMatch> FACTORY = new MatcherFactory<PresearcherMatch>() {
-        @Override
-        public CandidateMatcher<PresearcherMatch> createMatcher(DocumentBatch docs) {
-            return new PresearcherMatcher(docs);
-        }
-    };
 }

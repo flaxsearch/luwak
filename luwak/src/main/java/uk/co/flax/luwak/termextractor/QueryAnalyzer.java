@@ -82,6 +82,16 @@ public class QueryAnalyzer {
     }
 
     /**
+     * Create a QueryAnalyzer using the default TreeWeightor, and the provided QueryTreeBuilders,
+     * in addition to the default set
+     *
+     * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
+     */
+    public QueryAnalyzer(QueryTreeBuilder<?>... queryTreeBuilders) {
+        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
+    }
+
+    /**
      * Build a new QueryAnalyzer using a TreeWeightor and a list of PresearcherComponents
      *
      * A list of QueryTreeBuilders is extracted from each component, and combined to use
@@ -110,16 +120,6 @@ public class QueryAnalyzer {
      */
     public static QueryAnalyzer fromComponents(PresearcherComponent... components) {
         return fromComponents(TreeWeightor.DEFAULT_WEIGHTOR, components);
-    }
-
-    /**
-     * Create a QueryAnalyzer using the default TreeWeightor, and the provided QueryTreeBuilders,
-     * in addition to the default set
-     *
-     * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
-     */
-    public QueryAnalyzer(QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
     }
 
     /**

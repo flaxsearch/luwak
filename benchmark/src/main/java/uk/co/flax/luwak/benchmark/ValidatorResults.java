@@ -47,7 +47,7 @@ public class ValidatorResults<T extends QueryMatch> extends BenchmarkResults<T> 
         Sets.SetView<T> extras = Sets.difference(expectedMatches, actualMatches);
         Sets.SetView<T> missing = Sets.difference(actualMatches, expectedMatches);
 
-        if (extras.size() == 0 && missing.size() == 0)
+        if (extras.isEmpty() && missing.isEmpty())
             correctMatches++;
         else {
             missingMatches.putAll(docMatches.getDocId(), missing);
