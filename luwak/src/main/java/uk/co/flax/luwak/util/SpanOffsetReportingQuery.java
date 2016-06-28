@@ -1,4 +1,4 @@
-package org.apache.lucene.search.spans;
+package uk.co.flax.luwak.util;
 
 /*
  *   Copyright (c) 2015 Lemur Consulting Ltd.
@@ -28,6 +28,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * SpanQuery that wraps another SpanQuery, ensuring that offsets are loaded

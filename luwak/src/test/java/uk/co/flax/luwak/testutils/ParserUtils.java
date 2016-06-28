@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.testutils;
 
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;

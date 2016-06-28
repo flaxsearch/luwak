@@ -1,9 +1,11 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.testutils;
 
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import uk.co.flax.luwak.util.CollectionUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,7 +32,7 @@ public class TestCollectionUtils {
 
         List<String> terms = ImmutableList.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
-        assertThat(CollectionUtils.partition(terms, 2))
+        Assertions.assertThat(CollectionUtils.partition(terms, 2))
                 .containsExactly(ImmutableList.of("1", "2", "3", "4", "5"), ImmutableList.of("6", "7", "8", "9", "10"));
 
         assertThat(CollectionUtils.partition(terms, 3))

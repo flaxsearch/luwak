@@ -7,7 +7,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.FieldWeightNorm;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
-import uk.co.flax.luwak.util.ParserUtils;
+import uk.co.flax.luwak.testutils.ParserUtils;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.

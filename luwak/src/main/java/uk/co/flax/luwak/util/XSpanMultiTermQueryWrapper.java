@@ -1,4 +1,4 @@
-package org.apache.lucene.search.spans;
+package uk.co.flax.luwak.util;
 
 /*
  *   Copyright (c) 2016 Lemur Consulting Ltd.
@@ -25,6 +25,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.*;
 
 /**
  * Temporary replacement for {@link SpanMultiTermQueryWrapper} until

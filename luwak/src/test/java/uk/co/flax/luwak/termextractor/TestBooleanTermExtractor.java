@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
-import uk.co.flax.luwak.util.ParserUtils;
+import uk.co.flax.luwak.testutils.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

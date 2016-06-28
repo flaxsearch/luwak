@@ -1,4 +1,4 @@
-package org.apache.lucene.search.spans;
+package uk.co.flax.luwak.util;
 /*
  *   Copyright (c) 2015 Lemur Consulting Ltd.
  *
@@ -25,6 +25,9 @@ import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanOrQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.util.BytesRef;
 
 public class SpanRewriter {

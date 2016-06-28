@@ -1,4 +1,4 @@
-package org.apache.lucene.search;
+package uk.co.flax.luwak.util;
 /*
  *   Copyright (c) 2015 Lemur Consulting Ltd.
  *
@@ -21,6 +21,7 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.*;
 
 /**
  * Query wrapper that forces its wrapped Query to use the default doc-by-doc

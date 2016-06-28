@@ -1,4 +1,4 @@
-package org.apache.lucene.spans;
+package uk.co.flax.luwak.util;
 /*
  *   Copyright (c) 2015 Lemur Consulting Ltd.
  *
@@ -18,8 +18,9 @@ package org.apache.lucene.spans;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.*;
 import org.junit.Test;
+import uk.co.flax.luwak.util.SpanOffsetReportingQuery;
+import uk.co.flax.luwak.util.SpanRewriter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

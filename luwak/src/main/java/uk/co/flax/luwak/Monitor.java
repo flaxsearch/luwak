@@ -11,13 +11,14 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanExtractor;
-import org.apache.lucene.search.spans.SpanRewriter;
+import uk.co.flax.luwak.util.SpanExtractor;
+import uk.co.flax.luwak.util.SpanRewriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import uk.co.flax.luwak.presearcher.PresearcherMatches;
+import uk.co.flax.luwak.util.ForceNoBulkScoringQuery;
 
 /*
  * Copyright (c) 2015 Lemur Consulting Ltd.

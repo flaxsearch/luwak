@@ -1,4 +1,4 @@
-package org.apache.lucene.search.spans;
+package uk.co.flax.luwak.util;
 
 /*
  *   Copyright (c) 2015 Lemur Consulting Ltd.
@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Utility methods for extracting and collecting Spans from query trees

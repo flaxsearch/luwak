@@ -8,7 +8,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
-import uk.co.flax.luwak.util.ParserUtils;
+import uk.co.flax.luwak.testutils.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

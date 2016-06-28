@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.util;
+package uk.co.flax.luwak.testutils;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
