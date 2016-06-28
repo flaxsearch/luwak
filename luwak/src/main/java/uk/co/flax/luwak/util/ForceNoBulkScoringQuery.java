@@ -16,6 +16,7 @@ package uk.co.flax.luwak.util;
  */
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
@@ -41,6 +42,24 @@ public class ForceNoBulkScoringQuery extends Query {
         if (rewritten != inner)
             return new ForceNoBulkScoringQuery(rewritten);
         return super.rewrite(reader);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ForceNoBulkScoringQuery that = (ForceNoBulkScoringQuery) o;
+        return Objects.equals(inner, that.inner);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), inner);
+    }
+
+    public Query getWrappedQuery() {
+        return inner;
     }
 
     @Override
