@@ -33,7 +33,7 @@ public class DisjunctionNode extends QueryTree {
 
     public static QueryTree build(List<QueryTree> children) {
         if (children.size() == 0)
-            throw new IllegalArgumentException("Cannot build ConjunctionNode with no children");
+            throw new IllegalArgumentException("Cannot build DisjunctionNode with no children");
         if (children.size() == 1)
             return children.get(0);
         return new DisjunctionNode(children);

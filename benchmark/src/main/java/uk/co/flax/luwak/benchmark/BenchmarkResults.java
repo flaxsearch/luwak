@@ -30,9 +30,9 @@ import uk.co.flax.luwak.QueryMatch;
 
 public class BenchmarkResults<T extends QueryMatch> {
 
-    private final MetricRegistry METRICS = new MetricRegistry();
-    private final Timer timer = METRICS.timer("searchTimes");
-    private final Histogram queryBuildTimes = METRICS.histogram("queryBuildTimes");
+    private final MetricRegistry metrics = new MetricRegistry();
+    private final Timer timer = metrics.timer("searchTimes");
+    private final Histogram queryBuildTimes = metrics.histogram("queryBuildTimes");
 
     public void add(Matches<T> benchmarkMatches) {
         timer.update(benchmarkMatches.getSearchTime(), TimeUnit.MILLISECONDS);
@@ -48,7 +48,7 @@ public class BenchmarkResults<T extends QueryMatch> {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         try {
             PrintStream out = new PrintStream(os, true, StandardCharsets.UTF_8.name());
-            ConsoleReporter.forRegistry(METRICS).outputTo(out).build().report();
+            ConsoleReporter.forRegistry(metrics).outputTo(out).build().report();
             return os.toString(StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);

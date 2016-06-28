@@ -16,7 +16,7 @@ Here's some tests we did to compare Luwak to Elasticsearch Percolator:
 http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
 
 Scott Stults of Open Source Connections wrote "How to use Luwak to run preset queries against incoming documents":
-http://opensourceconnections.com/blog/2016/02/05/luwak
+http://opensourceconnections.com/blog/2016/02/05/luwak and Ryan Walker wrote a complete streaming search implementation with Luwak http://insightdataengineering.com/blog/streaming-search/
 
 Get the artifacts
 -----------------

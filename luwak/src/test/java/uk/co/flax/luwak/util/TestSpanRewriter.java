@@ -19,8 +19,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
 import org.junit.Test;
-import uk.co.flax.luwak.util.SpanOffsetReportingQuery;
-import uk.co.flax.luwak.util.SpanRewriter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

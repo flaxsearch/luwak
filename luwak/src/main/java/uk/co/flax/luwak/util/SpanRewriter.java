@@ -103,8 +103,8 @@ public class SpanRewriter {
                 spanQueries.get(it.field()).add(new SpanTermQuery(new Term(it.field(), term)));
             }
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            for (String field : spanQueries.keySet()) {
-                List<SpanTermQuery> termQueries = spanQueries.get(field);
+            for (Map.Entry<String,List<SpanTermQuery>> entry : spanQueries.entrySet()) {
+                List<SpanTermQuery> termQueries = entry.getValue();
                 builder.add(new SpanOrQuery(termQueries.toArray(new SpanTermQuery[termQueries.size()])),
                         BooleanClause.Occur.SHOULD);
             }
