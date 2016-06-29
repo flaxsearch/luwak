@@ -78,6 +78,19 @@ public class TestHighlightingMatcher {
     }
 
     @Test
+    public void testToString() {
+
+        HighlightsMatch match = new HighlightsMatch("1", "1");
+        match.addHit("field", 2, 3, -1, -1);
+        match.addHit("field", 0, 1, -1, -1);
+        match.addHit("afield", 0, 1, 0, 4);
+
+        Assertions.assertThat(match.toString())
+                .isEqualTo("Match(doc=1,query=1){hits={afield=[0(0)->1(4)], field=[0(-1)->1(-1), 2(-1)->3(-1)]}}");
+
+    }
+
+    @Test
     public void multiFieldQueryMatches() throws IOException {
 
         InputDocument doc = InputDocument.builder("doc1")
@@ -251,6 +264,7 @@ public class TestHighlightingMatcher {
 
         matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
         assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+
     }
 
     @Test

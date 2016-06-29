@@ -110,6 +110,13 @@ public class HighlightsMatch extends QueryMatch {
         return result;
     }
 
+    @Override
+    public String toString() {
+        if (error == null)
+            return super.toString() + "{hits=" + hits + "}";
+        return super.toString() + "{error=" + error + "}";
+    }
+
     void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
         if (!hits.containsKey(field))
             hits.put(field, new TreeSet<Hit>());
