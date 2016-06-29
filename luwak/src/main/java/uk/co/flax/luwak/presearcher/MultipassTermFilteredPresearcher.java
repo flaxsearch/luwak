@@ -118,19 +118,19 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     private class MultipassDocumentQueryBuilder implements DocumentQueryBuilder {
 
         BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
-        List<Term>[] terms = new List[passes];
+        List<List<Term>> terms = new ArrayList<List<Term>>(passes);
 
         public MultipassDocumentQueryBuilder() {
             for (int i = 0; i < queries.length; i++) {
                 queries[i] = new BooleanQuery.Builder();
-                terms[i] = new ArrayList<>();
+                terms.add(i, new ArrayList<Term>());
             }
         }
 
         @Override
         public void addTerm(String field, BytesRef term) throws IOException {
             for (int i = 0; i < passes; i++) {
-                terms[i].add(new Term(field(field, i), term));
+                terms.get(i).add(new Term(field(field, i), term));
             }
         }
 
@@ -138,7 +138,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         public Query build() {
             BooleanQuery.Builder parent = new BooleanQuery.Builder();
             for (int i = 0; i < passes; i++) {
-                parent.add(new TermsQuery(terms[i]), BooleanClause.Occur.MUST);
+                parent.add(new TermsQuery(terms.get(i)), BooleanClause.Occur.MUST);
             }
             return parent.build();
         }
