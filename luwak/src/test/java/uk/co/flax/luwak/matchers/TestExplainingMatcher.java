@@ -19,6 +19,8 @@ package uk.co.flax.luwak.matchers;
 import java.io.IOException;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.search.Explanation;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.Matches;
@@ -43,5 +45,23 @@ public class TestExplainingMatcher {
             assertThat(matches.matches("1", "doc1")).isNotNull();
             assertThat(matches.matches("1", "doc1").getExplanation()).isNotNull();
         }
+    }
+
+    @Test
+    @Ignore("Lucene Explanations don't implement hashCode() or equals() until 6.2")
+    public void testHashcodeAndEquals() {
+
+        ExplainingMatch m1 = new ExplainingMatch("1", "1", Explanation.match(0.1f, "an explanation"));
+        ExplainingMatch m2 = new ExplainingMatch("1", "2", Explanation.match(0.1f, "an explanation"));
+        ExplainingMatch m3 = new ExplainingMatch("1", "1", Explanation.match(0.1f, "another explanation"));
+        ExplainingMatch m4 = new ExplainingMatch("1", "1", Explanation.match(0.1f, "an explanation"));
+
+        assertThat(m1).isEqualTo(m4);
+        assertThat(m1.hashCode()).isEqualTo(m4.hashCode());
+        assertThat(m1).isNotEqualTo(m2);
+        assertThat(m1.hashCode()).isNotEqualTo(m2.hashCode());
+        assertThat(m1).isNotEqualTo(m3);
+        assertThat(m3).isNotEqualTo(m4);
+
     }
 }

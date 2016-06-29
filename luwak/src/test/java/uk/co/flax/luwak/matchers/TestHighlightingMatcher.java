@@ -273,4 +273,27 @@ public class TestHighlightingMatcher {
         assertThat(matches).matchesQuery("1", "1").withHitCount(2);
     }
 
+    @Test
+    public void testEquality() {
+
+        HighlightsMatch m1 = new HighlightsMatch("1", "1");
+        m1.addHit("field", 0, 1, 0, 1);
+
+        HighlightsMatch m2 = new HighlightsMatch("1", "1");
+        m2.addHit("field", 0, 1, 0, 1);
+
+        HighlightsMatch m3 = new HighlightsMatch("1", "1");
+        m3.addHit("field", 0, 2, 0, 1);
+
+        HighlightsMatch m4 = new HighlightsMatch("2", "1");
+        m4.addHit("field", 0, 1, 0, 1);
+
+        Assertions.assertThat(m1).isEqualTo(m2);
+        Assertions.assertThat(m1.hashCode()).isEqualTo(m2.hashCode());
+
+        Assertions.assertThat(m1).isNotEqualTo(m3);
+        Assertions.assertThat(m1).isNotEqualTo(m4);
+
+    }
+
 }

@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
+import java.util.Objects;
+
 import org.apache.lucene.search.Explanation;
 import uk.co.flax.luwak.QueryMatch;
 
@@ -30,5 +32,19 @@ public class ExplainingMatch extends QueryMatch {
 
     public Explanation getExplanation() {
         return explanation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ExplainingMatch that = (ExplainingMatch) o;
+        return Objects.equals(explanation, that.explanation);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), explanation);
     }
 }

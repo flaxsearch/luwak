@@ -69,4 +69,9 @@ public class QueryMatch {
     public int hashCode() {
         return Objects.hash(queryId, docId);
     }
+
+    @Override
+    public String toString() {
+        return "Match(doc=" + docId + ",query=" + queryId + ")";
+    }
 }
