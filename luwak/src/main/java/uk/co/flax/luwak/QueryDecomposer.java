@@ -56,18 +56,6 @@ public class QueryDecomposer {
         return qs;
     }
 
-    /**
-     * Apply a boost to a query
-     * @param q the query
-     * @param boost the boost
-     * @return the boosted query
-     */
-    public static Query boost(Query q, float boost) {
-        if (boost == 1.0)
-            return q;
-        return new BoostQuery(q, boost);
-    }
-
     public Collection<Query> decomposeBoostQuery(BoostQuery q) {
         if (q.getBoost() == 1.0)
             return decompose(q.getQuery());
@@ -92,8 +80,6 @@ public class QueryDecomposer {
         List<Query> exclusions = new LinkedList<>();
         List<Query> mandatory = new LinkedList<>();
 
-        float parentBoost = q.getBoost();
-
         for (BooleanClause clause : q) {
             if (clause.getOccur() == BooleanClause.Occur.MUST)
                 mandatory.add(clause.getQuery());
@@ -101,7 +87,7 @@ public class QueryDecomposer {
                 exclusions.add(clause.getQuery());
             else {
                 for (Query subQuery : decompose(clause.getQuery())) {
-                    subqueries.add(boost(subQuery, parentBoost));
+                    subqueries.add(subQuery);
                 }
             }
         }
@@ -114,7 +100,7 @@ public class QueryDecomposer {
         // decompose the MUST clause instead
         if (mandatory.size() == 1) {
             for (Query subQuery : decompose(mandatory.get(0))) {
-                subqueries.add(boost(subQuery, parentBoost));
+                subqueries.add(subQuery);
             }
         }
 

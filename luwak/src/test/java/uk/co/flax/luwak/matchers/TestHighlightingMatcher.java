@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -129,6 +130,16 @@ public class TestHighlightingMatcher {
                         public Query rewrite(IndexReader reader) throws IOException {
                             throw new RuntimeException("Oops!");
                         }
+
+                        @Override
+                        public boolean equals(Object o) {
+                            return false;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 0;
+                        }
                     };
                 }
                 return new LuceneQueryParser(textfield).parse(queryString, metadata);
@@ -193,9 +204,9 @@ public class TestHighlightingMatcher {
 
     @Test
     public void testDisjunctionMaxQuery() throws IOException {
-        final DisjunctionMaxQuery query = new DisjunctionMaxQuery(1.0f);
-        query.add(new TermQuery(new Term(textfield, "term1")));
-        query.add(new PrefixQuery(new Term(textfield, "term2")));
+        final DisjunctionMaxQuery query = new DisjunctionMaxQuery(Arrays.asList(
+                new TermQuery(new Term(textfield, "term1")), new PrefixQuery(new Term(textfield, "term2"))
+        ), 1.0f);
 
         monitor = new Monitor(new MonitorQueryParser() {
             @Override

@@ -34,7 +34,7 @@ class QueryIndex {
     
     QueryIndex(IndexWriter indexWriter) throws IOException {
         this.writer = indexWriter;
-        this.manager = new SearcherManager(writer, true, new TermsHashBuilder());
+        this.manager = new SearcherManager(writer, true, true, new TermsHashBuilder());
     }
     
     QueryIndex() throws IOException {

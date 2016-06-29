@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.NumericTokenStream;
+import org.apache.lucene.analysis.LegacyNumericTokenStream;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
@@ -15,10 +15,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.AttributeImpl;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.NumericUtils;
+import org.apache.lucene.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
@@ -121,6 +118,16 @@ public abstract class PresearcherTestBase {
         public Query rewrite(IndexReader reader) throws IOException {
             return new MatchAllDocsQuery();
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
     }
 
     static class TestQueryParser implements MonitorQueryParser {
@@ -165,6 +172,11 @@ public abstract class PresearcherTestBase {
         }
 
         @Override
+        public void reflectWith(AttributeReflector attributeReflector) {
+
+        }
+
+        @Override
         public void copyTo(AttributeImpl attribute) {
 
         }
@@ -203,6 +215,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void filtersOnNumericTermQueries() throws IOException {
 
         // Rudimentary query parser which returns numeric encoded BytesRefs
@@ -211,7 +224,7 @@ public abstract class PresearcherTestBase {
             public Query parse(String queryString, Map<String, String> metadata) throws Exception
             {
                 BytesRefBuilder brb = new BytesRefBuilder();
-                NumericUtils.intToPrefixCoded(Integer.parseInt(queryString), 0, brb);
+                LegacyNumericUtils.intToPrefixCoded(Integer.parseInt(queryString), 0, brb);
 
                 Term t = new Term(TEXTFIELD, brb.get());
                 return new TermQuery(t);
@@ -223,7 +236,7 @@ public abstract class PresearcherTestBase {
             }
 
             for (int i = 8; i <= 15; i++) {
-                NumericTokenStream nts = new NumericTokenStream(1);
+                LegacyNumericTokenStream nts = new LegacyNumericTokenStream(1);
                 nts.setIntValue(i);
                 InputDocument doc = InputDocument.builder("doc" + i)
                         .addField(new TextField(TEXTFIELD, nts)).build();

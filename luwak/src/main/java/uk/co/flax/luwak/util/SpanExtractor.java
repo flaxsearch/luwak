@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanScorer;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -42,8 +43,8 @@ public class SpanExtractor {
     public static List<Spans> getSpans(Scorer scorer, boolean errorOnNoSpans) {
 
         List<Spans> spans = new ArrayList<>();
-        if (scorer instanceof Spans) {
-            spans.add((Spans) scorer);
+        if (scorer instanceof SpanScorer) {
+            spans.add(((SpanScorer) scorer).getSpans());
             return spans;
         }
 

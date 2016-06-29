@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
@@ -155,15 +154,6 @@ public class QueryAnalyzer {
      */
     public List<QueryTerm> collectTerms(Query luceneQuery) {
         return collectTerms(buildTree(luceneQuery));
-    }
-
-    /**
-     * Collect terms from a lucene Filter
-     * @param luceneFilter the filter to analyze and collect terms from
-     * @return a list of QueryTerms
-     */
-    public List<QueryTerm> collectTerms(Filter luceneFilter) {
-        return collectTerms(buildTree(luceneFilter));
     }
 
     public boolean advancePhase(QueryTree queryTree, TreeAdvancer advancer) {

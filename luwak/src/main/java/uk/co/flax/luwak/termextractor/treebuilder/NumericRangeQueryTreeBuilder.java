@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
-import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.LegacyNumericRangeQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.AnyNode;
@@ -27,14 +27,15 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  *
  * Currently just returns QueryTerm.Type.ANY
  */
-public class NumericRangeQueryTreeBuilder extends QueryTreeBuilder<NumericRangeQuery> {
+@SuppressWarnings("deprecation")
+public class NumericRangeQueryTreeBuilder extends QueryTreeBuilder<LegacyNumericRangeQuery> {
 
     public NumericRangeQueryTreeBuilder() {
-        super(NumericRangeQuery.class);
+        super(LegacyNumericRangeQuery.class);
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, NumericRangeQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, LegacyNumericRangeQuery query) {
         return new AnyNode(query.getField(), query.toString());
     }
 }

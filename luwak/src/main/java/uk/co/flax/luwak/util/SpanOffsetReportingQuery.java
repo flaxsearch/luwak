@@ -70,14 +70,13 @@ public class SpanOffsetReportingQuery extends SpanQuery {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
         SpanOffsetReportingQuery that = (SpanOffsetReportingQuery) o;
         return Objects.equals(in, that.in);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), in);
+        return Objects.hash(in);
     }
 
     @Override

@@ -86,7 +86,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
             monitor.update(new MonitorQuery("1", "f:test"));
 
-            try (IndexReader reader = DirectoryReader.open(writer, false)) {
+            try (IndexReader reader = DirectoryReader.open(writer, false, false)) {
 
                 InputDocument doc = InputDocument.builder("doc1")
                         .addField("f", "this is a test document", WHITESPACE).build();

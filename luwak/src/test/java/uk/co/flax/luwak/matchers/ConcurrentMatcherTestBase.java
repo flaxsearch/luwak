@@ -87,7 +87,7 @@ public abstract class ConcurrentMatcherTestBase {
                 // 'test' and 'doc' parts will match.  'test' will have a higher score,
                 // because of it's lower termfreq.  We need to check that each query ends
                 // up with the score for the 'test' subquery, not the 'doc' subquery
-                assertThat(match.getScore()).isEqualTo(0.2169777f);
+                assertThat(match.getScore()).isEqualTo(2.5316024f);
             }
         }
     }

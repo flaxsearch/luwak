@@ -3,8 +3,6 @@ package uk.co.flax.luwak.termextractor.treebuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.queries.BooleanFilter;
-import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -116,28 +114,6 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
                 }
                 if (clause.getOccur() == BooleanClause.Occur.MUST_NOT) {
                     clauses.negatives.add(clause.getQuery());
-                }
-            }
-            return clauses;
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    public static class FilterBuilder extends BooleanQueryTreeBuilder<BooleanFilter> {
-
-        public FilterBuilder() {
-            super(BooleanFilter.class);
-        }
-
-        @Override
-        protected Clauses analyze(BooleanFilter filter) {
-            Clauses clauses = new Clauses();
-            for (FilterClause clause : filter.clauses()) {
-                if (clause.getOccur() == BooleanClause.Occur.MUST) {
-                    clauses.conjunctions.add(clause.getFilter());
-                }
-                if (clause.getOccur() == BooleanClause.Occur.SHOULD) {
-                    clauses.disjunctions.add(clause.getFilter());
                 }
             }
             return clauses;

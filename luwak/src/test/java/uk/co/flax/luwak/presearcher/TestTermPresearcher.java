@@ -113,7 +113,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
             monitor.update(new MonitorQuery("1", "f:test"));
 
-            try (IndexReader reader = DirectoryReader.open(writer, false)) {
+            try (IndexReader reader = DirectoryReader.open(writer, false, false)) {
 
                 DocumentBatch batch = DocumentBatch.of(
                         InputDocument.builder("doc1").addField("f", "this is a test document", new StandardAnalyzer()).build()

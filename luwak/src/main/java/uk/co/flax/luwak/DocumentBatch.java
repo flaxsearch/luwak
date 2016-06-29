@@ -23,7 +23,7 @@ import java.util.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
@@ -79,7 +79,7 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
      */
     public static class Builder {
 
-        private Similarity similarity = new DefaultSimilarity();
+        private Similarity similarity = new BM25Similarity();
         private List<InputDocument> documents = new ArrayList<>();
 
         /** Add an InputDocument */
@@ -187,7 +187,8 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
             }
 
             writer.commit();
-            LeafReader reader = SlowCompositeReaderWrapper.wrap(DirectoryReader.open(directory));
+            writer.forceMerge(1);
+            LeafReader reader = DirectoryReader.open(directory).leaves().get(0).reader();
             assert reader != null;
 
             docIds = new String[reader.maxDoc()];
@@ -222,15 +223,10 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
             super(documents, similarity);
             assert documents.size() == 1;
             memoryindex.setSimilarity(similarity);
-            try {
-                for (InputDocument doc : documents) {
-                    for (IndexableField field : doc.getDocument()) {
-                        memoryindex.addField(field.name(), field.tokenStream(doc.getAnalyzers(), null));
-                    }
+            for (InputDocument doc : documents) {
+                for (IndexableField field : doc.getDocument()) {
+                    memoryindex.addField(field.name(), field.tokenStream(doc.getAnalyzers(), null));
                 }
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
             }
             memoryindex.freeze();
             reader = (LeafReader) memoryindex.createSearcher().getIndexReader();

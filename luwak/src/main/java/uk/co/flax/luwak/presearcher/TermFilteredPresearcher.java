@@ -198,7 +198,7 @@ public class TermFilteredPresearcher extends Presearcher {
 
         public BytesRefHashIterator(BytesRefHash terms) {
             this.terms = terms;
-            this.sortedTerms = terms.sort(BytesRef.getUTF8SortedAsUnicodeComparator());
+            this.sortedTerms = terms.sort();
         }
 
         @Override

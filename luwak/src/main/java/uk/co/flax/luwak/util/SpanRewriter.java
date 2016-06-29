@@ -25,6 +25,7 @@ import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
@@ -75,7 +76,7 @@ public class SpanRewriter {
     }
 
     protected Query rewriteMultiTermQuery(MultiTermQuery mtq) {
-        return forceOffsets(new XSpanMultiTermQueryWrapper<>(mtq));
+        return forceOffsets(new SpanMultiTermQueryWrapper<>(mtq));
     }
 
     protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) {

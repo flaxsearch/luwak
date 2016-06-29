@@ -6,10 +6,9 @@ import com.google.common.collect.Iterables;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.junit.Test;
-
 import uk.co.flax.luwak.matchers.ScoringMatch;
 import uk.co.flax.luwak.matchers.ScoringMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -44,7 +43,7 @@ public class TestSimilarities {
         {
             monitor.update(new MonitorQuery("1", "test"));
 
-            Similarity similarity = new DefaultSimilarity() {
+            Similarity similarity = new ClassicSimilarity() {
                 @Override
                 public float tf(float freq) {
                     return 1000f;
@@ -59,7 +58,12 @@ public class TestSimilarities {
                     .setSimilarity(similarity)
                     .build();
 
-            Matches<ScoringMatch> standard = monitor.match(doc, ScoringMatcher.FACTORY);
+            DocumentBatch standardBatch = new DocumentBatch.Builder()
+                    .add(doc)
+                    .setSimilarity(new ClassicSimilarity())
+                    .build();
+
+            Matches<ScoringMatch> standard = monitor.match(standardBatch, ScoringMatcher.FACTORY);
             Matches<ScoringMatch> withSim = monitor.match(batch, ScoringMatcher.FACTORY);
 
             assertThat(Iterables.getFirst(standard.getMatches("doc"), null).getScore())

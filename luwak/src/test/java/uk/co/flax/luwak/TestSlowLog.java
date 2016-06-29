@@ -64,6 +64,16 @@ public class TestSlowLog {
                             }
                         };
                     }
+
+                    @Override
+                    public boolean equals(Object o) {
+                        return false;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return 0;
+                    }
                 };
             }
             return new MatchAllDocsQuery();

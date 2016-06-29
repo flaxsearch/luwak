@@ -42,10 +42,10 @@ public class QueryTermFilter {
      * @throws IOException on error
      */
     public QueryTermFilter(IndexReader reader) throws IOException {
-        LeafReader leafReader = SlowCompositeReaderWrapper.wrap(reader);
-        for (String field : leafReader.fields()) {
+        Fields mf = MultiFields.getFields(reader);
+        for (String field : mf) {
             BytesRefHash terms = new BytesRefHash();
-            Terms t = leafReader.terms(field);
+            Terms t = mf.terms(field);
             if (t != null) {
                 TermsEnum te = t.iterator();
                 BytesRef term;
@@ -55,6 +55,7 @@ public class QueryTermFilter {
             }
             termsHash.put(field, terms);
         }
+
     }
 
     /**
