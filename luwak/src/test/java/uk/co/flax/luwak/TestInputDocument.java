@@ -22,6 +22,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.search.Explanation;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -36,6 +37,17 @@ public class TestInputDocument {
 
     @Rule
     public ExpectedException expected = ExpectedException.none();
+
+    @Test
+    public void testSetDefaultAnalyzer() {
+
+        InputDocument doc = InputDocument.builder("id")
+                    .setDefaultAnalyzer(new StandardAnalyzer())
+                    .addField("test", "value", new StandardAnalyzer()).build();
+        Assertions.assertThat(doc != null);
+        Assertions.assertThat(doc.getId().equals("id"));
+        Assertions.assertThat(doc.getDocument().getFields("test").length == 1);
+    }
 
     @Test
     public void testCannotAddReservedFieldName() {
