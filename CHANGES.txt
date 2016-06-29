@@ -3,7 +3,7 @@ Luwak 1.4.0
 
 API changes:
 
-* Upgrade to lucene 5.4.0
+* Upgrade to lucene 5.4.1
 
 Optimizations:
 
