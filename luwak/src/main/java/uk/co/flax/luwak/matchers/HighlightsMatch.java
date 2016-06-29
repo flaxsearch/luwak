@@ -90,6 +90,12 @@ public class HighlightsMatch extends QueryMatch {
         return newMatch;
     }
 
+    void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
+        if (!hits.containsKey(field))
+            hits.put(field, new TreeSet<Hit>());
+        hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -110,10 +116,12 @@ public class HighlightsMatch extends QueryMatch {
         return result;
     }
 
-    void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
-        if (!hits.containsKey(field))
-            hits.put(field, new TreeSet<Hit>());
-        hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
+    @Override
+    public String toString() {
+        return "HighlightsMatch{" +
+                "hits=" + hits +
+                ", error='" + error + '\'' +
+                '}';
     }
 
     /**
