@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.util.ForceNoBulkScoringQuery;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -46,7 +47,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     /**
-     * Creates a new CandidateMatcher for the supplied InputDocument
+     * Creates a new CandidateMatcher for the supplied DocumentBatch
      * @param docs the documents to run queries against
      */
     public CandidateMatcher(DocumentBatch docs) {
@@ -54,7 +55,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     }
 
     /**
-     * Runs the supplied query against this CandidateMatcher's InputDocument, storing any
+     * Runs the supplied query against this CandidateMatcher's DocumentBatch, storing any
      * resulting match, and recording the query in the presearcher hits
      *
      * @param queryId the query id
@@ -64,7 +65,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
      */
     public final void matchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException {
         presearcherHits.add(queryId);
-        doMatchQuery(queryId, matchQuery, metadata);
+        doMatchQuery(queryId, new ForceNoBulkScoringQuery(matchQuery), metadata);
     }
 
     /**

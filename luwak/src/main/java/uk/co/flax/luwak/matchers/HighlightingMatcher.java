@@ -9,12 +9,12 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.spans.SpanCollector;
-import uk.co.flax.luwak.util.ForceNoBulkScoringQuery;
-import uk.co.flax.luwak.util.SpanExtractor;
-import uk.co.flax.luwak.util.SpanRewriter;
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
+import uk.co.flax.luwak.util.ForceNoBulkScoringQuery;
+import uk.co.flax.luwak.util.SpanExtractor;
+import uk.co.flax.luwak.util.SpanRewriter;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -104,7 +104,8 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
         final HighlightCollector collector = new HighlightCollector(queryId);
 
-        docs.getSearcher().search(new ForceNoBulkScoringQuery(rewriter.rewrite(query)), new SimpleCollector() {
+        assert query instanceof ForceNoBulkScoringQuery;
+        docs.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
 
             Scorer scorer;
 

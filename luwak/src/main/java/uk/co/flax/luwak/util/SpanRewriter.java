@@ -40,6 +40,9 @@ public class SpanRewriter {
             return forceOffsets(new XSpanNearQuery((SpanNearQuery)in));
         if (in instanceof SpanQuery)
             return forceOffsets((SpanQuery)in);
+        if (in instanceof ForceNoBulkScoringQuery) {
+            return new ForceNoBulkScoringQuery(rewrite(((ForceNoBulkScoringQuery) in).getWrappedQuery()));
+        }
         if (in instanceof TermQuery)
             return rewriteTermQuery((TermQuery)in);
         if (in instanceof BooleanQuery)
@@ -99,7 +102,7 @@ public class SpanRewriter {
             for (int i = 0; i < terms.size(); i++) {
                 BytesRef term = BytesRef.deepCopyOf(it.next());
                 if (spanQueries.containsKey(it.field()) == false) {
-                    spanQueries.put(it.field(), new ArrayList<SpanTermQuery>());
+                    spanQueries.put(it.field(), new ArrayList<>());
                 }
                 spanQueries.get(it.field()).add(new SpanTermQuery(new Term(it.field(), term)));
             }
