@@ -25,6 +25,7 @@ import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
@@ -37,6 +38,9 @@ public class SpanRewriter {
     public Query rewrite(Query in) {
         if (in instanceof SpanOffsetReportingQuery)
             return in;
+        if (in instanceof SpanNearQuery)
+            // use XSpanNearQuery to ensure that all subspans are correctly positioned
+            return forceOffsets(new XSpanNearQuery((SpanNearQuery)in));
         if (in instanceof SpanQuery)
             return forceOffsets((SpanQuery)in);
         if (in instanceof TermQuery)

@@ -288,6 +288,68 @@ public class TestHighlightingMatcher {
     }
 
     @Test
+    public void testDisjunctionWithOrderedNearSpans() throws Exception {
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.SHOULD)
+                .add(SpanNearQuery.newOrderedNearQuery(textfield)
+                        .addClause(new SpanTermQuery(new Term(textfield, "b")))
+                        .addClause(new SpanTermQuery(new Term(textfield, "c")))
+                        .setSlop(1)
+                        .build(), BooleanClause.Occur.SHOULD)
+                .build();
+        final Query parent = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(bq, BooleanClause.Occur.MUST)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return parent;
+            }
+        }, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b x x x x c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+
+    }
+
+    @Test
+    public void testDisjunctionWithUnorderedNearSpans() throws Exception {
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.SHOULD)
+                .add(SpanNearQuery.newUnorderedNearQuery(textfield)
+                        .addClause(new SpanTermQuery(new Term(textfield, "b")))
+                        .addClause(new SpanTermQuery(new Term(textfield, "c")))
+                        .setSlop(1)
+                        .build(), BooleanClause.Occur.SHOULD)
+                .build();
+        final Query parent = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(bq, BooleanClause.Occur.MUST)
+                .build();
+
+        monitor = new Monitor(new MonitorQueryParser() {
+            @Override
+            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+                return parent;
+            }
+        }, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b x x x x c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1").withHitCount(1);
+
+    }
+
+    @Test
     public void testEquality() {
 
         HighlightsMatch m1 = new HighlightsMatch("1", "1");
