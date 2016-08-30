@@ -25,10 +25,7 @@ import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.*;
 import org.apache.lucene.util.BytesRef;
 
 public class SpanRewriter {
@@ -52,6 +49,8 @@ public class SpanRewriter {
             return rewriteTermsQuery((TermsQuery) in);
         if (in instanceof BoostQuery)
             return rewrite(((BoostQuery) in).getQuery());   // we don't care about boosts for rewriting purposes
+        if (in instanceof PhraseQuery)
+            return rewritePhraseQuery((PhraseQuery)in);
 
         return rewriteUnknown(in);
     }
@@ -88,7 +87,6 @@ public class SpanRewriter {
     }
 
     protected Query rewriteTermsQuery(TermsQuery query) {
-
         Map<String, List<SpanTermQuery>> spanQueries = new HashMap<>();
 
         try {
@@ -114,6 +112,29 @@ public class SpanRewriter {
             throw new IllegalStateException(e);
         }
 
+    }
+
+    /*
+     * This method is only able to rewrite standard phrases where each word must follow the previous one
+     * with no gaps or overlaps.  This does however cover all common uses (such as "amazing horse").
+     */
+    protected Query rewritePhraseQuery(PhraseQuery query) {
+        Term[] terms = query.getTerms();
+        int[] positions = query.getPositions();
+        SpanTermQuery[] spanQueries = new SpanTermQuery[positions.length];
+
+        for(int i = 0; i < positions.length; i++) {
+            if(positions[i] - positions[0] != i) {
+                // positions must increase by 1 each time (i-1 is safe as the if can't be true for i=0)
+                throw new IllegalArgumentException("Don't know how to rewrite PhraseQuery with holes or overlaps " +
+                        "(position must increase by 1 each time but found term " + terms[i-1] + " at position " +
+                        positions[i-1] + " followed by term " + terms[i] + " at position " + positions[i] + ")");
+            }
+
+            spanQueries[i] = new SpanTermQuery(terms[i]);
+        }
+
+        return new SpanNearQuery(spanQueries, query.getSlop(), true);
     }
 
     protected Query rewriteUnknown(Query query) {
