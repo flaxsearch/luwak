@@ -2,7 +2,6 @@ package uk.co.flax.luwak.matchers;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -16,7 +15,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Matches;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -116,34 +118,31 @@ public class TestHighlightingMatcher {
     @Test
     public void testQueryErrors() throws IOException {
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                if (queryString.equals("error!")) {
-                    return new Query() {
-                        @Override
-                        public String toString(String field) {
-                            return "";
-                        }
+        monitor = new Monitor((queryString, metadata) -> {
+            if (queryString.equals("error!")) {
+                return new Query() {
+                    @Override
+                    public String toString(String field) {
+                        return "";
+                    }
 
-                        @Override
-                        public Query rewrite(IndexReader reader) throws IOException {
-                            throw new RuntimeException("Oops!");
-                        }
+                    @Override
+                    public Query rewrite(IndexReader reader) throws IOException {
+                        throw new RuntimeException("Oops!");
+                    }
 
-                        @Override
-                        public boolean equals(Object o) {
-                            return false;
-                        }
+                    @Override
+                    public boolean equals(Object o) {
+                        return false;
+                    }
 
-                        @Override
-                        public int hashCode() {
-                            return 0;
-                        }
-                    };
-                }
-                return new LuceneQueryParser(textfield).parse(queryString, metadata);
+                    @Override
+                    public int hashCode() {
+                        return 0;
+                    }
+                };
             }
+            return new LuceneQueryParser(textfield).parse(queryString, metadata);
         }, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", "test"),
@@ -160,12 +159,7 @@ public class TestHighlightingMatcher {
     @Test
     public void testWildcards() throws IOException {
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return new RegexpQuery(new Term(textfield, "he.*"));
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> new RegexpQuery(new Term(textfield, "he.*")), new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", ""));
 
@@ -187,12 +181,7 @@ public class TestHighlightingMatcher {
                 .add(new TermQuery(new Term(textfield, "term3")), BooleanClause.Occur.MUST_NOT)
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return bq;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> bq, new MatchAllPresearcher());
         monitor.update(new MonitorQuery("1", ""));
 
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term22 term4"), HighlightingMatcher.FACTORY);
@@ -208,12 +197,7 @@ public class TestHighlightingMatcher {
                 new TermQuery(new Term(textfield, "term1")), new PrefixQuery(new Term(textfield, "term2"))
         ), 1.0f);
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return query;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> query, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", ""));
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2 term3"), HighlightingMatcher.FACTORY);
@@ -231,12 +215,7 @@ public class TestHighlightingMatcher {
                 .add(new TermQuery(new Term(textfield, "term1")), BooleanClause.Occur.SHOULD)
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return bq;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> bq, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", ""));
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term1 term2"), HighlightingMatcher.FACTORY);
@@ -262,12 +241,7 @@ public class TestHighlightingMatcher {
                 .add(wrapper2, BooleanClause.Occur.MUST_NOT)
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return bq;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> bq, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", ""));
         Matches<HighlightsMatch> matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
@@ -285,12 +259,7 @@ public class TestHighlightingMatcher {
                 .addClause(new SpanTermQuery(new Term(textfield, "foo")))
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return snq;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> snq, new MatchAllPresearcher());
 
         monitor.update(new MonitorQuery("1", ""));
 
@@ -314,12 +283,7 @@ public class TestHighlightingMatcher {
                 .add(bq, BooleanClause.Occur.MUST)
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return parent;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> parent, new MatchAllPresearcher());
         monitor.update(new MonitorQuery("1", ""));
 
         InputDocument doc = buildDoc("1", "a b x x x x c");
@@ -345,12 +309,7 @@ public class TestHighlightingMatcher {
                 .add(bq, BooleanClause.Occur.MUST)
                 .build();
 
-        monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception {
-                return parent;
-            }
-        }, new MatchAllPresearcher());
+        monitor = new Monitor((queryString, metadata) -> parent, new MatchAllPresearcher());
         monitor.update(new MonitorQuery("1", ""));
 
         InputDocument doc = buildDoc("1", "a b x x x x c");
