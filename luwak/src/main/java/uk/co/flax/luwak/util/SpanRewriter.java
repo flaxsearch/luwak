@@ -32,7 +32,7 @@ public class SpanRewriter {
 
     public static final SpanRewriter INSTANCE = new SpanRewriter();
 
-    public Query rewrite(Query in) {
+    public Query rewrite(Query in) throws RewriteException {
         if (in instanceof SpanOffsetReportingQuery)
             return in;
         if (in instanceof SpanNearQuery)
@@ -67,7 +67,7 @@ public class SpanRewriter {
         return forceOffsets(new SpanTermQuery(tq.getTerm()));
     }
 
-    protected Query rewriteBoolean(BooleanQuery bq) {
+    protected Query rewriteBoolean(BooleanQuery bq) throws RewriteException {
         BooleanQuery.Builder newbq = new BooleanQuery.Builder();
         for (BooleanClause clause : bq) {
             BooleanClause.Occur occur = clause.getOccur();
@@ -82,7 +82,7 @@ public class SpanRewriter {
         return forceOffsets(new SpanMultiTermQueryWrapper<>(mtq));
     }
 
-    protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) {
+    protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) throws RewriteException {
         ArrayList<Query> subQueries = new ArrayList<>();
         for (Query subQuery : disjunctionMaxQuery) {
             subQueries.add(rewrite(subQuery));
@@ -90,7 +90,7 @@ public class SpanRewriter {
         return new DisjunctionMaxQuery(subQueries, disjunctionMaxQuery.getTieBreakerMultiplier());
     }
 
-    protected Query rewriteTermsQuery(TermsQuery query) {
+    protected Query rewriteTermsQuery(TermsQuery query) throws RewriteException {
 
         Map<String, List<SpanTermQuery>> spanQueries = new HashMap<>();
 
@@ -114,13 +114,13 @@ public class SpanRewriter {
             }
             return builder.build();
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            throw new RewriteException("Error rewriting query: " + e.getMessage(), query);
         }
 
     }
 
-    protected Query rewriteUnknown(Query query) {
-        throw new IllegalArgumentException("Don't know how to rewrite " + query.getClass());
+    protected Query rewriteUnknown(Query query) throws RewriteException {
+        throw new RewriteException("Don't know how to rewrite " + query.getClass(), query);
     }
 
 }

@@ -342,4 +342,41 @@ public class TestHighlightingMatcher {
 
     }
 
+    @Test
+    public void testUnrewritableQuery() throws IOException {
+
+        TermQuery inner = new TermQuery(new Term(textfield, "a"));
+        monitor = new Monitor((q, m) -> new Query(){
+            @Override
+            public String toString(String s) {
+                return "test";
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                return false;
+            }
+
+            @Override
+            public int hashCode() {
+                return 0;
+            }
+
+            @Override
+            public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+                return inner.createWeight(searcher, needsScores);
+            }
+        }, new MatchAllPresearcher());
+
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("doc", "a b c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+                .matchesQuery("1", "doc")
+                .withErrorMessage("Don't know how to rewrite");
+
+    }
+
 }

@@ -30,7 +30,7 @@ import uk.co.flax.luwak.QueryMatch;
 public class HighlightsMatch extends QueryMatch {
 
     private final Map<String, Set<Hit>> hits;
-    public String error;
+    public Exception error;
 
     /**
      * Create a new QueryMatch object for a query

@@ -13,6 +13,7 @@ import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
 import uk.co.flax.luwak.util.ForceNoBulkScoringQuery;
+import uk.co.flax.luwak.util.RewriteException;
 import uk.co.flax.luwak.util.SpanExtractor;
 import uk.co.flax.luwak.util.SpanRewriter;
 
@@ -105,7 +106,7 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
         final HighlightCollector collector = new HighlightCollector(queryId);
 
         assert query instanceof ForceNoBulkScoringQuery;
-        docs.getSearcher().search(rewriter.rewrite(query), new SimpleCollector() {
+        docs.getSearcher().search(query, new SimpleCollector() {
 
             Scorer scorer;
 
@@ -114,9 +115,8 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
                 try {
                     collector.setMatch(i);
                     SpanExtractor.collect(scorer, collector, true);
-                }
-                catch (Exception e) {
-                    collector.match.error = e.getMessage();
+                } catch (Exception e) {
+                    collector.match.error = e;
                 }
             }
 
@@ -137,23 +137,37 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     protected HighlightsMatch doMatch(String queryId, Query query) throws IOException {
         if (docs.getSearcher().count(query) == 0)
             return null;
-        return findHighlights(queryId, query);
+        try {
+            Query rewritten = rewriter.rewrite(query);
+            return findHighlights(queryId, rewritten);
+        }
+        catch (RewriteException e) {
+            return fallback(queryId, query, e);
+        }
     }
 
-    public static final MatcherFactory<HighlightsMatch> FACTORY = new MatcherFactory<HighlightsMatch>() {
-        @Override
-        public HighlightingMatcher createMatcher(DocumentBatch docs) {
-            return new HighlightingMatcher(docs, new SpanRewriter());
-        }
-    };
+    // if we can't extract highlights because of a rewrite exception, just report matches with no hits
+    protected HighlightsMatch fallback(String queryId, Query query, RewriteException e) throws IOException {
+        final HighlightCollector collector = new HighlightCollector(queryId);
+        docs.getSearcher().search(query, new SimpleCollector() {
+            @Override
+            public void collect(int i) throws IOException {
+                collector.setMatch(i);
+            }
+
+            @Override
+            public boolean needsScores() {
+                return false;
+            }
+        });
+        collector.match.error = e;
+        return collector.match;
+    }
+
+    public static final MatcherFactory<HighlightsMatch> FACTORY = docs1 -> new HighlightingMatcher(docs1, new SpanRewriter());
 
     public static MatcherFactory<HighlightsMatch> factory(final SpanRewriter rewriter) {
-        return new MatcherFactory<HighlightsMatch>() {
-            @Override
-            public CandidateMatcher<HighlightsMatch> createMatcher(DocumentBatch docs) {
-                return new HighlightingMatcher(docs, rewriter);
-            }
-        };
+        return docs1 -> new HighlightingMatcher(docs1, rewriter);
     }
 
 }

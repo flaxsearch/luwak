@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestSpanRewriter {
 
     @Test
-    public void testTermsQueryWithMultipleFields() {
+    public void testTermsQueryWithMultipleFields() throws RewriteException {
 
         TermsQuery tq = new TermsQuery(new Term("field1", "term1"), new Term("field2", "term1"), new Term("field2", "term2"));
 
@@ -35,7 +35,7 @@ public class TestSpanRewriter {
     }
 
     @Test
-    public void testBoostQuery() {
+    public void testBoostQuery() throws RewriteException {
 
         Query q = new SpanRewriter().rewrite(new BoostQuery(new TermQuery(new Term("f", "t")), 2.0f));
         assertThat(q).isInstanceOf(SpanOffsetReportingQuery.class);
@@ -43,7 +43,7 @@ public class TestSpanRewriter {
     }
 
     @Test
-    public void testMultiTermQueryEquals() {
+    public void testMultiTermQueryEquals() throws RewriteException {
 
         WildcardQuery wq = new WildcardQuery(new Term("field", "term"));
         Query q1 = new SpanRewriter().rewrite(wq);

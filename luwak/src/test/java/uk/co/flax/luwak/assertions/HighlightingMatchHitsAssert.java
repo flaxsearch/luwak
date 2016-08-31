@@ -37,4 +37,10 @@ public class HighlightingMatchHitsAssert extends AbstractAssert<HighlightingMatc
         Assertions.assertThat(actual.getHits(fieldname).size()).isGreaterThan(0);
         return new FieldMatchAssert(this, actual.getHits(fieldname));
     }
+
+    public HighlightingMatchHitsAssert withErrorMessage(String message) {
+        Assertions.assertThat(actual.error).isNotNull();
+        Assertions.assertThat(actual.error.getMessage()).contains(message);
+        return this;
+    }
 }

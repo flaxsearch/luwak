@@ -11,6 +11,7 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanCollector;
+import uk.co.flax.luwak.util.RewriteException;
 import uk.co.flax.luwak.util.SpanExtractor;
 import uk.co.flax.luwak.util.SpanRewriter;
 import org.apache.lucene.store.Directory;
@@ -605,7 +606,11 @@ public class Monitor implements Closeable {
         QueryIndex.QueryBuilder queryBuilder = new PresearcherQueryBuilder(docs.getIndexReader()){
             @Override
             public Query buildQuery(QueryTermFilter termFilter) throws IOException {
-                return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(termFilter)));
+                try {
+                    return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(termFilter)));
+                } catch (RewriteException e) {
+                    throw new IOException(e);
+                }
             }
         };
         queryIndex.search(queryBuilder, collector);
