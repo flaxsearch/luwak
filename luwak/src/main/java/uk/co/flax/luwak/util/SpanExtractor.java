@@ -77,7 +77,8 @@ public class SpanExtractor {
             // the correct document
             if (spanDoc == doc || (spanDoc < doc && spans.advance(doc) == doc)) {
                 while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-                    spans.collect(collector);
+                    if (spans.startPosition() != -1)
+                        spans.collect(collector);
                 }
             }
         }
