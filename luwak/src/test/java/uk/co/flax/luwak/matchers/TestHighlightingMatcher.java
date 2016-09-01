@@ -77,7 +77,23 @@ public class TestHighlightingMatcher {
                 .matchesQuery("query1", "doc1")
                     .inField(textfield)
                         .withHit(new HighlightsMatch.Hit(3, 10, 3, 14));
+    }
 
+    @Test
+    public void singlePhraseQueryMatchesSingleDocument() throws IOException {
+
+        MonitorQuery mq = new MonitorQuery("query1", "\"test document\"");
+        monitor.update(mq);
+
+        Matches<HighlightsMatch> matcher = monitor.match(buildDoc("doc1", "this is a test document"),
+                HighlightingMatcher.FACTORY);
+
+        assertThat(matcher)
+                .hasMatchCount("doc1", 1)
+                .matchesQuery("query1", "doc1")
+                .inField(textfield)
+                .withHit(new HighlightsMatch.Hit(3, 10, 3, 14))
+                .withHit(new HighlightsMatch.Hit(4, 15, 4, 23));
     }
 
     @Test
@@ -90,7 +106,6 @@ public class TestHighlightingMatcher {
 
         Assertions.assertThat(match.toString())
                 .isEqualTo("Match(doc=1,query=1){hits={afield=[0(0)->1(4)], field=[0(-1)->1(-1), 2(-1)->3(-1)]}}");
-
     }
 
     @Test
@@ -112,7 +127,6 @@ public class TestHighlightingMatcher {
                         .withHit(new HighlightsMatch.Hit(3, 10, 3, 14))
                     .inField("field2")
                         .withHit(new HighlightsMatch.Hit(5, 26, 5, 30));
-
     }
 
     @Test
@@ -169,7 +183,6 @@ public class TestHighlightingMatcher {
                 .hasMatchCount("1", 1);
 
         Assertions.assertThat(matches.matches("1", "1").getHitCount()).isEqualTo(1);
-
     }
 
     @Test
@@ -188,7 +201,6 @@ public class TestHighlightingMatcher {
         assertThat(matches)
                 .matchesQuery("1", "1")
                 .withHitCount(2);
-
     }
 
     @Test
@@ -249,7 +261,6 @@ public class TestHighlightingMatcher {
 
         matches = monitor.match(buildDoc("1", "term2 term"), HighlightingMatcher.FACTORY);
         assertThat(matches).matchesQuery("1", "1").withHitCount(1);
-
     }
 
     @Test
@@ -339,7 +350,6 @@ public class TestHighlightingMatcher {
 
         Assertions.assertThat(m1).isNotEqualTo(m3);
         Assertions.assertThat(m1).isNotEqualTo(m4);
-
     }
 
     @Test

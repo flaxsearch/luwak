@@ -18,6 +18,8 @@ package uk.co.flax.luwak.util;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +33,6 @@ public class TestSpanRewriter {
 
         Query q = new SpanRewriter().rewrite(tq);
         assertThat(q).isInstanceOf(BooleanQuery.class);
-
     }
 
     @Test
@@ -39,7 +40,6 @@ public class TestSpanRewriter {
 
         Query q = new SpanRewriter().rewrite(new BoostQuery(new TermQuery(new Term("f", "t")), 2.0f));
         assertThat(q).isInstanceOf(SpanOffsetReportingQuery.class);
-
     }
 
     @Test
@@ -50,7 +50,19 @@ public class TestSpanRewriter {
         Query q2 = new SpanRewriter().rewrite(wq);
 
         assertThat(q1).isEqualTo(q2);
-
     }
 
+    @Test
+    public void testPhraseQuery() throws RewriteException {
+
+        PhraseQuery pq = new PhraseQuery(1, "field1", "term1", "term2");
+
+        Query q = new SpanRewriter().rewrite(pq);
+        assertThat(q).isInstanceOf(SpanNearQuery.class);
+
+        SpanNearQuery sq = (SpanNearQuery)q;
+        assertThat(sq.getClauses()).contains(new SpanTermQuery(new Term("field1", "term1")),
+                new SpanTermQuery(new Term("field1", "term2")));
+        assertThat(sq.getSlop()).isEqualTo(1);
+    }
 }
