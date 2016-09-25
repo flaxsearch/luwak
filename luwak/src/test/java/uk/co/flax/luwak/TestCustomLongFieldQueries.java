@@ -14,6 +14,7 @@ import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -42,7 +43,7 @@ public class TestCustomLongFieldQueries {
 
     private static long parseDate(String date) {
         try {
-            return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").parse(date).getTime();
+            return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.ENGLISH).parse(date).getTime();
         } catch (java.text.ParseException e) {
             e.printStackTrace();
             return 0;
