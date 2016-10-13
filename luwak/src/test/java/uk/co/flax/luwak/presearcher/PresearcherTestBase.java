@@ -203,14 +203,15 @@ public abstract class PresearcherTestBase {
     @Test
     public void testNonStringTermHandling() throws IOException {
 
-        Monitor monitor = new Monitor(new NonStringTermQueryParser(), presearcher);
-        monitor.update(new MonitorQuery("1", "testquery"));
+        try(Monitor monitor = new Monitor(new NonStringTermQueryParser(), presearcher)) {
+            monitor.update(new MonitorQuery("1", "testquery"));
 
-        InputDocument doc = InputDocument.builder("1").addField(new TextField("f", new NonStringTokenStream())).build();
+            InputDocument doc = InputDocument.builder("1").addField(new TextField("f", new NonStringTokenStream())).build();
 
-        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
-                .hasMatchCount("1", 1)
-                .hasQueriesRunCount(1);
+            assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                    .hasMatchCount("1", 1)
+                    .hasQueriesRunCount(1);
+        }
 
     }
 
