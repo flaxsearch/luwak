@@ -36,6 +36,7 @@ public class HighlightsMatch extends QueryMatch {
      * Create a new QueryMatch object for a query
      *
      * @param queryId the ID of the query
+     * @param docId document id of the matching document
      * @param hits the hits recorded for this query
      */
     public HighlightsMatch(String queryId, String docId, Map<String, Set<Hit>> hits) {

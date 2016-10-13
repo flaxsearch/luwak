@@ -27,7 +27,7 @@ import uk.co.flax.luwak.MatcherFactory;
  * A Matcher that reports the scores of queries run against its DocumentBatch
  *
  * To change the {@link Similarity} implementation used for scoring here, use
- * {@link DocumentBatch.Builder#setSimilarity(Similarity)} when building the
+ * {@link uk.co.flax.luwak.DocumentBatch.Builder#setSimilarity(Similarity)} when building the
  * batch.
  */
 public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {

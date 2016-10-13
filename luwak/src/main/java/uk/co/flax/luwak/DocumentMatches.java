@@ -30,7 +30,10 @@ public class DocumentMatches<T extends QueryMatch> implements Iterable<T> {
 
     private final Collection<T> matches;
 
-    /** Create a DocumentMatches object recording no matches for a given document */
+    /** Create a DocumentMatches object recording no matches for a given document
+     * @param docId Lucene document id for the document
+     * @return a DocumentMatches object recording no matches for a given document
+     */
     public static <T extends QueryMatch> DocumentMatches<T> noMatches(String docId) {
         return new DocumentMatches<>(docId, Collections.<T>emptyList());
     }
@@ -50,12 +53,16 @@ public class DocumentMatches<T extends QueryMatch> implements Iterable<T> {
         return matches.iterator();
     }
 
-    /** Return the docid for this object */
+    /** Return the docid for this object
+     * @return the docid for this object
+     */
     public String getDocId() {
         return docId;
     }
 
-    /** Return the matches for this object */
+    /** Return the matches for this object
+     * @return the matches for this object
+     */
     public Collection<T> getMatches() {
         return matches;
     }

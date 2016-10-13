@@ -38,7 +38,9 @@ public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
         }
     };
 
-    /** Create a new ExplainingMatcher for the provided DocumentBatch */
+    /** Create a new ExplainingMatcher for the provided DocumentBatch
+     * @param docs batch of documents to match
+     */
     public ExplainingMatcher(DocumentBatch docs) {
         super(docs);
     }
