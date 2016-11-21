@@ -6,7 +6,6 @@ import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.*;
 import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.analysis.util.CharacterUtils;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -39,7 +38,6 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
     private int tokStart;
     private int tokEnd;
 
-    private final CharacterUtils charUtils;
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final PositionIncrementAttribute posIncAtt;
     private final PositionLengthAttribute posLenAtt;
@@ -58,7 +56,6 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
      */
     public SuffixingNGramTokenFilter(TokenStream input, String suffix, String wildcardToken, int maxTokenLength) {
         super(input);
-        this.charUtils = CharacterUtils.getInstance();
 
         this.suffix = suffix;
         this.anyToken = wildcardToken;
@@ -84,7 +81,7 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
 
                 curTermBuffer = termAtt.buffer().clone();
                 curTermLength = termAtt.length();
-                curCodePointCount = charUtils.codePointCount(termAtt);
+                curCodePointCount = Character.codePointCount(termAtt, 0, termAtt.length());
                 curGramSize = curTermLength;
                 curPos = 0;
                 curPosInc = posIncAtt.getPositionIncrement();
@@ -108,8 +105,8 @@ public final class SuffixingNGramTokenFilter extends TokenFilter {
             }
             if (curGramSize >= 0 && (curPos + curGramSize) <= curCodePointCount) {
                 clearAttributes();
-                final int start = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, 0, curPos);
-                final int end = charUtils.offsetByCodePoints(curTermBuffer, 0, curTermLength, start, curGramSize);
+                final int start = Character.offsetByCodePoints(curTermBuffer, 0, curTermLength, 0, curPos);
+                final int end = Character.offsetByCodePoints(curTermBuffer, 0, curTermLength, start, curGramSize);
                 termAtt.copyBuffer(curTermBuffer, start, end - start);
                 termAtt.append(suffix);
                 if ((curGramSize == curTermLength - curPos) && !seenSuffixes.add(termAtt.subSequence(0, termAtt.length()))) {
