@@ -49,7 +49,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void singleTermQueryMatchesSingleDocument() throws IOException {
+    public void singleTermQueryMatchesSingleDocument() throws IOException, UpdateException {
 
         String document = "This is a test document";
 
@@ -67,7 +67,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void matchStatisticsAreReported() throws IOException {
+    public void matchStatisticsAreReported() throws IOException, UpdateException {
         String document = "This is a test document";
         DocumentBatch batch = DocumentBatch.of(InputDocument.builder("doc1")
                 .addField(TEXTFIELD, document, ANALYZER)
@@ -82,7 +82,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void updatesOverwriteOldQueries() throws IOException {
+    public void updatesOverwriteOldQueries() throws IOException, UpdateException {
         monitor.update(new MonitorQuery("query1", "this"));
 
         monitor.update(new MonitorQuery("query1", "that"));
@@ -94,10 +94,10 @@ public class TestMonitor {
     }
 
     @Test
-    public void canDeleteById() throws IOException {
+    public void canDeleteById() throws IOException, UpdateException {
 
-        Assertions.assertThat(monitor.update(new MonitorQuery("query1", "this"))).isEmpty();
-        Assertions.assertThat(monitor.update(new MonitorQuery("query2", "that"), new MonitorQuery("query3", "other"))).isEmpty();
+        monitor.update(new MonitorQuery("query1", "this"));
+        monitor.update(new MonitorQuery("query2", "that"), new MonitorQuery("query3", "other"));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(3);
 
         monitor.deleteById("query2", "query1");
@@ -111,7 +111,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void canRetrieveQuery() throws IOException {
+    public void canRetrieveQuery() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that"));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
@@ -123,7 +123,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void canClearTheMonitor() throws IOException {
+    public void canClearTheMonitor() throws IOException, UpdateException {
         monitor.update(new MonitorQuery("query1", "a"), new MonitorQuery("query2", "b"), new MonitorQuery("query3", "c"));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(3);
 
@@ -144,7 +144,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void testUpdateReporting() throws IOException {
+    public void testUpdateReporting() throws IOException, UpdateException {
 
         List<MonitorQuery> queries = new ArrayList<>(10400);
         for (int i = 0; i < 10355; i++) {
@@ -173,7 +173,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void testMatcherMetadata() throws IOException {
+    public void testMatcherMetadata() throws IOException, UpdateException {
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             HashMap<String, String> metadataMap = new HashMap<>();
             metadataMap.put("key", "value");
@@ -204,7 +204,7 @@ public class TestMonitor {
     }
 
     @Test
-    public void testDocumentBatching() throws IOException {
+    public void testDocumentBatching() throws IOException, UpdateException {
 
         DocumentBatch batch = DocumentBatch.of(
             InputDocument.builder("doc1").addField(TEXTFIELD, "this is a test", ANALYZER).build(),

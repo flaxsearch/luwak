@@ -11,6 +11,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.InputDocument;
 import uk.co.flax.luwak.MonitorQuery;
 import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.assertions.TokenStreamAssert;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 
@@ -35,7 +36,7 @@ import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Test
-    public void filtersWildcards() throws IOException {
+    public void filtersWildcards() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "/hell.*/"));
 
@@ -45,7 +46,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void ngramsOnlyMatchWildcards() throws IOException {
+    public void ngramsOnlyMatchWildcards() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "hello"));
 
@@ -55,7 +56,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testLongTermsStillMatchWildcards() throws IOException {
+    public void testLongTermsStillMatchWildcards() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "/a.*/"));
 
@@ -70,7 +71,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void caseSensitivity() throws IOException {
+    public void caseSensitivity() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "foo"));
 

@@ -41,7 +41,7 @@ import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 public class TestTermPresearcher extends PresearcherTestBase {
 
     @Test
-    public void filtersOnTermQueries() throws IOException {
+    public void filtersOnTermQueries() throws IOException, UpdateException {
 
         MonitorQuery query1
                 = new MonitorQuery("1", "furble");
@@ -60,7 +60,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void ignoresTermsOnNotQueries() throws IOException {
+    public void ignoresTermsOnNotQueries() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "document -test"));
 
@@ -74,7 +74,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void matchesAnyQueries() throws IOException {
+    public void matchesAnyQueries() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "/hell./"));
 
@@ -102,7 +102,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testQueryBuilder() throws IOException {
+    public void testQueryBuilder() throws IOException, UpdateException {
 
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
         Presearcher presearcher = createPresearcher();

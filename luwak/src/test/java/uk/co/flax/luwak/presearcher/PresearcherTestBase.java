@@ -63,7 +63,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    public void testNullFieldHandling() throws IOException {
+    public void testNullFieldHandling() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "field_1:test"));
 
@@ -83,7 +83,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    public void testMatchAllQueryHandling() throws IOException {
+    public void testMatchAllQueryHandling() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "*:*"));
 
@@ -93,7 +93,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    public void testNegativeQueryHandling() throws IOException {
+    public void testNegativeQueryHandling() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "*:* -f:foo"));
 
@@ -139,7 +139,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    public void testAnyTokenHandling() throws IOException {
+    public void testAnyTokenHandling() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new TestQueryParser(), presearcher)) {
             monitor.update(new MonitorQuery("1", "testquery"));
@@ -201,7 +201,7 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    public void testNonStringTermHandling() throws IOException {
+    public void testNonStringTermHandling() throws IOException, UpdateException {
 
         try(Monitor monitor = new Monitor(new NonStringTermQueryParser(), presearcher)) {
             monitor.update(new MonitorQuery("1", "testquery"));
@@ -217,7 +217,7 @@ public abstract class PresearcherTestBase {
 
     @Test
     @SuppressWarnings("deprecation")
-    public void filtersOnNumericTermQueries() throws IOException {
+    public void filtersOnNumericTermQueries() throws IOException, UpdateException {
 
         // Rudimentary query parser which returns numeric encoded BytesRefs
         try (Monitor numeric_monitor = new Monitor(new MonitorQueryParser() {

@@ -22,10 +22,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.Explanation;
 import org.junit.Ignore;
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Matches;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -34,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestExplainingMatcher {
 
     @Test
-    public void testExplainingMatcher() throws IOException {
+    public void testExplainingMatcher() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             monitor.update(new MonitorQuery("1", "test"), new MonitorQuery("2", "wibble"));

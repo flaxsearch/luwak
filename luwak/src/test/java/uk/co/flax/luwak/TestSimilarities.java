@@ -37,7 +37,7 @@ public class TestSimilarities {
     public static final Analyzer ANALYZER = new WhitespaceAnalyzer();
 
     @Test
-    public void testNonStandardSimilarity() throws IOException {
+    public void testNonStandardSimilarity() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher()))
         {

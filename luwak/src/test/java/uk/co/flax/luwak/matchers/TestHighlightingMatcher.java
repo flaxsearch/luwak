@@ -15,10 +15,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Matches;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -64,7 +61,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void singleTermQueryMatchesSingleDocument() throws IOException {
+    public void singleTermQueryMatchesSingleDocument() throws IOException, UpdateException {
 
         MonitorQuery mq = new MonitorQuery("query1", "test");
         monitor.update(mq);
@@ -80,7 +77,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void singlePhraseQueryMatchesSingleDocument() throws IOException {
+    public void singlePhraseQueryMatchesSingleDocument() throws IOException, UpdateException {
 
         MonitorQuery mq = new MonitorQuery("query1", "\"test document\"");
         monitor.update(mq);
@@ -109,7 +106,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void multiFieldQueryMatches() throws IOException {
+    public void multiFieldQueryMatches() throws IOException, UpdateException {
 
         InputDocument doc = InputDocument.builder("doc1")
                 .addField("field1", "this is a test of field one", WHITESPACE)
@@ -130,7 +127,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void testQueryErrors() throws IOException {
+    public void testQueryErrors() throws IOException, UpdateException {
 
         monitor = new Monitor((queryString, metadata) -> {
             if (queryString.equals("error!")) {
@@ -171,7 +168,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void testWildcards() throws IOException {
+    public void testWildcards() throws IOException, UpdateException {
 
         monitor = new Monitor((queryString, metadata) -> new RegexpQuery(new Term(textfield, "he.*")), new MatchAllPresearcher());
 
@@ -204,7 +201,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void testDisjunctionMaxQuery() throws IOException {
+    public void testDisjunctionMaxQuery() throws IOException, UpdateException {
         final DisjunctionMaxQuery query = new DisjunctionMaxQuery(Arrays.asList(
                 new TermQuery(new Term(textfield, "term1")), new PrefixQuery(new Term(textfield, "term2"))
         ), 1.0f);
@@ -353,7 +350,7 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    public void testUnrewritableQuery() throws IOException {
+    public void testUnrewritableQuery() throws IOException, UpdateException {
 
         TermQuery inner = new TermQuery(new Term(textfield, "a"));
         monitor = new Monitor((q, m) -> new Query(){

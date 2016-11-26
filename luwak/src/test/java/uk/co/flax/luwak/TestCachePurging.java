@@ -43,7 +43,7 @@ public class TestCachePurging {
     public ExpectedException expected = ExpectedException.none();
 
     @Test
-    public void testQueryCacheCanBePurged() throws IOException {
+    public void testQueryCacheCanBePurged() throws IOException, UpdateException {
 
         final AtomicInteger purgeCount = new AtomicInteger();
         QueryIndexUpdateListener listener = new QueryIndexUpdateListener() {
@@ -150,7 +150,7 @@ public class TestCachePurging {
     }
 
     @Test
-    public void testBackgroundPurges() throws IOException, InterruptedException {
+    public void testBackgroundPurges() throws IOException, InterruptedException, UpdateException {
 
         QueryIndexConfiguration config = new QueryIndexConfiguration().setPurgeFrequency(1, TimeUnit.SECONDS);
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher(), config)) {

@@ -26,10 +26,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
@@ -41,7 +38,7 @@ public class TestBenchmark {
     private Monitor monitor;
 
     @Before
-    public void startMonitor() throws IOException {
+    public void startMonitor() throws IOException, UpdateException {
         monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher());
         monitor.update(new MonitorQuery("1", "cheese"));
         monitor.update(new MonitorQuery("2", "sesquipedalian"));

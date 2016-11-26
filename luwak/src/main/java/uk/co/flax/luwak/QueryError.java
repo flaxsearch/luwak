@@ -23,29 +23,24 @@ import java.util.Locale;
  */
 public class QueryError {
 
-    /** The query Id */
-    public final String id;
-
     /** The query */
-    public final String query;
+    public final MonitorQuery query;
 
     /** The error */
-    public final String error;
+    public final Exception error;
 
     /**
      * Create a new QueryError
-     * @param id the query id
      * @param query the query
-     * @param errorMessage the error
+     * @param error the error
      */
-    public QueryError(String id, String query, String errorMessage) {
-        this.id = id;
+    public QueryError(MonitorQuery query, Exception error) {
         this.query = query;
-        this.error = errorMessage;
+        this.error = error;
     }
 
     @Override
     public String toString() {
-        return String.format(Locale.ROOT, "Error parsing query %s [%s] : %s", id, query, error);
+        return String.format(Locale.ROOT, "Error parsing query %s [%s] : %s", query, error.getMessage());
     }
 }

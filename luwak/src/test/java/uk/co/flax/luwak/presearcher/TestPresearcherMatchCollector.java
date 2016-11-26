@@ -4,10 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.junit.Test;
-import uk.co.flax.luwak.InputDocument;
-import uk.co.flax.luwak.Monitor;
-import uk.co.flax.luwak.MonitorQuery;
-import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
@@ -34,7 +31,7 @@ public class TestPresearcherMatchCollector {
     public static final String TEXTFIELD = "f";
 
     @Test
-    public void testMatchCollectorShowMatches() throws IOException {
+    public void testMatchCollectorShowMatches() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher())) {
             monitor.update(new MonitorQuery("1", "test"));

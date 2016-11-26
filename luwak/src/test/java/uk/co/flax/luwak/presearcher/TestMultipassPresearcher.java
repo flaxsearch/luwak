@@ -41,7 +41,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testSimpleBoolean() throws IOException {
+    public void testSimpleBoolean() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "field:\"hello world\""),
                        new MonitorQuery("2", "field:world"),
@@ -57,7 +57,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testComplexBoolean() throws IOException {
+    public void testComplexBoolean() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "field:(+foo +bar +(badger cormorant))"));
 
@@ -75,7 +75,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testQueryBuilder() throws IOException {
+    public void testQueryBuilder() throws IOException, UpdateException {
 
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
         Presearcher presearcher = createPresearcher();

@@ -63,7 +63,11 @@ public class StandardBenchmark {
             System.out.println("Benchmarking presearcher " + presearcher.toString());
             try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD), presearcher)) {
                 long start = System.nanoTime();
-                monitor.update(loadQueries());
+                try {
+                    monitor.update(loadQueries());
+                } catch (UpdateException e) {
+                    System.out.println(e.errors.size() + " queries had errors");
+                }
                 System.out.println("Loaded queries in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " ms");
                 // run through once to warm up
                 Benchmark.run(monitor, loadDocuments(), 10, PresearcherMatcher.FACTORY);

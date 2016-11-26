@@ -49,7 +49,7 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
     public static final Analyzer ANALYZER = new StandardAnalyzer();
 
     @Test
-    public void testBatchFiltering() throws IOException {
+    public void testBatchFiltering() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "test", ImmutableMap.of("language", "en")),
                 new MonitorQuery("2", "wahl", ImmutableMap.of("language", "de")),
@@ -99,7 +99,7 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
     }
 
     @Test
-    public void testFieldFiltering() throws IOException {
+    public void testFieldFiltering() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "test", ImmutableMap.of("language", "en")),
                        new MonitorQuery("2", "test", ImmutableMap.of("language", "de")),
@@ -141,7 +141,7 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
     }
 
     @Test
-    public void testFilteringOnMatchAllQueries() throws IOException {
+    public void testFilteringOnMatchAllQueries() throws IOException, UpdateException {
         monitor.update(new MonitorQuery("1", "*:*", ImmutableMap.of("language", "de")));
 
         InputDocument doc = InputDocument.builder("enDoc")

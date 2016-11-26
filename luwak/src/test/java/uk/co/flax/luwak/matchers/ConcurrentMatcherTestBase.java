@@ -39,7 +39,7 @@ public abstract class ConcurrentMatcherTestBase {
         MatcherFactory<T> matcherFactory(ExecutorService executor, MatcherFactory<T> factory, int threads);
 
     @Test
-    public void testAllMatchesAreCollected() throws IOException {
+    public void testAllMatchesAreCollected() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             List<MonitorQuery> queries = new ArrayList<>();
@@ -60,7 +60,7 @@ public abstract class ConcurrentMatcherTestBase {
     }
 
     @Test
-    public void testMatchesAreDisambiguated() throws IOException {
+    public void testMatchesAreDisambiguated() throws IOException, UpdateException {
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("field"), new MatchAllPresearcher())) {
             List<MonitorQuery> queries = new ArrayList<>();
@@ -93,7 +93,7 @@ public abstract class ConcurrentMatcherTestBase {
     }
 
     @Test
-    public void testParallelSlowLog() throws IOException {
+    public void testParallelSlowLog() throws IOException, UpdateException {
 
         ExecutorService executor = Executors.newCachedThreadPool();
 

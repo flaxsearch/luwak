@@ -1,6 +1,5 @@
 package uk.co.flax.luwak;
 
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -17,6 +16,7 @@ import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -67,12 +67,15 @@ public class TestMonitorErrorHandling {
     public void testMonitorErrors() throws Exception {
 
         try (Monitor monitor = new Monitor(createMockCache(), new MatchAllPresearcher())) {
-            List<QueryError> errors = monitor.update(
-                new MonitorQuery("1", "unparseable"),
-                new MonitorQuery("2", "test"),
-                new MonitorQuery("3", "error"));
-
-            assertThat(errors).hasSize(1);
+            try {
+                monitor.update(new MonitorQuery("1", "unparseable"),
+                        new MonitorQuery("2", "test"),
+                        new MonitorQuery("3", "error"));
+                fail("Expected an UpdateException");
+            }
+            catch (UpdateException e) {
+                assertThat(e.errors).hasSize(1);
+            }
 
             InputDocument doc = InputDocument.builder("doc").addField(FIELD, "test", ANALYZER).build();
             DocumentBatch batch = DocumentBatch.of(doc);
@@ -94,12 +97,16 @@ public class TestMonitorErrorHandling {
                 .thenReturn(new Document());
 
         try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), presearcher)) {
-            List<QueryError> errors
-            = monitor.update(new MonitorQuery("1", "1"), new MonitorQuery("2", "2"), new MonitorQuery("3", "3"));
-
-            assertThat(errors).hasSize(1);
-            assertThat(errors.get(0).id).isEqualTo("2");
-            assertThat(monitor.getQueryCount()).isEqualTo(2);
+            try {
+                monitor.update(new MonitorQuery("1", "1"),
+                        new MonitorQuery("2", "2"),
+                        new MonitorQuery("3", "3"));
+                fail("Expected an UpdateException");
+            } catch (UpdateException e) {
+                assertThat(e.errors).hasSize(1);
+                assertThat(e.errors.get(0).query.getId()).isEqualTo("2");
+                assertThat(monitor.getQueryCount()).isEqualTo(2);
+            }
         }
     }
 

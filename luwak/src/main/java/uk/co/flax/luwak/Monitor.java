@@ -355,10 +355,10 @@ public class Monitor implements Closeable {
     /**
      * Add new queries to the monitor
      * @param queries the MonitorQueries to add
-     * @return a list of exceptions for queries that could not be added
      * @throws IOException on IO errors
+     * @throws UpdateException if any of the queries could not be added
      */
-    public List<QueryError> update(Iterable<MonitorQuery> queries) throws IOException {
+    public void update(Iterable<MonitorQuery> queries) throws IOException, UpdateException {
 
         List<QueryError> errors = new ArrayList<>();
         List<Indexable> updates = new ArrayList<>();
@@ -369,16 +369,17 @@ public class Monitor implements Closeable {
                     updates.add(new Indexable(query.getId(), queryCacheEntry, buildIndexableQuery(query.getId(), query, queryCacheEntry)));
                 }
             } catch (Exception e) {
-                errors.add(new QueryError(query.getId(), query.getQuery(), e.getMessage()));
+                errors.add(new QueryError(query, e));
             }
             if (updates.size() > commitBatchSize) {
                 commit(updates);
                 updates.clear();
             }
         }
-
         commit(updates);
-        return errors;
+
+        if (errors.isEmpty() == false)
+            throw new UpdateException(errors);
     }
 
     private Iterable<QueryCacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
@@ -402,11 +403,11 @@ public class Monitor implements Closeable {
     /**
      * Add new queries to the monitor
      * @param queries the MonitorQueries to add
-     * @return a list of exceptions for queries that could not be added
      * @throws IOException on IO errors
+     * @throws UpdateException if any of the queries could not be added
      */
-    public List<QueryError> update(MonitorQuery... queries) throws IOException {
-        return update(Arrays.asList(queries));
+    public void update(MonitorQuery... queries) throws IOException, UpdateException {
+        update(Arrays.asList(queries));
     }
 
     /**

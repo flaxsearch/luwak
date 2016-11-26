@@ -32,7 +32,8 @@ import uk.co.flax.luwak.util.CollectionUtils;
  *
  * Use as follows:
  * <pre class="prettyprint">
- *     try (ConcurrentQueryLoader loader = new ConcurrentQueryLoader(monitor)) {
+ *     List&lt;QueryError&gt; errors = new ArrayList&lt;&gt;();
+ *     try (ConcurrentQueryLoader loader = new ConcurrentQueryLoader(monitor, errors)) {
  *         for (MonitorQuery mq : getQueries()) {
  *             loader.add(mq);
  *         }
@@ -131,7 +132,12 @@ public class ConcurrentQueryLoader implements Closeable {
                     if (workerQueue.size() == 0 && shutdown)
                         running = false;
                     if (workerQueue.size() > 0) {
-                        errors.addAll(monitor.update(workerQueue));
+                        try {
+                            monitor.update(workerQueue);
+                        }
+                        catch (UpdateException e) {
+                            errors.addAll(e.errors);
+                        }
                     }
                 }
             }

@@ -44,7 +44,7 @@ public class TestMonitorPersistence {
     }
 
     @Test
-    public void testCacheIsRepopulated() throws IOException {
+    public void testCacheIsRepopulated() throws IOException, UpdateException {
 
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
@@ -70,7 +70,7 @@ public class TestMonitorPersistence {
     }
 
     @Test
-    public void testMonitorCanAvoidStoringQueries() throws IOException {
+    public void testMonitorCanAvoidStoringQueries() throws IOException, UpdateException {
 
         QueryIndexConfiguration config = new QueryIndexConfiguration().storeQueries(false);
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
