@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.Explanation;
-import org.junit.Ignore;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
@@ -45,7 +44,6 @@ public class TestExplainingMatcher {
     }
 
     @Test
-    @Ignore("Lucene Explanations don't implement hashCode() or equals() until 6.2")
     public void testHashcodeAndEquals() {
 
         ExplainingMatch m1 = new ExplainingMatch("1", "1", Explanation.match(0.1f, "an explanation"));
