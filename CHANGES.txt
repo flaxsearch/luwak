@@ -21,8 +21,8 @@ Bug fixes:
 * Several fixes to the HighlightingMatcher span-rewrite code
 * Luwak-specific queries correctly implement equals() and hashCode(), fixing
   some query-cache interaction bugs.
-* HighlightsMatch.Hit now imeplements hashCode()
-* QueryTreeAnalyzer uses a LinkedHashSet to enfore deterministic iteration
+* HighlightsMatch.Hit now implements hashCode()
+* QueryTreeAnalyzer uses a LinkedHashSet to enforce deterministic iteration
   order over its children
 
 Luwak 1.3.0
