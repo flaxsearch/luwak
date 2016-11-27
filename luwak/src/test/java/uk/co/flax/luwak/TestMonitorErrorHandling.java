@@ -1,5 +1,6 @@
 package uk.co.flax.luwak;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -107,6 +108,20 @@ public class TestMonitorErrorHandling {
                 assertThat(e.errors.get(0).query.getId()).isEqualTo("2");
                 assertThat(monitor.getQueryCount()).isEqualTo(2);
             }
+        }
+    }
+
+    @Test
+    public void testMonitorQueryNullValues() {
+
+        try {
+            Map<String, String> metadata2 = new HashMap<>();
+            metadata2.put("key", null);
+            new MonitorQuery("id", "query", metadata2);
+            fail("Expected an IllegalArgumentException");
+        }
+        catch (IllegalArgumentException e) {
+            assertThat(e).hasMessage("Null value for key key in metadata map");
         }
     }
 

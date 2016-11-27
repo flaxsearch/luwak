@@ -50,6 +50,7 @@ public class MonitorQuery {
         this.id = id;
         this.query = query;
         this.metadata = Collections.unmodifiableMap(new TreeMap<>(metadata));
+        checkNullEntries(this.metadata);
     }
 
     /**
@@ -58,7 +59,14 @@ public class MonitorQuery {
      * @param query the query
      */
     public MonitorQuery(String id, String query) {
-        this(id, query, Collections.<String, String>emptyMap());
+        this(id, query, Collections.emptyMap());
+    }
+
+    private static void checkNullEntries(Map<String, String> metadata) {
+        for (Map.Entry<String, String> entry : metadata.entrySet()) {
+            if (entry.getValue() == null)
+                throw new IllegalArgumentException("Null value for key " + entry.getKey() + " in metadata map");
+        }
     }
 
     /**
