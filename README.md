@@ -1,7 +1,7 @@
 Luwak - stored query engine from Flax                   
 =====================================
 [![Build
-Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=topic%2Flucene-5.3)](https://travis-ci.org/flaxsearch/luwak)
+Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=master)](https://travis-ci.org/flaxsearch/luwak)
 
 What is Luwak?
 --------------
@@ -25,7 +25,7 @@ Get the artifacts
 <dependency>
   <groupId>com.github.flaxsearch</groupId>
   <artifactId>luwak</artifactId>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ Basic usage looks like this:
 Monitor monitor = new Monitor(new LuceneQueryParser("field"), new TermFilteredPresearcher());
 
 MonitorQuery mq = new MonitorQuery("query1", "field:text");
-monitor.update(mq);
+List<QueryError> errors = monitor.update(mq);
 
 // match one document at a time
 InputDocument doc = InputDocument.builder("doc1")
@@ -56,6 +56,12 @@ Adding queries
 The monitor is updated using MonitorQuery objects, which consist of an id, a query string, and an
 optional metadata map.  The monitor uses its provided MonitorQueryParser
 to parse the query strings and cache query objects.
+
+In Luwak 1.5.0, errors thrown when adding queries (from query parsing, for example) cause an
+UpdateException to be thrown, detailing which queries could not be added.
+
+In Luwak 1.4 and below, ```Monitor.update()``` returns a list of ```QueryError``` objects, which should 
+be checked for parse errors.  The list will be empty if all queries were added successfully.
 
 Matching documents
 ------------------
