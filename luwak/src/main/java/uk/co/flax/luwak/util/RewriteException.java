@@ -23,6 +23,8 @@ import org.apache.lucene.search.Query;
  */
 public class RewriteException extends Exception {
 
+    private static final long serialVersionUID = -82604657523783759L;
+
     public final Query cause;
 
     public RewriteException(String message, Query cause) {

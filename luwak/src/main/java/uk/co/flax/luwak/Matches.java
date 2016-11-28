@@ -92,7 +92,7 @@ public class Matches<T extends QueryMatch> implements Iterable<DocumentMatches<T
      * @return the number of queries that matched for a given document
      */
     public int getMatchCount(String docId) {
-        DocumentMatches docMatches = matches.get(docId);
+        DocumentMatches<T> docMatches = matches.get(docId);
         if (docMatches == null)
             return 0;
         return docMatches.getMatches().size();

@@ -24,6 +24,8 @@ import java.util.List;
  */
 public class UpdateException extends Exception {
 
+    private static final long serialVersionUID = -2701284159561061331L;
+
     /**
      * The list of errors thrown during an update
      */
