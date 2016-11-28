@@ -41,6 +41,6 @@ public class QueryError {
 
     @Override
     public String toString() {
-        return String.format(Locale.ROOT, "Error parsing query %s [%s] : %s", query, error.getMessage());
+        return String.format(Locale.ROOT, "Error parsing query %s : %s", query, error.getMessage());
     }
 }
