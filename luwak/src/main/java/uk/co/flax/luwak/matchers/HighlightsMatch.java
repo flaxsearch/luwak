@@ -50,10 +50,17 @@ public class HighlightsMatch extends QueryMatch {
     }
 
     /**
+     * @return a map of hits per field
+     */
+    public Map<String, Set<Hit>> getHits() {
+        return Collections.unmodifiableMap(this.hits);
+    }
+
+    /**
      * @return the fields in which matches have been found
      */
     public Set<String> getFields() {
-        return hits.keySet();
+        return Collections.unmodifiableSet(hits.keySet());
     }
 
     /**
@@ -120,7 +127,7 @@ public class HighlightsMatch extends QueryMatch {
 
     void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
         if (!hits.containsKey(field))
-            hits.put(field, new TreeSet<Hit>());
+            hits.put(field, new TreeSet<>());
         hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
     }
 
