@@ -66,7 +66,7 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
         this.wildcardToken = wildcardToken;
-        this.excludedFields = excludedFields == null ? new HashSet<String>() : excludedFields;
+        this.excludedFields = excludedFields == null ? new HashSet<>() : excludedFields;
     }
 
     /**

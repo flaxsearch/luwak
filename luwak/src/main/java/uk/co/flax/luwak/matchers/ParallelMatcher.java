@@ -164,7 +164,7 @@ public class ParallelMatcher<T extends QueryMatch> extends CandidateMatcher<T> {
 
     /* Marker object placed on the queue after all matches are done, to indicate to the
        worker threads that they should finish */
-    private static final MatcherTask END = new MatcherTask("", null, Collections.<String, String>emptyMap());
+    private static final MatcherTask END = new MatcherTask("", null, Collections.emptyMap());
 
     public static class ParallelMatcherFactory<T extends QueryMatch> implements MatcherFactory<T> {
 

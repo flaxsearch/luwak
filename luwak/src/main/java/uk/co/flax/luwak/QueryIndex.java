@@ -46,12 +46,7 @@ class QueryIndex {
         public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
             IndexSearcher searcher = super.newSearcher(reader, previousReader);
             termFilters.put(reader, new QueryTermFilter(reader));
-            reader.addReaderClosedListener(new IndexReader.ReaderClosedListener() {
-                @Override
-                public void onClose(IndexReader reader) throws IOException {
-                    termFilters.remove(reader);
-                }
-            });
+            reader.addReaderClosedListener(termFilters::remove);
             return searcher;
         }
     }
@@ -92,12 +87,7 @@ class QueryIndex {
     }
 
     long search(final Query query, QueryCollector matcher) throws IOException {
-        QueryBuilder builder = new QueryBuilder() {
-            @Override
-            public Query buildQuery(QueryTermFilter termFilter) throws IOException {
-                return query;
-            }
-        };
+        QueryBuilder builder = termFilter -> query;
         return search(builder, matcher);
     }
 

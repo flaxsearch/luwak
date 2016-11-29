@@ -39,11 +39,6 @@ public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
         return new QueryMatch(queryId, docId);
     }
 
-    public static final MatcherFactory<QueryMatch> FACTORY = new MatcherFactory<QueryMatch>() {
-        @Override
-        public SimpleMatcher createMatcher(DocumentBatch docs) {
-            return new SimpleMatcher(docs);
-        }
-    };
+    public static final MatcherFactory<QueryMatch> FACTORY = SimpleMatcher::new;
 
 }

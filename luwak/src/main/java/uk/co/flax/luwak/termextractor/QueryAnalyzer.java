@@ -11,7 +11,7 @@ import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
 
-/**
+/*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");

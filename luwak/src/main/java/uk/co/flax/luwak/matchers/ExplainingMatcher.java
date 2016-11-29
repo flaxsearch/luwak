@@ -31,12 +31,7 @@ import uk.co.flax.luwak.MatcherFactory;
 public class ExplainingMatcher extends CandidateMatcher<ExplainingMatch> {
 
     /** A factory for ExplainingMatchers */
-    public static final MatcherFactory<ExplainingMatch> FACTORY = new MatcherFactory<ExplainingMatch>() {
-        @Override
-        public ExplainingMatcher createMatcher(DocumentBatch docs) {
-            return new ExplainingMatcher(docs);
-        }
-    };
+    public static final MatcherFactory<ExplainingMatch> FACTORY = ExplainingMatcher::new;
 
     /** Create a new ExplainingMatcher for the provided DocumentBatch
      * @param docs batch of documents to match

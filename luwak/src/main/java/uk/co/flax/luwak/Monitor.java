@@ -93,15 +93,12 @@ public class Monitor implements Closeable {
 
         long purgeFrequency = configuration.getPurgeFrequency();
         this.purgeExecutor = Executors.newSingleThreadScheduledExecutor();
-        this.purgeExecutor.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    purgeCache();
-                }
-                catch (Throwable e) {
-                    afterPurgeError(e);
-                }
+        this.purgeExecutor.scheduleAtFixedRate(() -> {
+            try {
+                purgeCache();
+            }
+            catch (Throwable e) {
+                afterPurgeError(e);
             }
         }, purgeFrequency, purgeFrequency, configuration.getPurgeFrequencyUnits());
 
@@ -228,37 +225,29 @@ public class Monitor implements Closeable {
         final Set<BytesRef> seenHashes = new HashSet<>();
         final Set<String> seenIds = new HashSet<>();
 
-        queryIndex.purgeCache(new QueryIndex.CachePopulator() {
-            @Override
-            public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                queryIndex.scan(new QueryIndex.QueryCollector() {
-                    @Override
-                    public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
-                        if (seenIds.contains(id)) {
-                            return;
-                        }
-                        seenIds.add(id);
-
-                        BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
-                        MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
-
-                        BytesRef hash = mq.hash();
-                        if (seenHashes.contains(hash)) {
-                            return;
-                        }
-                        seenHashes.add(hash);
-
-                        try {
-                            for (QueryCacheEntry ce : decomposeQuery(mq)) {
-                                newCache.put(ce.hash, ce);
-                            }
-                        } catch (Exception e) {
-                            parseErrors.add(e);
-                        }
-                    }
-                });
+        queryIndex.purgeCache(newCache -> queryIndex.scan((id, query, dataValues) -> {
+            if (seenIds.contains(id)) {
+                return;
             }
-        });
+            seenIds.add(id);
+
+            BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+            MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
+
+            BytesRef hash = mq.hash();
+            if (seenHashes.contains(hash)) {
+                return;
+            }
+            seenHashes.add(hash);
+
+            try {
+                for (QueryCacheEntry ce : decomposeQuery(mq)) {
+                    newCache.put(ce.hash, ce);
+                }
+            } catch (Exception e) {
+                parseErrors.add(e);
+            }
+        }));
         if (parseErrors.size() != 0)
             throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);
     }
@@ -315,18 +304,10 @@ public class Monitor implements Closeable {
      * @throws IOException on IO errors
      */
     public void purgeCache() throws IOException {
-        queryIndex.purgeCache(new QueryIndex.CachePopulator() {
-            @Override
-            public void populateCacheWithIndex(final Map<BytesRef, QueryCacheEntry> newCache) throws IOException {
-                queryIndex.scan(new QueryIndex.QueryCollector() {
-                    @Override
-                    public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
-                        if (query != null)
-                            newCache.put(BytesRef.deepCopyOf(query.hash), query);
-                    }
-                });
-            }
-        });
+        queryIndex.purgeCache(newCache -> queryIndex.scan((id, query, dataValues) -> {
+            if (query != null)
+                newCache.put(BytesRef.deepCopyOf(query.hash), query);
+        }));
         
         lastPurged = System.nanoTime();
         afterPurge();
@@ -512,12 +493,9 @@ public class Monitor implements Closeable {
         if (storeQueries == false)
             throw new IllegalStateException("Cannot call getQuery() as queries are not stored");
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
-        queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), new QueryIndex.QueryCollector() {
-            @Override
-            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
-                BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
-                queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
-            }
+        queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), (id, query, dataValues) -> {
+            BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+            queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
         });
         return queryHolder[0];
     }
@@ -543,12 +521,7 @@ public class Monitor implements Closeable {
      */
     public Set<String> getQueryIds() throws IOException {
         final Set<String> ids = new HashSet<>();
-        queryIndex.scan(new QueryIndex.QueryCollector() {
-            @Override
-            public void matchQuery(String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
-                ids.add(id);
-            }
-        });
+        queryIndex.scan((id, query, dataValues) -> ids.add(id));
         return ids;
     }
 

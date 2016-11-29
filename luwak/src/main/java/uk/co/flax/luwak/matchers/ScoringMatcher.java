@@ -52,11 +52,6 @@ public class ScoringMatcher extends CollectingMatcher<ScoringMatch> {
     /**
      * A MatcherFactory for ScoringMatcher objects
      */
-    public static final MatcherFactory<ScoringMatch> FACTORY = new MatcherFactory<ScoringMatch>() {
-        @Override
-        public ScoringMatcher createMatcher(DocumentBatch docs) {
-            return new ScoringMatcher(docs);
-        }
-    };
+    public static final MatcherFactory<ScoringMatch> FACTORY = ScoringMatcher::new;
 
 }

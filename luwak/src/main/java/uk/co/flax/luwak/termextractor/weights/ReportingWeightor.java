@@ -57,7 +57,7 @@ public class ReportingWeightor extends TreeWeightor {
         return selected;
     }
 
-    public static interface Reporter {
+    public interface Reporter {
 
         void reportTerm(float weight, QueryTerm term);
 

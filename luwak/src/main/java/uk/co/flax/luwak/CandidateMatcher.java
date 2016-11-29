@@ -79,11 +79,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
     protected abstract void doMatchQuery(String queryId, Query matchQuery, Map<String, String> metadata) throws IOException;
 
     private void addMatch(String queryId, String docId, T match) {
-        MatchHolder<T> docMatches = matches.get(docId);
-        if (docMatches == null) {
-            docMatches = new MatchHolder<>();
-            matches.put(docId, docMatches);
-        }
+        MatchHolder<T> docMatches = matches.computeIfAbsent(docId, k -> new MatchHolder<>());
         if (docMatches.matches.containsKey(queryId)) {
             docMatches.matches.put(queryId, resolve(match, docMatches.matches.get(queryId)));
         }
@@ -158,7 +154,7 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
             if (matches.containsKey(id))
                 results.put(id, new DocumentMatches<>(id, matches.get(id).matches.values()));
             else
-                results.put(id, DocumentMatches.<T>noMatches(id));
+                results.put(id, DocumentMatches.noMatches(id));
         }
         return new Matches<>(results, presearcherHits, errors, queryBuildTime, searchTime, queriesRun, docs.getBatchSize(), slowlog);
     }
