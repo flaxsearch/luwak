@@ -90,4 +90,15 @@ public class TestExtractors {
 
     }
 
+    @Test
+    public void testBoostQueryExtractor() {
+
+        BooleanQuery.Builder bq = new BooleanQuery.Builder();
+        bq.add(new TermQuery(new Term("f", "q1")), BooleanClause.Occur.MUST);
+        bq.add(new TermQuery(new Term("f", "q2")), BooleanClause.Occur.SHOULD);
+
+        Query boostQuery = new BoostQuery(bq.build(), 0.5f);
+        assertThat(treeBuilder.collectTerms(boostQuery))
+                .containsExactly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT));
+    }
 }
