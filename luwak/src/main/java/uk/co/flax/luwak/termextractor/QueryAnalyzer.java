@@ -43,6 +43,7 @@ public class QueryAnalyzer {
             new BooleanQueryTreeBuilder.QueryBuilder(),
             new PhraseQueryTreeBuilder(),
             new ConstantScoreQueryTreeBuilder(),
+            new BoostQueryTreeBuilder(),
             new NumericRangeQueryTreeBuilder(),
             new TermRangeQueryTreeBuilder(),
             new RegexpAnyTermQueryTreeBuilder(),
