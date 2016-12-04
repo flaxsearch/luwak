@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.AnyNode;
@@ -35,7 +36,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  * If the query is a pure conjunction, then this extractor will select the best
  * matching term from all the clauses and only extract that.
  */
-public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
+public abstract class BooleanQueryTreeBuilder<T extends Query> extends QueryTreeBuilder<T> {
 
     public BooleanQueryTreeBuilder(Class<T> cls) {
         super(cls);
@@ -58,9 +59,9 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
         return ConjunctionNode.build(buildChildTrees(builder, clauses.getConjunctions()));
     }
 
-    private List<QueryTree> buildChildTrees(QueryAnalyzer builder, List<Object> children) {
+    private List<QueryTree> buildChildTrees(QueryAnalyzer builder, List<Query> children) {
         List<QueryTree> trees = new ArrayList<>();
-        for (Object child : children) {
+        for (Query child : children) {
             trees.add(builder.buildTree(child));
         }
         return trees;
@@ -68,9 +69,9 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
 
     public static class Clauses {
 
-        final List<Object> disjunctions = new ArrayList<>();
-        final List<Object> conjunctions = new ArrayList<>();
-        final List<Object> negatives = new ArrayList<>();
+        final List<Query> disjunctions = new ArrayList<>();
+        final List<Query> conjunctions = new ArrayList<>();
+        final List<Query> negatives = new ArrayList<>();
 
         public boolean isConjunctionQuery() {
             return conjunctions.size() > 0;
@@ -84,11 +85,11 @@ public abstract class BooleanQueryTreeBuilder<T> extends QueryTreeBuilder<T> {
             return conjunctions.size() == 0 && disjunctions.size() == 0 && negatives.size() > 0;
         }
 
-        public List<Object> getDisjunctions() {
+        public List<Query> getDisjunctions() {
             return disjunctions;
         }
 
-        public List<Object> getConjunctions() {
+        public List<Query> getConjunctions() {
             return conjunctions;
         }
     }

@@ -128,14 +128,14 @@ public class QueryAnalyzer {
      * @return a QueryTree describing the analyzed query
      */
     @SuppressWarnings("unchecked")
-    public QueryTree buildTree(Object luceneQuery) {
+    public QueryTree buildTree(Query luceneQuery) {
         QueryTreeBuilder builder = getTreeBuilderForQuery(luceneQuery.getClass());
         if (builder == null)
             throw new UnsupportedOperationException("Can't build query tree from query of type " + luceneQuery.getClass());
         return builder.buildTree(this, luceneQuery);
     }
 
-    public QueryTreeBuilder getTreeBuilderForQuery(Class<?> queryClass) {
+    public QueryTreeBuilder getTreeBuilderForQuery(Class<? extends Query> queryClass) {
         for (QueryTreeBuilder<?> builder : queryTreeBuilders) {
             if (builder.cls.isAssignableFrom(queryClass)) {
                 return builder;
