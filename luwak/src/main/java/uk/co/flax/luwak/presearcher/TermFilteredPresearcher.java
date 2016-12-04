@@ -118,20 +118,6 @@ public class TermFilteredPresearcher extends Presearcher {
         }
     }
 
-    protected BytesRefHash buildTermsHash(String field, LeafReader reader) throws IOException {
-        BytesRefHash terms = new BytesRefHash();
-        Terms t = reader.terms(field);
-        if (t == null) {
-            return terms;
-        }
-        TermsEnum te = t.iterator();
-        BytesRef term;
-        while ((term = te.next()) != null) {
-            terms.add(term);
-        }
-        return terms;
-    }
-
     protected DocumentQueryBuilder getQueryBuilder() {
         return new DocumentQueryBuilder() {
 
