@@ -128,12 +128,19 @@ public class QueryAnalyzer {
      */
     @SuppressWarnings("unchecked")
     public QueryTree buildTree(Object luceneQuery) {
-        for (QueryTreeBuilder queryTreeBuilder : queryTreeBuilders) {
-            if (queryTreeBuilder.cls.isAssignableFrom(luceneQuery.getClass())) {
-                return queryTreeBuilder.buildTree(this, luceneQuery);
+        QueryTreeBuilder builder = getTreeBuilderForQuery(luceneQuery.getClass());
+        if (builder == null)
+            throw new UnsupportedOperationException("Can't build query tree from query of type " + luceneQuery.getClass());
+        return builder.buildTree(this, luceneQuery);
+    }
+
+    public QueryTreeBuilder getTreeBuilderForQuery(Class<?> queryClass) {
+        for (QueryTreeBuilder<?> builder : queryTreeBuilders) {
+            if (builder.cls.isAssignableFrom(queryClass)) {
+                return builder;
             }
         }
-        throw new UnsupportedOperationException("Can't build query tree from query of type " + luceneQuery.getClass());
+        return null;
     }
 
     /**
