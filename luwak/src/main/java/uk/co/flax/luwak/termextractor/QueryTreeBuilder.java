@@ -1,5 +1,6 @@
 package uk.co.flax.luwak.termextractor;
 
+import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 
 /**
@@ -25,7 +26,7 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
  *
  * @param <T> the type of the Query or Filter to extract terms from
  */
-public abstract class QueryTreeBuilder<T> {
+public abstract class QueryTreeBuilder<T extends Query> {
 
     public final Class<T> cls;
 

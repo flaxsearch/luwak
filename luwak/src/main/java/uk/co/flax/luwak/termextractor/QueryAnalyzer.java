@@ -128,7 +128,7 @@ public class QueryAnalyzer {
      * @return a QueryTree describing the analyzed query
      */
     @SuppressWarnings("unchecked")
-    public QueryTree buildTree(Object luceneQuery) {
+    public QueryTree buildTree(Query luceneQuery) {
         for (QueryTreeBuilder queryTreeBuilder : queryTreeBuilders) {
             if (queryTreeBuilder.cls.isAssignableFrom(luceneQuery.getClass())) {
                 return queryTreeBuilder.buildTree(this, luceneQuery);
