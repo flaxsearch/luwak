@@ -37,7 +37,6 @@ public class TestLuceneQueries {
             "org.apache.lucene.search.spans.SpanPositionRangeQuery",
             "org.apache.lucene.search.WildcardQuery",
             "org.apache.lucene.search.NGramPhraseQuery",
-            "org.apache.lucene.search.MatchAllDocsQuery",
             "org.apache.lucene.search.MultiPhraseQuery",
             "org.apache.lucene.queries.CustomScoreQuery",
             "org.apache.lucene.search.PrefixQuery",
@@ -58,6 +57,7 @@ public class TestLuceneQueries {
     public static Set<String> unhandledQueries = ImmutableSet.of(
             "org.apache.lucene.search.DocValuesRangeQuery",
             "org.apache.lucene.search.MatchNoDocsQuery",
+            "org.apache.lucene.search.MatchAllDocsQuery",
             "org.apache.lucene.search.DocValuesTermsQuery",
             "org.apache.lucene.search.TermRangeQuery",
             "org.apache.lucene.search.TermAutomatonQuery",
