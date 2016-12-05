@@ -60,9 +60,10 @@ public class TestSpanExtractors {
     @Test
     public void testSpanMultiTerms() {
         SpanQuery q = new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term("field", "term.*")));
-        assertThat(treeBuilder.collectTerms(q)).containsOnly(
-                new QueryTerm("field", "field:/term.*/", QueryTerm.Type.ANY)
-        );
+        assertThat(treeBuilder.collectTerms(q))
+                .hasSize(1)
+                .extracting("type")
+                .containsOnly(QueryTerm.Type.ANY);
     }
 
 }

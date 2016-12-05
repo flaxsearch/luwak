@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.*;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
-import uk.co.flax.luwak.termextractor.treebuilder.*;
-import uk.co.flax.luwak.util.CollectionUtils;
+import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -39,23 +38,6 @@ public class QueryAnalyzer {
 
     private final List<QueryTreeBuilder<?>> queryTreeBuilders;
 
-    public static final List<QueryTreeBuilder<? extends Query>> DEFAULT_BUILDERS = CollectionUtils.makeUnmodifiableList(
-            new BooleanQueryTreeBuilder.QueryBuilder(),
-            new PhraseQueryTreeBuilder(),
-            new ConstantScoreQueryTreeBuilder(),
-            new BoostQueryTreeBuilder(),
-            new NumericRangeQueryTreeBuilder(),
-            new TermRangeQueryTreeBuilder(),
-            new RegexpAnyTermQueryTreeBuilder(),
-            new SimpleTermQueryTreeBuilder(),
-            new SpanTermQueryTreeBuilder(),
-            new SpanNearQueryTreeBuilder(),
-            new SpanOrQueryTreeBuilder(),
-            new SpanMultiTermQueryWrapperTreeBuilder(),
-            new SpanNotQueryTreeBuilder(),
-            new GenericQueryTreeBuilder()
-    );
-
     public final TreeWeightor weightor;
 
     /**
@@ -67,7 +49,7 @@ public class QueryAnalyzer {
     public QueryAnalyzer(TreeWeightor weightor, List<QueryTreeBuilder<?>> queryTreeBuilders) {
         this.queryTreeBuilders = new ArrayList<>();
         this.queryTreeBuilders.addAll(queryTreeBuilders);
-        this.queryTreeBuilders.addAll(DEFAULT_BUILDERS);
+        this.queryTreeBuilders.addAll(TreeBuilders.DEFAULT_BUILDERS);
         this.weightor = weightor;
     }
 

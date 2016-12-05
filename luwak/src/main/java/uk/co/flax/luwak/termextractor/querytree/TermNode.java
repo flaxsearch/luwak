@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.index.Term;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
 /*
@@ -28,6 +29,10 @@ public class TermNode extends QueryTree {
 
     public TermNode(QueryTerm term) {
         this.term = term;
+    }
+
+    public TermNode(Term term) {
+        this(new QueryTerm(term));
     }
 
     @Override

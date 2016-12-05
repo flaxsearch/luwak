@@ -55,7 +55,9 @@ public class TestExtractors {
         LegacyNumericRangeQuery<Long> nrq = LegacyNumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
 
         assertThat(treeBuilder.collectTerms(nrq))
-                .containsExactly(new QueryTerm("field", "field:[0 TO 10]", QueryTerm.Type.ANY));
+                .hasSize(1)
+                .extracting("type")
+                .containsExactly(QueryTerm.Type.ANY);
 
         BooleanQuery.Builder bq = new BooleanQuery.Builder();
         bq.add(nrq, BooleanClause.Occur.MUST);
