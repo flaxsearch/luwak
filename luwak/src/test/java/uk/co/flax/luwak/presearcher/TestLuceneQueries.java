@@ -19,10 +19,13 @@ import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.google.common.collect.ImmutableSet;
 import org.apache.lucene.search.Query;
 import org.junit.Test;
 import org.reflections.Reflections;
+import org.slf4j.LoggerFactory;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
 
@@ -95,8 +98,15 @@ public class TestLuceneQueries {
         return true;
     }
 
+    private static void quietLogging() {
+        Logger logger = (Logger) LoggerFactory.getLogger("org.reflections.Reflections");
+        logger.setLevel(Level.ERROR);
+    }
+
     @Test
     public void checkAllCoreQueriesAreHandled() {
+
+        quietLogging();
 
         Reflections reflections = new Reflections("org.apache.lucene");
         Set<Class<? extends Query>> coreQueries = reflections.getSubTypesOf(Query.class);
