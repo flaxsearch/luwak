@@ -33,7 +33,6 @@ public class TestLuceneQueries {
     public static Set<String> todoQueries = ImmutableSet.of(
             "org.apache.lucene.search.SynonymQuery",
             "org.apache.lucene.queries.payloads.PayloadScoreQuery",
-            "org.apache.lucene.search.DisjunctionMaxQuery",
             "org.apache.lucene.search.spans.SpanPositionRangeQuery",
             "org.apache.lucene.search.WildcardQuery",
             "org.apache.lucene.search.NGramPhraseQuery",
