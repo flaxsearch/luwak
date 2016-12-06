@@ -1,6 +1,12 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.Collections;
+
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.payloads.MaxPayloadFunction;
+import org.apache.lucene.queries.payloads.PayloadScoreQuery;
+import org.apache.lucene.queries.payloads.SpanPayloadCheckQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.spans.*;
 import org.junit.Test;
@@ -66,4 +72,77 @@ public class TestSpanExtractors {
                 .containsOnly(QueryTerm.Type.ANY);
     }
 
+    @Test
+    public void testSpanWithin() {
+        Term t1 = new Term("field", "term1");
+        Term t2 = new Term("field", "term22");
+        Term t3 = new Term("field", "term333");
+        SpanWithinQuery swq = new SpanWithinQuery(
+                SpanNearQuery.newOrderedNearQuery("field")
+                    .addClause(new SpanTermQuery(t1))
+                    .addClause(new SpanTermQuery(t2))
+                    .build(),
+                new SpanTermQuery(t3));
+
+        assertThat(treeBuilder.collectTerms(swq))
+                .containsExactly(new QueryTerm(t3));
+
+    }
+
+    @Test
+    public void testSpanContains() {
+        Term t1 = new Term("field", "term1");
+        Term t2 = new Term("field", "term22");
+        Term t3 = new Term("field", "term333");
+        SpanContainingQuery swq = new SpanContainingQuery(
+                SpanNearQuery.newOrderedNearQuery("field")
+                        .addClause(new SpanTermQuery(t1))
+                        .addClause(new SpanTermQuery(t2))
+                        .build(),
+                new SpanTermQuery(t3));
+
+        assertThat(treeBuilder.collectTerms(swq))
+                .containsExactly(new QueryTerm(t3));
+
+    }
+
+    @Test
+    public void testSpanBoost() {
+        Term t1 = new Term("field", "term1");
+        SpanBoostQuery q = new SpanBoostQuery(new SpanTermQuery(t1), 0.1f);
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm(t1));
+    }
+
+    @Test
+    public void testFieldMaskingSpanQuery() {
+        Term t1 = new Term("field", "term1");
+        FieldMaskingSpanQuery q = new FieldMaskingSpanQuery(new SpanTermQuery(t1), "field2");
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm(t1));
+    }
+
+    @Test
+    public void testSpanPositionQuery() {
+        Term t1 = new Term("field", "term");
+        Query q = new SpanFirstQuery(new SpanTermQuery(t1), 10);
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm(t1));
+    }
+
+    @Test
+    public void testPayloadScoreQuery() {
+        Term t1 = new Term("field", "term");
+        Query q = new PayloadScoreQuery(new SpanTermQuery(t1), new MaxPayloadFunction());
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm(t1));
+    }
+
+    @Test
+    public void testSpanPayloadCheckQuery() {
+        Term t1 = new Term("field", "term");
+        Query q = new SpanPayloadCheckQuery(new SpanTermQuery(t1), Collections.emptyList());
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm(t1));
+    }
 }

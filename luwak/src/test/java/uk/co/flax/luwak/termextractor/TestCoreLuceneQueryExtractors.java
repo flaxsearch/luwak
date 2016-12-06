@@ -1,4 +1,4 @@
-package uk.co.flax.luwak.presearcher;
+package uk.co.flax.luwak.termextractor;
 /*
  *   Copyright (c) 2016 Lemur Consulting Ltd.
  *
@@ -26,33 +26,25 @@ import org.apache.lucene.search.Query;
 import org.junit.Test;
 import org.reflections.Reflections;
 import org.slf4j.LoggerFactory;
-import uk.co.flax.luwak.termextractor.QueryAnalyzer;
+import uk.co.flax.luwak.presearcher.WildcardNGramPresearcherComponent;
 import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestLuceneQueries {
+public class TestCoreLuceneQueryExtractors {
 
     public static Set<String> todoQueries = ImmutableSet.of(
             "org.apache.lucene.search.SynonymQuery",
-            "org.apache.lucene.queries.payloads.PayloadScoreQuery",
-            "org.apache.lucene.search.spans.SpanPositionRangeQuery",
             "org.apache.lucene.search.WildcardQuery",
             "org.apache.lucene.search.NGramPhraseQuery",
             "org.apache.lucene.search.MultiPhraseQuery",
             "org.apache.lucene.queries.CustomScoreQuery",
             "org.apache.lucene.search.PrefixQuery",
-            "org.apache.lucene.search.spans.SpanWithinQuery",
             "org.apache.lucene.queries.CommonTermsQuery",
             "org.apache.lucene.search.FieldValueQuery",
-            "org.apache.lucene.search.spans.SpanBoostQuery",
-            "org.apache.lucene.search.spans.SpanFirstQuery",
             "org.apache.lucene.search.BlendedTermQuery",
             "org.apache.lucene.search.AutomatonQuery",
-            "org.apache.lucene.queries.BoostingQuery",
-            "org.apache.lucene.queries.payloads.SpanPayloadCheckQuery",
-            "org.apache.lucene.search.spans.FieldMaskingSpanQuery",
-            "org.apache.lucene.search.spans.SpanContainingQuery"
+            "org.apache.lucene.queries.BoostingQuery"
     );
 
     public static Set<String> unhandledQueries = ImmutableSet.of(

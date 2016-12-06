@@ -57,6 +57,23 @@ public class TreeBuilders {
             newDisjunctionBuilder(DisjunctionMaxQuery.class,
                     (b, q) -> q.getDisjuncts().stream().map(b::buildTree).collect(Collectors.toList())),
             TermsQueryTreeBuilder.INSTANCE,
+            new QueryTreeBuilder<SpanWithinQuery>(SpanWithinQuery.class) {
+                @Override
+                public QueryTree buildTree(QueryAnalyzer builder, SpanWithinQuery query) {
+                    return ConjunctionNode.build(builder.buildTree(query.getBig()), builder.buildTree(query.getLittle()));
+                }
+            },
+            new QueryTreeBuilder<SpanContainingQuery>(SpanContainingQuery.class) {
+                @Override
+                public QueryTree buildTree(QueryAnalyzer builder, SpanContainingQuery query) {
+                    return ConjunctionNode.build(builder.buildTree(query.getBig()), builder.buildTree(query.getLittle()));
+                }
+            },
+            newFilteringQueryBuilder(SpanBoostQuery.class, SpanBoostQuery::getQuery),
+            newFilteringQueryBuilder(FieldMaskingSpanQuery.class, FieldMaskingSpanQuery::getMaskedQuery),
+            newFilteringQueryBuilder(SpanPositionCheckQuery.class, SpanPositionCheckQuery::getMatch),
+            PayloadScoreQueryTreeBuilder.INSTANCE,
+            SpanPayloadCheckQueryTreeBuilder.INSTANCE,
             ANY_NODE_BUILDER
     );
 
