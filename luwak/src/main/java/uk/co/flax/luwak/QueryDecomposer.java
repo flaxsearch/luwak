@@ -40,7 +40,13 @@ public class QueryDecomposer {
             return decomposeBoolean((BooleanQuery) q);
 
         if (q instanceof DisjunctionMaxQuery) {
-            return ((DisjunctionMaxQuery)q).getDisjuncts();
+            List<Query> subqueries = new ArrayList<>();
+            for (Query subq : ((DisjunctionMaxQuery) q).getDisjuncts()) {
+                for (Query decomposed : decompose(subq)) {
+                    subqueries.add(decomposed);
+                }
+            }
+            return subqueries;
         }
 
         if (q instanceof BoostQuery) {

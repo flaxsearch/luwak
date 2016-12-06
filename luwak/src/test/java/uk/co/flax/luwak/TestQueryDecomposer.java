@@ -102,4 +102,14 @@ public class TestQueryDecomposer {
         assertThat(decomposer.decompose(q)).containsExactly(q("f:t1"), q("f:t2"));
     }
 
+    @Test
+    public void testNestedDisjunctionMaxDecomposition() throws Exception {
+        Query q = new DisjunctionMaxQuery(
+                ImmutableList.<Query>of(q("hello goodbye"), q("world")), 0.1f
+        );
+
+        assertThat(decomposer.decompose(q))
+                .hasSize(3)
+                .containsExactly(q("hello"), q("goodbye"), q("world"));
+    }
 }
