@@ -54,6 +54,9 @@ public class TreeBuilders {
             newFilteringQueryBuilder(SpanMultiTermQueryWrapper.class, SpanMultiTermQueryWrapper::getWrappedQuery),
             newFilteringQueryBuilder(SpanNotQuery.class, SpanNotQuery::getInclude),
             newFilteringQueryBuilder(BoostedQuery.class, BoostedQuery::getQuery),
+            newDisjunctionBuilder(DisjunctionMaxQuery.class,
+                    (b, q) -> q.getDisjuncts().stream().map(b::buildTree).collect(Collectors.toList())),
+            TermsQueryTreeBuilder.INSTANCE,
             ANY_NODE_BUILDER
     );
 
