@@ -242,7 +242,7 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
             memoryindex.setSimilarity(similarity);
             for (InputDocument doc : documents) {
                 for (IndexableField field : doc.getDocument()) {
-                    memoryindex.addField(field.name(), field.tokenStream(doc.getAnalyzers(), null));
+                    memoryindex.addField(field, doc.getAnalyzers());
                 }
             }
             memoryindex.freeze();

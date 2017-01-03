@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.search.Query;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -218,6 +219,46 @@ public class TestMonitor {
         Assertions.assertThat(response.getBatchSize()).isEqualTo(2);
         Assertions.assertThat(response.iterator()).hasSize(2);
 
+    }
+
+    @Test
+    public void testMutliValuedFieldWithNonDefaultGaps() throws IOException, UpdateException {
+
+        Analyzer analyzer = new Analyzer() {
+            @Override
+            public int getPositionIncrementGap(String fieldName) {
+                return 1000;
+            }
+
+            @Override
+            public int getOffsetGap(String fieldName) {
+                return 2000;
+            }
+
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                return new TokenStreamComponents(new WhitespaceTokenizer());
+            }
+        };
+
+        MonitorQuery mq = new MonitorQuery("query", TEXTFIELD + ":\"hello world\"~5");
+        monitor.update(mq);
+
+        InputDocument doc1 = InputDocument.builder("doc1")
+                .addField(TEXTFIELD, "hello world", analyzer)
+                .addField(TEXTFIELD, "goodbye", analyzer)
+                .build();
+        assertThat(monitor.match(doc1, SimpleMatcher.FACTORY))
+                .matchesDoc("doc1")
+                .hasMatchCount("doc1", 1)
+                .matchesQuery("query", "doc1");
+
+        InputDocument doc2 = InputDocument.builder("doc2")
+                .addField(TEXTFIELD, "hello", analyzer)
+                .addField(TEXTFIELD, "world", analyzer)
+                .build();
+        assertThat(monitor.match(doc2, SimpleMatcher.FACTORY))
+                .hasMatchCount("doc2", 0);
     }
 
 }

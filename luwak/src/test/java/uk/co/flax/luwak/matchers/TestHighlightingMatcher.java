@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
@@ -386,4 +387,63 @@ public class TestHighlightingMatcher {
 
     }
 
+    @Test
+    public void testMutliValuedFieldWithNonDefaultGaps() throws IOException, UpdateException {
+
+        Analyzer analyzer = new Analyzer() {
+            @Override
+            public int getPositionIncrementGap(String fieldName) {
+                return 1000;
+            }
+
+            @Override
+            public int getOffsetGap(String fieldName) {
+                return 2000;
+            }
+
+            @Override
+            protected TokenStreamComponents createComponents(String fieldName) {
+                return new TokenStreamComponents(new WhitespaceTokenizer());
+            }
+        };
+
+        MonitorQuery mq = new MonitorQuery("query", textfield + ":\"hello world\"~5");
+        monitor.update(mq);
+
+        InputDocument doc1 = InputDocument.builder("doc1")
+                .addField(textfield, "hello world", analyzer)
+                .addField(textfield, "goodbye", analyzer)
+                .build();
+        Matches<HighlightsMatch> matcher1 = monitor.match(doc1, HighlightingMatcher.FACTORY);
+        assertThat(matcher1)
+                .hasMatchCount("doc1", 1)
+                .matchesQuery("query", "doc1")
+                    .inField(textfield)
+                        .withHit(new HighlightsMatch.Hit(0, 0, 0, 5))
+                        .withHit(new HighlightsMatch.Hit(1, 6, 1, 11));
+
+        InputDocument doc2 = InputDocument.builder("doc2")
+                .addField(textfield, "hello", analyzer)
+                .addField(textfield, "world", analyzer)
+                .build();
+        Matches<HighlightsMatch> matcher2 = monitor.match(doc2, HighlightingMatcher.FACTORY);
+        assertThat(matcher2)
+                .doesNotMatchQuery("query", "doc2")
+                .hasMatchCount("doc2", 0);
+
+        InputDocument doc3 = InputDocument.builder("doc3")
+                .addField(textfield, "hello world", analyzer)
+                .addField(textfield, "hello goodbye world", analyzer)
+                .build();
+        Matches<HighlightsMatch> matcher3 = monitor.match(doc3, HighlightingMatcher.FACTORY);
+        assertThat(matcher3)
+                .hasMatchCount("doc3", 1)
+                .matchesQuery("query", "doc3")
+                    .inField(textfield)
+                        .withHit(new HighlightsMatch.Hit(0, 0, 0, 5))
+                        .withHit(new HighlightsMatch.Hit(1, 6, 1, 11))
+                        .withHit(new HighlightsMatch.Hit(1002, 2011, 1002, 2016))
+                        .withHit(new HighlightsMatch.Hit(1004, 2025, 1004, 2030));
+
+    }
 }
