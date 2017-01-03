@@ -65,4 +65,14 @@ public class TestSpanRewriter {
                 new SpanTermQuery(new Term("field1", "term2")));
         assertThat(sq.getSlop()).isEqualTo(1);
     }
+
+    @Test
+    public void testConstantScoreQuery() throws RewriteException {
+
+        Query q = new ConstantScoreQuery(new TermQuery(new Term("field", "term")));
+
+        Query rewritten = new SpanRewriter().rewrite(q);
+        assertThat(rewritten).isInstanceOf(SpanOffsetReportingQuery.class);
+
+    }
 }

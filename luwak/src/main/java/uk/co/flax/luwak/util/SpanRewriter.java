@@ -57,6 +57,8 @@ public class SpanRewriter {
             return rewrite(((BoostQuery) in).getQuery());   // we don't care about boosts for rewriting purposes
         if (in instanceof PhraseQuery)
             return rewritePhraseQuery((PhraseQuery)in);
+        if (in instanceof ConstantScoreQuery)
+            return rewrite(((ConstantScoreQuery) in).getQuery());
 
         return rewriteUnknown(in);
     }
