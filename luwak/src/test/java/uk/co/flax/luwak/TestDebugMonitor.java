@@ -47,7 +47,7 @@ public class TestDebugMonitor {
     }
 
     @Test
-    public void testNonEmptyDebugInfo() throws IOException {
+    public void testNonEmptyDebugInfo() throws IOException, UpdateException {
         monitor.update(new MonitorQuery("my-id", "test"));
         monitor.update(new MonitorQuery("my-id2", "test2"));
 
@@ -65,7 +65,7 @@ public class TestDebugMonitor {
     }
 
     @Test
-    public void testChecksums() throws IOException {
+    public void testChecksums() throws IOException, UpdateException {
         monitor.update(new MonitorQuery("my-id", "test"));
         monitor.update(new MonitorQuery("my-id2", "test2"));
         monitor.update(new MonitorQuery("my-id3", "test"));
