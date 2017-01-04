@@ -153,7 +153,7 @@ public class DebugMonitor extends Monitor implements Closeable {
 
         queryIndex.search(builder.build(), new QueryIndex.QueryCollector() {
             @Override
-            public void matchQuery(String id, QueryCacheEntry entry, QueryIndex.DataValues dataValues) throws IOException {
+            public void matchQuery(String queryid, QueryCacheEntry entry, QueryIndex.DataValues dataValues) throws IOException {
                 sb.append("doc: ");
                 sb.append(String.valueOf(dataValues.doc));
                 sb.append("\n");
@@ -244,10 +244,9 @@ public class DebugMonitor extends Monitor implements Closeable {
                 }
 
                 try {  // I would like the dump to continue even in case there's an exception here.
-
-                    md5.update(query.hash.bytes);
-
                     if (query != null) {
+                        md5.update(query.hash.bytes);
+
                         // those xQuery's could be null
                         md5.update(String.valueOf(query.matchQuery).getBytes(StandardCharsets.UTF_8));
                         md5.update(String.valueOf(query.metadata).getBytes(StandardCharsets.UTF_8));
