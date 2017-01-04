@@ -31,6 +31,8 @@ public class QueryIndexConfiguration {
 
     /**
      * Set the QueryDecomposer to be used by the Monitor
+     * @param queryDecomposer the QueryDecomposer to be used by the Monitor
+     * @return the current configuration
      */
     public QueryIndexConfiguration setQueryDecomposer(QueryDecomposer queryDecomposer) {
         this.queryDecomposer = queryDecomposer;
@@ -38,7 +40,7 @@ public class QueryIndexConfiguration {
     }
 
     /**
-     * @return the QueryDecomposer to be used by the Monitor
+     * @return the QueryDecomposer used by the Monitor
      */
     public QueryDecomposer getQueryDecomposer() {
         return queryDecomposer;
@@ -48,6 +50,7 @@ public class QueryIndexConfiguration {
      * Set the frequency with with the Monitor's querycache will be garbage-collected
      * @param frequency the frequency value
      * @param units     the frequency units
+     * @return the current configuration
      */
     public QueryIndexConfiguration setPurgeFrequency(long frequency, TimeUnit units) {
         this.purgeFrequency = frequency;
@@ -56,14 +59,14 @@ public class QueryIndexConfiguration {
     }
 
     /**
-     * Get the value of Monitor's querycache garbage-collection frequency
+     * @return the value of Monitor's querycache garbage-collection frequency
      */
     public long getPurgeFrequency() {
         return purgeFrequency;
     }
 
     /**
-     * Get the units of the Monitor's querycache garbage-collection frequency
+     * @return Get the units of the Monitor's querycache garbage-collection frequency
      */
     public TimeUnit getPurgeFrequencyUnits() {
         return purgeFrequencyUnits;
@@ -71,6 +74,8 @@ public class QueryIndexConfiguration {
 
     /**
      * Set how many queries will be buffered in memory before being committed to the queryindex
+     * @param size how many queries will be buffered in memory before being committed to the queryindex
+     * @return the current configuration
      */
     public QueryIndexConfiguration setQueryUpdateBufferSize(int size) {
         this.queryUpdateBufferSize = size;
@@ -78,7 +83,7 @@ public class QueryIndexConfiguration {
     }
 
     /**
-     * Get the size of the queryindex's in-memory buffer
+     * @return the size of the queryindex's in-memory buffer
      */
     public int getQueryUpdateBufferSize() {
         return queryUpdateBufferSize;
@@ -89,6 +94,9 @@ public class QueryIndexConfiguration {
      *
      * If you don't need to call Monitor.getQuery() at all, you can save some memory
      * by setting this to {@code false}.
+     *
+     * @param storeQueries whether or not the Monitor should store its MonitorQueries
+     * @return the current configuration
      */
     public QueryIndexConfiguration storeQueries(boolean storeQueries) {
         this.storeQueries = storeQueries;
