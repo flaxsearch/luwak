@@ -15,11 +15,12 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
-
 import static uk.co.flax.luwak.assertions.HighlightingMatchAssert.assertThat;
 
 /*
@@ -446,4 +447,69 @@ public class TestHighlightingMatcher {
                         .withHit(new HighlightsMatch.Hit(1004, 2025, 1004, 2030));
 
     }
+
+    @Test
+    public void testDisjunctionWithOrderedNearMatch() throws Exception {
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.SHOULD)
+                .add(SpanNearQuery.newOrderedNearQuery(textfield)
+                        .addClause(new SpanTermQuery(new Term(textfield, "b")))
+                        .addClause(new SpanTermQuery(new Term(textfield, "c")))
+                        .setSlop(1)
+                        .build(), BooleanClause.Occur.SHOULD)
+                .build();
+        final Query parent = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(bq, BooleanClause.Occur.MUST)
+                .build();
+
+        monitor = new Monitor((queryString, metadata) -> parent, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+        .matchesQuery("1", "1")
+            .withHitCount(3)
+            .inField(textfield)
+                .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
+                .withHit(new HighlightsMatch.Hit(1, 2, 1, 3))
+                .withHit(new HighlightsMatch.Hit(2, 4, 2, 5));
+
+    }
+
+    @Test
+    @Ignore("should be the same as ordered near but it's not")
+    public void testDisjunctionWithUnorderedNearSpansMatch() throws Exception {
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.SHOULD)
+                .add(SpanNearQuery.newUnorderedNearQuery(textfield)
+                        .addClause(new SpanTermQuery(new Term(textfield, "b")))
+                        .addClause(new SpanTermQuery(new Term(textfield, "c")))
+                        .setSlop(1)
+                        .build(), BooleanClause.Occur.SHOULD)
+                .build();
+        final Query parent = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(bq, BooleanClause.Occur.MUST)
+                .build();
+
+        monitor = new Monitor((queryString, metadata) -> parent, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+            .matchesQuery("1", "1")
+                .withHitCount(3)
+                .inField(textfield)
+                    .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
+                    .withHit(new HighlightsMatch.Hit(1, 2, 1, 3))
+                    .withHit(new HighlightsMatch.Hit(2, 4, 2, 5));
+    }
+
 }
