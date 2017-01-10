@@ -547,7 +547,7 @@ public class TestHighlightingMatcher {
 
         final Query outerConjunct = new BooleanQuery.Builder()
                 .add(disjunct, BooleanClause.Occur.MUST)
-                .add(new TermQuery(new Term(textfield, "now")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "good")), BooleanClause.Occur.MUST)
                 .build();
 
 
