@@ -559,10 +559,9 @@ public class TestHighlightingMatcher {
 
         assertThat(matches)
             .matchesQuery("1", "1")
-                .withHitCount(3)
+                .withHitCount(2)
                 .inField(textfield)
                     .withHit(new HighlightsMatch.Hit(0, 0, 0, 3))
-                    .withHit(new HighlightsMatch.Hit(1, 4, 1, 6))
                     .withHit(new HighlightsMatch.Hit(6, 24, 6, 28));
     }
 
