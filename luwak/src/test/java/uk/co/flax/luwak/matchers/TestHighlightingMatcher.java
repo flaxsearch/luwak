@@ -446,4 +446,33 @@ public class TestHighlightingMatcher {
                         .withHit(new HighlightsMatch.Hit(1004, 2025, 1004, 2030));
 
     }
+
+    @Test
+    public void testMinShouldMatchQuery() throws Exception {
+
+        final Query minq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "x")), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term(textfield, "y")), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term(textfield, "z")), BooleanClause.Occur.SHOULD)
+                .setMinimumNumberShouldMatch(2)
+                .build();
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "b")), BooleanClause.Occur.MUST)
+                .add(minq, BooleanClause.Occur.SHOULD)
+                .build();
+
+        monitor = new Monitor((queryString, metadata) -> bq, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b x");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1")
+            .withHitCount(2)
+            .inField(textfield)
+                .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
+                .withHit(new HighlightsMatch.Hit(1, 2, 1, 3));
+    }
 }

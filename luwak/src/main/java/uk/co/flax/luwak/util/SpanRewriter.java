@@ -73,6 +73,7 @@ public class SpanRewriter {
 
     protected Query rewriteBoolean(BooleanQuery bq) throws RewriteException {
         BooleanQuery.Builder newbq = new BooleanQuery.Builder();
+        newbq.setMinimumNumberShouldMatch(bq.getMinimumNumberShouldMatch());
         for (BooleanClause clause : bq) {
             BooleanClause.Occur occur = clause.getOccur();
             if (occur == BooleanClause.Occur.FILTER)
