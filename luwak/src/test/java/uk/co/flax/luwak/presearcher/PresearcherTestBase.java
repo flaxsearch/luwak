@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LegacyNumericTokenStream;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -216,7 +216,6 @@ public abstract class PresearcherTestBase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void filtersOnNumericTermQueries() throws IOException, UpdateException {
 
         // Rudimentary query parser which returns numeric encoded BytesRefs
@@ -224,11 +223,7 @@ public abstract class PresearcherTestBase {
             @Override
             public Query parse(String queryString, Map<String, String> metadata) throws Exception
             {
-                BytesRefBuilder brb = new BytesRefBuilder();
-                LegacyNumericUtils.intToPrefixCoded(Integer.parseInt(queryString), 0, brb);
-
-                Term t = new Term(TEXTFIELD, brb.get());
-                return new TermQuery(t);
+                return IntPoint.newExactQuery(TEXTFIELD, Integer.parseInt(queryString));
             }
         }, presearcher)) {
 
@@ -237,10 +232,8 @@ public abstract class PresearcherTestBase {
             }
 
             for (int i = 8; i <= 15; i++) {
-                LegacyNumericTokenStream nts = new LegacyNumericTokenStream(1);
-                nts.setIntValue(i);
                 InputDocument doc = InputDocument.builder("doc" + i)
-                        .addField(new TextField(TEXTFIELD, nts)).build();
+                        .addField(new IntPoint(TEXTFIELD, i)).build();
                 assertThat(numeric_monitor.match(doc, SimpleMatcher.FACTORY))
                         .matchesDoc("doc" + i)
                         .hasMatchCount("doc" + i, 1)
