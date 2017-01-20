@@ -1,0 +1,1 @@
+curl -XPOST -d@src/test/resources/queries.json -H 'Content-Type: application/json' localhost:8080/update/multi
