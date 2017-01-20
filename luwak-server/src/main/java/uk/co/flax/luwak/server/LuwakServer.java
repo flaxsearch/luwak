@@ -21,12 +21,15 @@ import io.dropwizard.setup.Environment;
 public class LuwakServer extends Application<LuwakConfiguration> {
 
     public static void main(String[] args) throws Exception {
+        // If no arguments are given, assume we just want to start up the server
+        if (args.length == 0) {
+            args = new String[] {"server"};
+        }
         new LuwakServer().run(args);
     }
 
     @Override
     public void run(LuwakConfiguration luwakConfiguration, Environment environment) throws Exception {
-
-
+        environment.jersey().register(new ClaimResource());
     }
 }
