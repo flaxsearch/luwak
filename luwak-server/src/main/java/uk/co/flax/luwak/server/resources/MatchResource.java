@@ -1,5 +1,7 @@
 package uk.co.flax.luwak.server.resources;
 
+import uk.co.flax.luwak.Monitor;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
@@ -11,6 +13,11 @@ import javax.ws.rs.core.MediaType;
  */
 @Path("/match")
 public class MatchResource {
+  private final Monitor monitor;
+
+  public MatchResource(Monitor monitor) {
+    this.monitor = monitor;
+  }
 
   @GET
   @Path("/")

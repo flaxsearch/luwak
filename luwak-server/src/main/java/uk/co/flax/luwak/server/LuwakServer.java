@@ -17,6 +17,9 @@ package uk.co.flax.luwak.server;
 
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 import uk.co.flax.luwak.server.resources.MatchResource;
 import uk.co.flax.luwak.server.resources.UpdateResource;
 
@@ -32,7 +35,10 @@ public class LuwakServer extends Application<LuwakConfiguration> {
 
     @Override
     public void run(LuwakConfiguration luwakConfiguration, Environment environment) throws Exception {
-        environment.jersey().register(new MatchResource());
-        environment.jersey().register(new UpdateResource());
+        Monitor monitor = new Monitor(new LuceneQueryParser("field"), new TermFilteredPresearcher());
+        environment.lifecycle().manage(new LuwakMonitorManager(monitor));
+
+        environment.jersey().register(new MatchResource(monitor));
+        environment.jersey().register(new UpdateResource(monitor));
     }
 }
