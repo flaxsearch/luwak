@@ -36,3 +36,15 @@ Then run ```./load-queries <query file>```
 **To match a document against the service**
 
 ./match "This is the contents of my document"
+
+## Deploying to Heroku
+Roughly following the instructions at https://devcenter.heroku.com/articles/getting-started-with-java#introduction
+* Install the Heroku CLI
+* If you have a public SSH key, you can upload it to Heroku
+  to make your life easier: `heroku keys:add ~/.ssh/id_rsa.pub`
+* Create a Heroku app: `heroku create`
+* Push your current branch to heroku: `git push heroku HEAD:master`
+* Once that succeeds, start the app via: `heroku ps:scale web=1`
+* Run `heroku open` to get the URL of the running application. You should be able to
+  to post to the API by appending the correct path, e.g.
+  `POST https://my-app-name.herokuapp.com/update`
