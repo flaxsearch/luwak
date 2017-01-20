@@ -19,9 +19,14 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 
 public class LuwakServer extends Application<LuwakConfiguration> {
-    
+
+    public static void main(String[] args) throws Exception {
+        new LuwakServer().run(args);
+    }
+
     @Override
     public void run(LuwakConfiguration luwakConfiguration, Environment environment) throws Exception {
+
 
     }
 }
