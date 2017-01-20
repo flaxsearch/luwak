@@ -20,3 +20,19 @@ A currently barebones Dropwizard wrapper around Luwak.
 In `luwak-server`, Build the jar with `mvn package`, then run
 
     java -jar target/luwak-server-{version number here}-SNAPSHOT.jar
+
+**To add queries**
+
+Create a query input file in the following JSON format:
+```
+[
+{ "id" : "queryid", "query" : "your query here" },
+{ "id" : "query2", "query" : "another query" }
+]
+```
+
+Then run ```./load-queries <query file>```
+
+**To match a document against the service**
+
+./match "This is the contents of my document"
