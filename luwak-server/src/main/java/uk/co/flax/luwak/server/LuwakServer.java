@@ -16,6 +16,7 @@ package uk.co.flax.luwak.server;
  */
 
 import io.dropwizard.Application;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import uk.co.flax.luwak.Monitor;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
@@ -40,5 +41,11 @@ public class LuwakServer extends Application<LuwakConfiguration> {
 
         environment.jersey().register(new MatchResource(monitor));
         environment.jersey().register(new UpdateResource(monitor));
+    }
+
+    @Override
+    public void initialize(Bootstrap<LuwakConfiguration> bootstrap) {
+        super.initialize(bootstrap);
+        LuwakMapper.addMappings(bootstrap.getObjectMapper());
     }
 }

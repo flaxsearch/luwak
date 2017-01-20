@@ -1,12 +1,16 @@
 package uk.co.flax.luwak.server.resources;
 
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.matchers.SimpleMatcher;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * Created by Tom.Ridd on 20/01/2017.
@@ -19,10 +23,10 @@ public class MatchResource {
     this.monitor = monitor;
   }
 
-  @GET
+  @POST
   @Path("/")
   @Produces(MediaType.APPLICATION_JSON)
-  public LuwakMatchResult getLuwakMatches(@HeaderParam("query") String monitorQueryJson) {
-    return new LuwakMatchResult(monitorQueryJson);
+  public Matches<QueryMatch> getLuwakMatches(InputDocument inputDocument) throws IOException {
+    return monitor.match(inputDocument, SimpleMatcher.FACTORY);
   }
 }

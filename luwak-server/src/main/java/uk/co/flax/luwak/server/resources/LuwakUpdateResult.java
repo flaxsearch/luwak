@@ -1,22 +1,24 @@
 package uk.co.flax.luwak.server.resources;
 
+import uk.co.flax.luwak.MonitorQuery;
+
 /**
  * Created by Tom.Ridd on 20/01/2017.
  */
 public class LuwakUpdateResult {
-  private boolean result;
-  private String inputDocument;
+  private boolean success;
+  private MonitorQuery inputDocument;
 
-  public LuwakUpdateResult(String inputDocument, boolean result) {
-    this.result = result;
+  public LuwakUpdateResult(MonitorQuery inputDocument, boolean success) {
+    this.success = success;
     this.inputDocument = inputDocument;
   }
 
-  public boolean isResult() {
-    return result;
+  public boolean isSuccess() {
+    return success;
   }
 
-  public String getInputDocument() {
+  public MonitorQuery getInputDocument() {
     return inputDocument;
   }
 }
