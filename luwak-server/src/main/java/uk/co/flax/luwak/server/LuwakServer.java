@@ -17,6 +17,8 @@ package uk.co.flax.luwak.server;
 
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
+import uk.co.flax.luwak.server.resources.MatchResource;
+import uk.co.flax.luwak.server.resources.UpdateResource;
 
 public class LuwakServer extends Application<LuwakConfiguration> {
 
@@ -30,6 +32,7 @@ public class LuwakServer extends Application<LuwakConfiguration> {
 
     @Override
     public void run(LuwakConfiguration luwakConfiguration, Environment environment) throws Exception {
-        environment.jersey().register(new ClaimResource());
+        environment.jersey().register(new MatchResource());
+        environment.jersey().register(new UpdateResource());
     }
 }
