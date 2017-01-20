@@ -21,6 +21,10 @@ In `luwak-server`, Build the jar with `mvn package`, then run
 
     java -jar target/luwak-server-{version number here}-SNAPSHOT.jar
 
+**UI**
+
+There is a basic UI accessible at `localhost:8080/ui`
+
 **To add queries**
 
 Create a query input file in the following JSON format:

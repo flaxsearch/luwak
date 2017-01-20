@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LuwakMatch</title>
+    <link rel="stylesheet" href="/ui/css/style.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="/ui/js/script.js"></script>
+</head>
+<body>
+<div id="container">
+    <header>
+        <h1>Luwak<span>Match</span></h1>
+        <p>Search claims with Luwak</p>
+    </header>
+    <section>
+        <form id="search-form" name="search-form" onsubmit="return search()">
+            <div class = "fieldcontainer">
+                <input type="search" id="query" class="search-field" placeholder="Search facts...">
+                <input type="submit" name="search-btn" id="search-btn" value="">
+            </div>
+        </form>
+
+        <ul id="results"></ul>
+        <div id="buttons"></div>
+    </section>
+    <footer>
+        <p>Copyright 2017</p>
+    </footer>
+</div>
+</body>
+</html>

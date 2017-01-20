@@ -16,6 +16,7 @@ package uk.co.flax.luwak.server;
  */
 
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import uk.co.flax.luwak.Monitor;
@@ -46,6 +47,7 @@ public class LuwakServer extends Application<LuwakConfiguration> {
     @Override
     public void initialize(Bootstrap<LuwakConfiguration> bootstrap) {
         super.initialize(bootstrap);
+        bootstrap.addBundle(new AssetsBundle("/assets", "/ui", "index.html"));
         LuwakMapper.addMappings(bootstrap.getObjectMapper());
     }
 }
