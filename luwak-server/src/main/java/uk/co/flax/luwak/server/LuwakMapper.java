@@ -110,6 +110,7 @@ public class LuwakMapper extends SimpleModule {
                         query = jsonParser.getText();
                         break;
                     case "metadata":
+                        jsonParser.nextToken();
                         metadata = readMap(jsonParser);
                         break;
                 }

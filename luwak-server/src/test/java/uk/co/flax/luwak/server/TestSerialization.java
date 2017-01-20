@@ -46,8 +46,10 @@ public class TestSerialization {
     public void testMonitorQueryWithMetadata() throws IOException {
         String input = "{ \"id\": \"1\", \"query\": \"test\", \"metadata\": { \"key\": \"value\", \"key2\": \"value2\" } }";
         MonitorQuery expected = new MonitorQuery("1", "test", ImmutableMap.of("key", "value", "key2", "value2"));
+        MonitorQuery actual = mapper.readValue(input, MonitorQuery.class);
 
-        assertThat(mapper.readValue(input, MonitorQuery.class)).isEqualTo(expected);
+        assertThat(actual.getMetadata().size()).isEqualTo(2);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
