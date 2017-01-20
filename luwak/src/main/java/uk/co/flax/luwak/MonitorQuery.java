@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import org.apache.lucene.store.InputStreamDataInput;
 import org.apache.lucene.store.OutputStreamDataOutput;
@@ -47,8 +44,8 @@ public class MonitorQuery {
      * @param metadata metadata passed to {@link Presearcher#indexQuery(org.apache.lucene.search.Query,java.util.Map)}
      */
     public MonitorQuery(String id, String query, Map<String, String> metadata) {
-        this.id = id;
-        this.query = query;
+        this.id = Objects.requireNonNull(id);
+        this.query = Objects.requireNonNull(query);
         this.metadata = Collections.unmodifiableMap(new TreeMap<>(metadata));
         checkNullEntries(this.metadata);
     }

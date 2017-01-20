@@ -36,7 +36,7 @@ public class Matches<T extends QueryMatch> implements Iterable<DocumentMatches<T
 
     private final SlowLog slowlog;
 
-    Matches(Map<String, DocumentMatches<T>> matches, Set<String> presearcherHits, List<MatchError> errors,
+    public Matches(Map<String, DocumentMatches<T>> matches, Set<String> presearcherHits, List<MatchError> errors,
                    long queryBuildTime, long searchTime, int queriesRun, int batchSize, SlowLog slowlog) {
         this.matches = Collections.unmodifiableMap(matches);
         this.errors = Collections.unmodifiableList(errors);
@@ -51,6 +51,10 @@ public class Matches<T extends QueryMatch> implements Iterable<DocumentMatches<T
     @Override
     public Iterator<DocumentMatches<T>> iterator() {
         return matches.values().iterator();
+    }
+
+    public Set<String> docs() {
+        return matches.keySet();
     }
 
     /**
