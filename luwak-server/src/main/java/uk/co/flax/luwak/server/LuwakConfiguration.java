@@ -16,6 +16,8 @@ package uk.co.flax.luwak.server;
  */
 
 import io.dropwizard.Configuration;
+import uk.co.flax.luwak.Monitor;
 
 public class LuwakConfiguration extends Configuration {
+
 }
