@@ -1,5 +1,5 @@
 [
-{ "id" : "1", "query" : "\"rules\" AND OR \"regulations\" AND \"british businesses\" AND \"100%\" AND \"6%\" AND \"EU\"" },
+{ "id" : "1", "query" : "(\"rules\" OR \"regulations\") AND \"british businesses\" AND \"100%\" AND \"6%\" AND \"EU\"" },
 { "id" : "2", "query" : "\"uncontrolled immigration\" AND \"downward pressure\" AND \"wages\" OR \"uncontrolled immigration\" AND \"suppress*\" AND \"wages\"" },
 { "id" : "3", "query" : "\"leave\" OR \"left\" AND \"wages\" AND \"drop\" AND \"long run\" AND \"£38\" AND \"week\"" },
   { "id" : "4", "query" : "\"EU\" AND \"50%\" AND \"youth unemployment\" AND \"southern europe\"" },
@@ -9,5 +9,5 @@
   { "id" : "8", "query" : "\"turkey\" AND \"is not going to join\" AND \"eu\" OR \"not\" AND \"joining\" AND \"eu\" OR \"turkey\" AND \"accession\" AND \"not\"" },
   { "id" : "9", "query" : "\"if\" AND \"leave\" AND \"£10 billion\"" },
   { "id" : "10", "query" : "\"single market\" AND \"500 million\"" },
-  { "id" : "11", "query" : "\"60%\" OR \"13%\" AND \"rules\" AND OR \"regulations\" AND \"come from\" AND \"EU\" or \"made by\" AND  \"EU\"" }
+  { "id" : "11", "query" : "\"60%\" OR \"13%\" AND (\"rules\" OR \"regulations\") AND ((\"come from\" AND \"EU\") or (\"made by\" AND  \"EU\"))" }
 ]
