@@ -7,3 +7,5 @@ bin/
 .project
 .classpath
 .settings/
+# Dropwizard files
+dependency-reduced-pom.xml
