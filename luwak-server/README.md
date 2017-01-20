@@ -30,6 +30,7 @@ Create a query input file in the following JSON format:
 { "id" : "query2", "query" : "another query" }
 ]
 ```
+There's an example [here](src/test/resources/queries.json)
 
 Then run ```./load-queries <query file>```
 
