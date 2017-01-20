@@ -15,7 +15,7 @@ public class LuwakMonitorManager implements Managed {
 
   @Override
   public void start() throws Exception {
-
+    // Monitor manager started on monitor creation
   }
 
   @Override
