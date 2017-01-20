@@ -22,6 +22,21 @@
             <artifactId>dropwizard-core</artifactId>
             <version>1.0.5</version>
         </dependency>
+
+        <!--
+            For now, we manually pull in dependencies which are set to test scope in the parent pom, as these conflicts
+            are overriding the transitive (non-test-scoped) dependencies from dropwizard-core.
+        -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>19.0</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.1.7</version>
+        </dependency>
     </dependencies>
 
 </project>
