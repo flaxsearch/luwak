@@ -11,6 +11,10 @@
 
     <artifactId>luwak-server</artifactId>
 
+    <properties>
+        <dropwizard.version>1.0.5</dropwizard.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.flaxsearch</groupId>
@@ -20,7 +24,7 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>1.0.5</version>
+            <version>${dropwizard.version}</version>
         </dependency>
     </dependencies>
 
