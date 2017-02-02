@@ -43,4 +43,8 @@ public class HighlightingMatchHitsAssert extends AbstractAssert<HighlightingMatc
         Assertions.assertThat(actual.error.getMessage()).contains(message);
         return this;
     }
+
+    public HighlightingMatchHitsAssert matchesQuery(String queryId, String docId) {
+        return parent.matchesQuery(queryId, docId);
+    }
 }

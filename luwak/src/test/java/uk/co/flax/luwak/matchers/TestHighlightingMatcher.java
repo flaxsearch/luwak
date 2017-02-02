@@ -475,4 +475,25 @@ public class TestHighlightingMatcher {
                 .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
                 .withHit(new HighlightsMatch.Hit(1, 2, 1, 3));
     }
+
+    @Test
+    public void highlightBatches() throws Exception {
+        String query = "\"cell biology\"";
+        String matching_document = "the cell biology count";
+
+        monitor.update(new MonitorQuery("query1", query));
+
+        DocumentBatch batch = DocumentBatch.of(
+                InputDocument.builder("doc1").addField(textfield, matching_document, WHITESPACE).build(),
+                InputDocument.builder("doc2").addField(textfield, matching_document, WHITESPACE).build()
+        );
+
+        Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+                .hasMatchCount("doc1", 1)
+                .hasMatchCount("doc2", 1)
+                .matchesQuery("query1", "doc1")
+                .matchesQuery("query1", "doc2");
+    }
 }
