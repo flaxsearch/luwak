@@ -6,8 +6,10 @@ import java.util.Arrays;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanNearQuery;
@@ -474,6 +476,23 @@ public class TestHighlightingMatcher {
             .inField(textfield)
                 .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
                 .withHit(new HighlightsMatch.Hit(1, 2, 1, 3));
+    }
+
+    @Test
+    public void testComplexPhraseQueryParser() throws IOException, UpdateException {
+
+        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(textfield, new StandardAnalyzer());
+        MonitorQueryParser cqp = (queryString, metadata) -> cpqp.parse(queryString);
+        monitor = new Monitor(cqp, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", "\"x b\""));
+
+        InputDocument doc = buildDoc("1", "x b c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1")
+                .withHitCount(2)
+                .inField(textfield);
+
     }
 
     @Test
