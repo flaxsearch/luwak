@@ -27,37 +27,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestSpanRewriter {
 
     @Test
-    public void testTermsQueryWithMultipleFields() throws RewriteException {
+    public void testTermsQueryWithMultipleFields() throws Exception {
 
         TermsQuery tq = new TermsQuery(new Term("field1", "term1"), new Term("field2", "term1"), new Term("field2", "term2"));
 
-        Query q = new SpanRewriter().rewrite(tq);
+        Query q = new SpanRewriter().rewrite(tq, null);
         assertThat(q).isInstanceOf(BooleanQuery.class);
     }
 
     @Test
-    public void testBoostQuery() throws RewriteException {
+    public void testBoostQuery() throws Exception {
 
-        Query q = new SpanRewriter().rewrite(new BoostQuery(new TermQuery(new Term("f", "t")), 2.0f));
+        Query q = new SpanRewriter().rewrite(new BoostQuery(new TermQuery(new Term("f", "t")), 2.0f), null);
         assertThat(q).isInstanceOf(SpanOffsetReportingQuery.class);
     }
 
     @Test
-    public void testMultiTermQueryEquals() throws RewriteException {
+    public void testMultiTermQueryEquals() throws Exception {
 
         WildcardQuery wq = new WildcardQuery(new Term("field", "term"));
-        Query q1 = new SpanRewriter().rewrite(wq);
-        Query q2 = new SpanRewriter().rewrite(wq);
+        Query q1 = new SpanRewriter().rewrite(wq, null);
+        Query q2 = new SpanRewriter().rewrite(wq, null);
 
         assertThat(q1).isEqualTo(q2);
     }
 
     @Test
-    public void testPhraseQuery() throws RewriteException {
+    public void testPhraseQuery() throws Exception {
 
         PhraseQuery pq = new PhraseQuery(1, "field1", "term1", "term2");
 
-        Query q = new SpanRewriter().rewrite(pq);
+        Query q = new SpanRewriter().rewrite(pq, null);
         assertThat(q).isInstanceOf(SpanNearQuery.class);
 
         SpanNearQuery sq = (SpanNearQuery)q;
@@ -67,11 +67,11 @@ public class TestSpanRewriter {
     }
 
     @Test
-    public void testConstantScoreQuery() throws RewriteException {
+    public void testConstantScoreQuery() throws Exception {
 
         Query q = new ConstantScoreQuery(new TermQuery(new Term("field", "term")));
 
-        Query rewritten = new SpanRewriter().rewrite(q);
+        Query rewritten = new SpanRewriter().rewrite(q, null);
         assertThat(rewritten).isInstanceOf(SpanOffsetReportingQuery.class);
 
     }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
@@ -135,10 +136,11 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     protected HighlightsMatch doMatch(String queryId, Query query) throws IOException {
-        if (docs.getSearcher().count(query) == 0)
+        IndexSearcher searcher = docs.getSearcher();
+        if (searcher.count(query) == 0)
             return null;
         try {
-            Query rewritten = rewriter.rewrite(query);
+            Query rewritten = rewriter.rewrite(query, searcher);
             return findHighlights(queryId, rewritten);
         }
         catch (RewriteException e) {

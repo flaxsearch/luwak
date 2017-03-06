@@ -583,7 +583,7 @@ public class Monitor implements Closeable {
             @Override
             public Query buildQuery(QueryTermFilter termFilter) throws IOException {
                 try {
-                    return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(termFilter)));
+                    return new ForceNoBulkScoringQuery(SpanRewriter.INSTANCE.rewrite(super.buildQuery(termFilter), null));
                 } catch (RewriteException e) {
                     throw new IOException(e);
                 }
