@@ -87,6 +87,8 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
         }
 
         void setMatch(int doc) {
+            if (this.match != null)
+                addMatch(this.match);
             this.match = new HighlightsMatch(queryId, docs.resolveDocId(doc));
         }
 
