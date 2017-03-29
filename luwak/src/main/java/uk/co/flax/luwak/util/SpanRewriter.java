@@ -35,9 +35,6 @@ public class SpanRewriter {
     public Query rewrite(Query in, IndexSearcher searcher) throws RewriteException, IOException {
         if (in instanceof SpanOffsetReportingQuery)
             return in;
-        if (in instanceof SpanNearQuery)
-            // use XSpanNearQuery to ensure that all subspans are correctly positioned
-            return forceOffsets(new XSpanNearQuery((SpanNearQuery)in));
         if (in instanceof SpanQuery)
             return forceOffsets((SpanQuery)in);
         if (in instanceof ForceNoBulkScoringQuery) {
