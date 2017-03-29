@@ -62,6 +62,8 @@ public class TestCoreLuceneQueryExtractors {
             "org.apache.lucene.search.FuzzyQuery",
             "org.apache.lucene.queries.mlt.MoreLikeThisQuery",
             "org.apache.lucene.queries.function.FunctionQuery",
+            "org.apache.lucene.queries.function.FunctionMatchQuery",
+            "org.apache.lucene.search.IndexOrDocValuesQuery",
             "org.apache.lucene.search.LegacyNumericRangeQuery"
     );
 

@@ -16,7 +16,6 @@ package uk.co.flax.luwak.util;
  */
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +51,10 @@ public class SpanRewriter {
             return rewriteMultiTermQuery((MultiTermQuery)in);
         if (in instanceof DisjunctionMaxQuery)
             return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in, searcher);
+        if (in instanceof TermInSetQuery)
+            return rewriteTermInSetQuery((TermInSetQuery) in);
         if (in instanceof TermsQuery)
-            return rewriteTermsQuery((TermsQuery) in);
+            return rewrite(in.rewrite(null), null);
         if (in instanceof BoostQuery)
             return rewrite(((BoostQuery) in).getQuery(), searcher);   // we don't care about boosts for rewriting purposes
         if (in instanceof PhraseQuery)
@@ -100,14 +101,10 @@ public class SpanRewriter {
         return new DisjunctionMaxQuery(subQueries, disjunctionMaxQuery.getTieBreakerMultiplier());
     }
 
-    protected Query rewriteTermsQuery(TermsQuery query) throws RewriteException {
-
+    protected Query rewriteTermInSetQuery(TermInSetQuery query) throws RewriteException {
         Map<String, List<SpanTermQuery>> spanQueries = new HashMap<>();
-
         try {
-            Field termsField = TermsQuery.class.getDeclaredField("termData");
-            termsField.setAccessible(true);
-            PrefixCodedTerms terms = (PrefixCodedTerms) termsField.get(query);
+            PrefixCodedTerms terms = query.getTermData();
             PrefixCodedTerms.TermIterator it = terms.iterator();
             for (int i = 0; i < terms.size(); i++) {
                 BytesRef term = BytesRef.deepCopyOf(it.next());
@@ -126,7 +123,6 @@ public class SpanRewriter {
         } catch (Exception e) {
             throw new RewriteException("Error rewriting query: " + e.getMessage(), query);
         }
-
     }
 
     protected Query rewriteUnknown(Query query) throws RewriteException {
