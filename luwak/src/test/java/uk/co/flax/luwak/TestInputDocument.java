@@ -18,10 +18,19 @@ package uk.co.flax.luwak;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.search.Explanation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import uk.co.flax.luwak.matchers.ExplainingMatch;
+import uk.co.flax.luwak.matchers.ExplainingMatcher;
+import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
+import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestInputDocument {
 
@@ -42,6 +51,29 @@ public class TestInputDocument {
         expected.expectMessage("reserved");
 
         InputDocument.builder("id").addField(new StringField(InputDocument.ID_FIELD, "", Field.Store.YES)).build();
+    }
+
+    @Test
+    public void testOmitNorms() throws Exception {
+        FieldType type = new FieldType();
+        type.setOmitNorms(true);
+        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+        Field f = new Field("text", "this is some text that will have a length norm greater than 0", type);
+
+        InputDocument doc = InputDocument.builder("id")
+                .setDefaultAnalyzer(new StandardAnalyzer())
+                .addField(f).build();
+
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("text"), new MatchAllPresearcher())) {
+            monitor.update(new MonitorQuery("q", "length"));
+
+            Matches<ExplainingMatch> matches = monitor.match(doc, ExplainingMatcher.FACTORY);
+            DocumentMatches<ExplainingMatch> m = matches.getMatches("id");
+            for (ExplainingMatch e : m) {
+                Explanation expl = e.getExplanation();
+                assertThat(expl.toString()).contains("norms omitted");
+            }
+        }
     }
 
 }

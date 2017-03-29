@@ -15,18 +15,12 @@ package uk.co.flax.luwak.termextractor.treebuilder;
  *   limitations under the License.
  */
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
-import org.apache.lucene.index.PrefixCodedTerms;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
-import org.apache.lucene.util.BytesRef;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
-import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
 public class TermsQueryTreeBuilder extends QueryTreeBuilder<TermsQuery> {
 
@@ -38,12 +32,11 @@ public class TermsQueryTreeBuilder extends QueryTreeBuilder<TermsQuery> {
 
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, TermsQuery query) {
-        PrefixCodedTerms.TermIterator it = query.getTermData().iterator();
-        List<QueryTree> terms = new ArrayList<>();
-        BytesRef term;
-        while ((term = it.next()) != null) {
-            terms.add(new TermNode(new Term(it.field(), term)));
+        try {
+            return builder.buildTree(query.rewrite(null));
+        } catch (IOException e) {
+            throw new RuntimeException(e);  // should never happen
         }
-        return DisjunctionNode.build(terms);
     }
+
 }

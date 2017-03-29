@@ -6,8 +6,10 @@ import java.util.Arrays;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanNearQuery;
@@ -16,7 +18,6 @@ import org.apache.lucene.search.spans.SpanTermQuery;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.co.flax.luwak.*;
@@ -482,39 +483,6 @@ public class TestHighlightingMatcher {
     }
 
     @Test
-    @Ignore("should be the same as ordered near but it's not")
-    public void testDisjunctionWithUnorderedNearSpansMatch() throws Exception {
-
-        final Query bq = new BooleanQuery.Builder()
-                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.SHOULD)
-                .add(SpanNearQuery.newUnorderedNearQuery(textfield)
-                        .addClause(new SpanTermQuery(new Term(textfield, "b")))
-                        .addClause(new SpanTermQuery(new Term(textfield, "c")))
-                        .setSlop(1)
-                        .build(), BooleanClause.Occur.SHOULD)
-                .build();
-        final Query parent = new BooleanQuery.Builder()
-                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
-                .add(bq, BooleanClause.Occur.MUST)
-                .build();
-
-        monitor = new Monitor((queryString, metadata) -> parent, new MatchAllPresearcher());
-        monitor.update(new MonitorQuery("1", ""));
-
-        InputDocument doc = buildDoc("1", "a b c");
-        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
-
-        assertThat(matches)
-            .matchesQuery("1", "1")
-                .withHitCount(3)
-                .inField(textfield)
-                    .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
-                    .withHit(new HighlightsMatch.Hit(1, 2, 1, 3))
-                    .withHit(new HighlightsMatch.Hit(2, 4, 2, 5));
-    }
-
-    @Test
-    @Ignore("triggers assertion in NearSpansUnordered.nextStartPosition")
     public void testUnorderedNearWithinOrderedNear() throws Exception {
 
         final SpanQuery spanPhrase = SpanNearQuery.newOrderedNearQuery(textfield)
@@ -563,6 +531,73 @@ public class TestHighlightingMatcher {
                 .inField(textfield)
                     .withHit(new HighlightsMatch.Hit(0, 0, 0, 3))
                     .withHit(new HighlightsMatch.Hit(6, 24, 6, 28));
+    }
+
+    @Test
+    public void testMinShouldMatchQuery() throws Exception {
+
+        final Query minq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "x")), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term(textfield, "y")), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term(textfield, "z")), BooleanClause.Occur.SHOULD)
+                .setMinimumNumberShouldMatch(2)
+                .build();
+
+        final Query bq = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(textfield, "a")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term(textfield, "b")), BooleanClause.Occur.MUST)
+                .add(minq, BooleanClause.Occur.SHOULD)
+                .build();
+
+        monitor = new Monitor((queryString, metadata) -> bq, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", ""));
+
+        InputDocument doc = buildDoc("1", "a b x");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1")
+            .withHitCount(2)
+            .inField(textfield)
+                .withHit(new HighlightsMatch.Hit(0, 0, 0, 1))
+                .withHit(new HighlightsMatch.Hit(1, 2, 1, 3));
+    }
+
+    @Test
+    public void testComplexPhraseQueryParser() throws IOException, UpdateException {
+
+        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(textfield, new StandardAnalyzer());
+        MonitorQueryParser cqp = (queryString, metadata) -> cpqp.parse(queryString);
+        monitor = new Monitor(cqp, new MatchAllPresearcher());
+        monitor.update(new MonitorQuery("1", "\"x b\""));
+
+        InputDocument doc = buildDoc("1", "x b c");
+        Matches<HighlightsMatch> matches = monitor.match(doc, HighlightingMatcher.FACTORY);
+
+        assertThat(matches).matchesQuery("1", "1")
+                .withHitCount(2)
+                .inField(textfield);
+
+    }
+
+    @Test
+    public void highlightBatches() throws Exception {
+        String query = "\"cell biology\"";
+        String matching_document = "the cell biology count";
+
+        monitor.update(new MonitorQuery("query1", query));
+
+        DocumentBatch batch = DocumentBatch.of(
+                InputDocument.builder("doc1").addField(textfield, matching_document, WHITESPACE).build(),
+                InputDocument.builder("doc2").addField(textfield, matching_document, WHITESPACE).build()
+        );
+
+        Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);
+
+        assertThat(matches)
+                .hasMatchCount("doc1", 1)
+                .hasMatchCount("doc2", 1)
+                .matchesQuery("query1", "doc1")
+                .matchesQuery("query1", "doc2");
     }
 
 }

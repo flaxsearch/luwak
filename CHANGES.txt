@@ -1,3 +1,44 @@
+Luwak 1.5.0
+===========
+
+This release of luwak requires Java 8
+
+API changes:
+
+* Upgrade to lucene 6.5
+* Monitor.update() is declared as throwing an UpdateException (#106)
+
+Optimizations:
+
+* Disable bulk scoring, reducing fixed overhead for large boolean disjunctions
+* Query decomposer will recurse into DisjunctionMaxQuery (#112)
+
+New features:
+
+* HighlightingMatcher can handle exact phrase queries
+* HighlightingMatcher reports matches even if it can't actually highlight a
+  query
+* Several code cleanups contributed by Bloomberg (#100, #102, #107, #118, #119)
+* Expose hits map in HighlightsMatch (#92)
+* All lucene core queries are now handled by TermFilteredPresearcher
+* SpanRewriter can handle ConstantScoreQuery (#114)
+* SpanRewriter will attempt to rewrite unknown queries.  This allows luwak to
+  highlight queries produced by, for example, the ComplexPhraseQueryParser
+  (#136)
+
+Bug fixes:
+
+* MonitorQuery metadata checks for null values
+* InputDocument propagates position and offset gaps for multivalued fields
+  (#117)
+* SpanRewriter.rewriteBoolean() propagates minShouldMatch (#123)
+* HighlightingMatcher was only returning hits for the last doc in a batch (#134)
+* Unpositioned span terms were being incorrectly highlighted due to two-phase
+  iteration (fixed by LUCENE-7628)
+* InputDocument was not respecting omitNorms values on fields (fixed by
+  LUCENE-7696) (#135)
+
+
 Luwak 1.4.0
 ===========
 

@@ -40,7 +40,7 @@ public class SpanExtractor {
      *                       from the Scorer or any of its children
      * @return a List of Spans
      */
-    public static List<Spans> getSpans(Scorer scorer, boolean errorOnNoSpans) {
+    public static List<Spans> getSpans(Scorer scorer, boolean errorOnNoSpans) throws IOException {
 
         List<Spans> spans = new ArrayList<>();
         if (scorer instanceof SpanScorer) {

@@ -15,7 +15,7 @@ package uk.co.flax.luwak.util;
  *   limitations under the License.
  */
 
-import java.lang.reflect.Field;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,33 +32,35 @@ public class SpanRewriter {
 
     public static final SpanRewriter INSTANCE = new SpanRewriter();
 
-    public Query rewrite(Query in) throws RewriteException {
+    public Query rewrite(Query in, IndexSearcher searcher) throws RewriteException, IOException {
         if (in instanceof SpanOffsetReportingQuery)
             return in;
-        if (in instanceof SpanNearQuery)
-            // use XSpanNearQuery to ensure that all subspans are correctly positioned
-            return forceOffsets(new XSpanNearQuery((SpanNearQuery)in));
         if (in instanceof SpanQuery)
             return forceOffsets((SpanQuery)in);
         if (in instanceof ForceNoBulkScoringQuery) {
-            return new ForceNoBulkScoringQuery(rewrite(((ForceNoBulkScoringQuery) in).getWrappedQuery()));
+            return new ForceNoBulkScoringQuery(rewrite(((ForceNoBulkScoringQuery) in).getWrappedQuery(), searcher));
         }
         if (in instanceof TermQuery)
             return rewriteTermQuery((TermQuery)in);
         if (in instanceof BooleanQuery)
-            return rewriteBoolean((BooleanQuery) in);
+            return rewriteBoolean((BooleanQuery) in, searcher);
         if (in instanceof MultiTermQuery)
             return rewriteMultiTermQuery((MultiTermQuery)in);
         if (in instanceof DisjunctionMaxQuery)
-            return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in);
+            return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in, searcher);
+        if (in instanceof TermInSetQuery)
+            return rewriteTermInSetQuery((TermInSetQuery) in);
         if (in instanceof TermsQuery)
-            return rewriteTermsQuery((TermsQuery) in);
+            return rewrite(in.rewrite(null), null);
         if (in instanceof BoostQuery)
-            return rewrite(((BoostQuery) in).getQuery());   // we don't care about boosts for rewriting purposes
+            return rewrite(((BoostQuery) in).getQuery(), searcher);   // we don't care about boosts for rewriting purposes
         if (in instanceof PhraseQuery)
             return rewritePhraseQuery((PhraseQuery)in);
         if (in instanceof ConstantScoreQuery)
-            return rewrite(((ConstantScoreQuery) in).getQuery());
+            return rewrite(((ConstantScoreQuery) in).getQuery(), searcher);
+        if (searcher != null) {
+            return rewrite(searcher.rewrite(in), null);
+        }
 
         return rewriteUnknown(in);
     }
@@ -71,13 +73,14 @@ public class SpanRewriter {
         return forceOffsets(new SpanTermQuery(tq.getTerm()));
     }
 
-    protected Query rewriteBoolean(BooleanQuery bq) throws RewriteException {
+    protected Query rewriteBoolean(BooleanQuery bq, IndexSearcher searcher) throws RewriteException, IOException {
         BooleanQuery.Builder newbq = new BooleanQuery.Builder();
+        newbq.setMinimumNumberShouldMatch(bq.getMinimumNumberShouldMatch());
         for (BooleanClause clause : bq) {
             BooleanClause.Occur occur = clause.getOccur();
             if (occur == BooleanClause.Occur.FILTER)
                 occur = BooleanClause.Occur.MUST;   // rewrite FILTER to MUST to ensure scoring
-            newbq.add(rewrite(clause.getQuery()), occur);
+            newbq.add(rewrite(clause.getQuery(), searcher), occur);
         }
         return newbq.build();
     }
@@ -86,22 +89,19 @@ public class SpanRewriter {
         return forceOffsets(new SpanMultiTermQueryWrapper<>(mtq));
     }
 
-    protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery) throws RewriteException {
+    protected Query rewriteDisjunctionMaxQuery(DisjunctionMaxQuery disjunctionMaxQuery, IndexSearcher searcher)
+            throws RewriteException, IOException {
         ArrayList<Query> subQueries = new ArrayList<>();
         for (Query subQuery : disjunctionMaxQuery) {
-            subQueries.add(rewrite(subQuery));
+            subQueries.add(rewrite(subQuery, searcher));
         }
         return new DisjunctionMaxQuery(subQueries, disjunctionMaxQuery.getTieBreakerMultiplier());
     }
 
-    protected Query rewriteTermsQuery(TermsQuery query) throws RewriteException {
-
+    protected Query rewriteTermInSetQuery(TermInSetQuery query) throws RewriteException {
         Map<String, List<SpanTermQuery>> spanQueries = new HashMap<>();
-
         try {
-            Field termsField = TermsQuery.class.getDeclaredField("termData");
-            termsField.setAccessible(true);
-            PrefixCodedTerms terms = (PrefixCodedTerms) termsField.get(query);
+            PrefixCodedTerms terms = query.getTermData();
             PrefixCodedTerms.TermIterator it = terms.iterator();
             for (int i = 0; i < terms.size(); i++) {
                 BytesRef term = BytesRef.deepCopyOf(it.next());
@@ -120,7 +120,6 @@ public class SpanRewriter {
         } catch (Exception e) {
             throw new RewriteException("Error rewriting query: " + e.getMessage(), query);
         }
-
     }
 
     protected Query rewriteUnknown(Query query) throws RewriteException {

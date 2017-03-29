@@ -15,6 +15,7 @@ package uk.co.flax.luwak.termextractor.treebuilder;
  *   limitations under the License.
  */
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.queries.function.BoostedQuery;
+import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.*;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
@@ -36,6 +38,17 @@ public class TreeBuilders {
         @Override
         public QueryTree buildTree(QueryAnalyzer builder, Query query) {
             return new AnyNode("Cannot filter on query of type " + query.getClass().getName());
+        }
+    };
+
+    private static final Function<FunctionScoreQuery, Query> functionScoreQueryExtractor = q -> {
+        try {
+            Field queryField = FunctionScoreQuery.class.getDeclaredField("in");
+            queryField.setAccessible(true);
+            return (Query) queryField.get(q);
+        }
+        catch (Exception e) {
+            return new MatchAllDocsQuery();
         }
     };
 
@@ -57,6 +70,7 @@ public class TreeBuilders {
             newDisjunctionBuilder(DisjunctionMaxQuery.class,
                     (b, q) -> q.getDisjuncts().stream().map(b::buildTree).collect(Collectors.toList())),
             TermsQueryTreeBuilder.INSTANCE,
+            TermInSetQueryTreeBuilder.INSTANCE,
             new QueryTreeBuilder<SpanWithinQuery>(SpanWithinQuery.class) {
                 @Override
                 public QueryTree buildTree(QueryAnalyzer builder, SpanWithinQuery query) {
@@ -72,6 +86,7 @@ public class TreeBuilders {
             newFilteringQueryBuilder(SpanBoostQuery.class, SpanBoostQuery::getQuery),
             newFilteringQueryBuilder(FieldMaskingSpanQuery.class, FieldMaskingSpanQuery::getMaskedQuery),
             newFilteringQueryBuilder(SpanPositionCheckQuery.class, SpanPositionCheckQuery::getMatch),
+            newFilteringQueryBuilder(FunctionScoreQuery.class, functionScoreQueryExtractor),
             PayloadScoreQueryTreeBuilder.INSTANCE,
             SpanPayloadCheckQueryTreeBuilder.INSTANCE,
             ANY_NODE_BUILDER
