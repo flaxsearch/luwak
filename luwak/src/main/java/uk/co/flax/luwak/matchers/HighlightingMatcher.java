@@ -10,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.spans.SpanCollector;
+
 import uk.co.flax.luwak.CandidateMatcher;
 import uk.co.flax.luwak.DocumentBatch;
 import uk.co.flax.luwak.MatcherFactory;
@@ -64,7 +65,8 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
 
     @Override
     protected void addMatch(HighlightsMatch match) {
-        HighlightsMatch previousMatch = this.matches(match.getDocId(), match.getDocId());
+        HighlightsMatch previousMatch = this.matches(match.getDocId(), match.getQueryId());
+        
         if (previousMatch == null) {
             super.addMatch(match);
             return;
