@@ -63,16 +63,6 @@ public class HighlightingMatcher extends CandidateMatcher<HighlightsMatch> {
     }
 
     @Override
-    protected void addMatch(HighlightsMatch match) {
-        HighlightsMatch previousMatch = this.matches(match.getDocId(), match.getDocId());
-        if (previousMatch == null) {
-            super.addMatch(match);
-            return;
-        }
-        super.addMatch(HighlightsMatch.merge(match.getQueryId(), match.getDocId(), previousMatch, match));
-    }
-
-    @Override
     public HighlightsMatch resolve(HighlightsMatch match1, HighlightsMatch match2) {
         return HighlightsMatch.merge(match1.getQueryId(), match1.getDocId(), match1, match2);
     }
