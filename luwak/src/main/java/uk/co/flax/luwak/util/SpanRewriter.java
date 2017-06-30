@@ -146,7 +146,7 @@ public class SpanRewriter {
             spanQueries[i] = new SpanTermQuery(terms[i]);
         }
 
-        return new SpanNearQuery(spanQueries, query.getSlop(), true);
+        return forceOffsets(new SpanNearQuery(spanQueries, query.getSlop(), true));
     }
 
 }

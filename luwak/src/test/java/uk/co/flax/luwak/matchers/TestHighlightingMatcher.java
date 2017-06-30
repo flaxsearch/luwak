@@ -584,20 +584,29 @@ public class TestHighlightingMatcher {
         String query = "\"cell biology\"";
         String matching_document = "the cell biology count";
 
+        monitor.update(new MonitorQuery("query0", "non matching query"));
         monitor.update(new MonitorQuery("query1", query));
+        monitor.update(new MonitorQuery("query2", "biology"));
 
         DocumentBatch batch = DocumentBatch.of(
                 InputDocument.builder("doc1").addField(textfield, matching_document, WHITESPACE).build(),
-                InputDocument.builder("doc2").addField(textfield, matching_document, WHITESPACE).build()
+                InputDocument.builder("doc2").addField(textfield, "nope", WHITESPACE).build(),
+                InputDocument.builder("doc3").addField(textfield, "biology text", WHITESPACE).build()
         );
 
         Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);
 
         assertThat(matches)
-                .hasMatchCount("doc1", 1)
-                .hasMatchCount("doc2", 1)
+                .hasMatchCount("doc1", 2)
+                .hasMatchCount("doc2", 0)
+                .hasMatchCount("doc3", 1)
                 .matchesQuery("query1", "doc1")
-                .matchesQuery("query1", "doc2");
+                    .inField(textfield)
+                        .withHit(new HighlightsMatch.Hit(1, 4, 1, 8))
+                        .withHit(new HighlightsMatch.Hit(2, 9, 2, 16))
+                .matchesQuery("query2", "doc3")
+                    .inField(textfield)
+                        .withHit(new HighlightsMatch.Hit(0, 0, 0, 7));
     }
 
 }
