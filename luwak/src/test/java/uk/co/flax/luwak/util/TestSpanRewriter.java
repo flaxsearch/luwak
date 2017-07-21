@@ -58,9 +58,11 @@ public class TestSpanRewriter {
         PhraseQuery pq = new PhraseQuery(1, "field1", "term1", "term2");
 
         Query q = new SpanRewriter().rewrite(pq, null);
-        assertThat(q).isInstanceOf(SpanNearQuery.class);
+        assertThat(q).isInstanceOf(SpanOffsetReportingQuery.class);
 
-        SpanNearQuery sq = (SpanNearQuery)q;
+        SpanOffsetReportingQuery or = (SpanOffsetReportingQuery) q;
+        assertThat(or.getWrappedQuery()).isInstanceOf(SpanNearQuery.class);
+        SpanNearQuery sq = (SpanNearQuery) or.getWrappedQuery();
         assertThat(sq.getClauses()).contains(new SpanTermQuery(new Term("field1", "term1")),
                 new SpanTermQuery(new Term("field1", "term2")));
         assertThat(sq.getSlop()).isEqualTo(1);

@@ -48,6 +48,13 @@ public class SpanOffsetReportingQuery extends SpanQuery {
         this.in = in;
     }
 
+    /**
+     * @return the wrapped query
+     */
+    public SpanQuery getWrappedQuery() {
+        return in;
+    }
+
     @Override
     public String getField() {
         return in.getField();
