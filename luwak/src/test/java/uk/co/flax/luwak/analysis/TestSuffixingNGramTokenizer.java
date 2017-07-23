@@ -2,6 +2,7 @@ package uk.co.flax.luwak.analysis;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -9,6 +10,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
+import org.apache.lucene.analysis.miscellaneous.PatternKeywordMarkerFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.LeafReader;
 import org.junit.Test;
@@ -39,7 +41,9 @@ public class TestSuffixingNGramTokenizer {
         @Override
         protected TokenStreamComponents createComponents(String fieldName) {
             Tokenizer source = new WhitespaceTokenizer();
-            TokenStream sink = new SuffixingNGramTokenFilter(source, "XX", "ANY", 10);
+            Pattern keywordPattern = Pattern.compile("key");
+            TokenStream sink = new PatternKeywordMarkerFilter(source, keywordPattern);
+            sink = new SuffixingNGramTokenFilter(sink, "XX", "ANY", 10);
             return new TokenStreamComponents(source, sink);
         }
     };
@@ -126,6 +130,24 @@ public class TestSuffixingNGramTokenizer {
                 .nextEquals("ANY")
                 .isExhausted();
 
+    }
+
+    @Test
+    public void testKeywordTokensAreNotNgrammed() throws IOException {
+
+        TokenStream ts = analyzer.tokenStream("f", "alarm key harm");
+        assertThat(ts)
+                .nextEquals("alarm")
+                .nextEquals("alarmXX").nextEquals("alarXX").nextEquals("alaXX").nextEquals("alXX").nextEquals("aXX")
+                .nextEquals("larmXX").nextEquals("larXX").nextEquals("laXX").nextEquals("lXX")
+                .nextEquals("armXX").nextEquals("arXX")
+                .nextEquals("rmXX").nextEquals("rXX")
+                .nextEquals("mXX")
+                .nextEquals("XX")
+                .nextEquals("key")
+                .nextEquals("harm")
+                .nextEquals("harmXX").nextEquals("harXX").nextEquals("haXX").nextEquals("hXX")
+                .isExhausted();
     }
 
     public static void main(String... args) throws IOException {
