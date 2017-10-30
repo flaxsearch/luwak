@@ -116,4 +116,43 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
         }
     }
 
+    @Test
+    public void testUnionRegexp() throws IOException, UpdateException {
+
+        monitor.update(new MonitorQuery("1", "/play(er|ed)/"));
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "player or played"), SimpleMatcher.FACTORY))
+                    .hasMatchCount("doc1", 1);
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "players playing"), SimpleMatcher.FACTORY))
+                .hasQueriesRunCount(1)
+                .hasMatchCount("doc1", 0);
+    }
+
+    @Test
+    public void testCharsetRegexp() throws IOException, UpdateException {
+
+        monitor.update(new MonitorQuery("1", "/201[0-9]/"));
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "the year 2017"), SimpleMatcher.FACTORY))
+                    .hasMatchCount("doc1", 1);
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "The number 201"), SimpleMatcher.FACTORY))
+                .hasQueriesRunCount(1)
+                .hasMatchCount("doc1", 0);
+    }
+
+    @Test
+    public void testNumberRegexp() throws IOException, UpdateException {
+
+        monitor.update(new MonitorQuery("1", "/amazon\\.c.m/"));
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "amazon.com"), SimpleMatcher.FACTORY))
+                .hasMatchCount("doc1", 1);
+
+        assertThat(monitor.match(buildDoc("doc1", TEXTFIELD, "amazon com"), SimpleMatcher.FACTORY))
+            .hasQueriesRunCount(1)
+            .hasMatchCount("doc1", 0);
+    }
+
 }
