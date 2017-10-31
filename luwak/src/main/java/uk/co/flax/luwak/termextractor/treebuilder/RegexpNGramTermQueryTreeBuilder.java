@@ -1,9 +1,13 @@
 package uk.co.flax.luwak.termextractor.treebuilder;
 
+import java.util.regex.Pattern;
+
 import org.apache.lucene.search.RegexpQuery;
+
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
 
@@ -35,6 +39,9 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
 
     private final String wildcardToken;
 
+    // don't attempt substring extraction if regexp contains 1 of these characters
+    private static final Pattern complexRegexpChars = Pattern.compile("[\\[\\]()\\\\]");
+
     /**
      * Creates a RegexpNGramTermQueryTreeBuilder
      * @param ngramSuffix a string to identify terms as ngrams
@@ -49,8 +56,12 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
     @Override
     public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
         String regexp = parseOutRegexp(query.toString(""));
-        String selected = selectLongestSubstring(regexp);
-        return new TermNode(new QueryTerm(query.getField(), selected + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
+        if (complexRegexpChars.matcher(regexp).find()) {
+            return new AnyNode(query.getField(), regexp);
+        } else {
+            String selected = selectLongestSubstring(regexp);
+            return new TermNode(new QueryTerm(query.getField(), selected + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
+        }
     }
 
     /**
