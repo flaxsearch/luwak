@@ -143,7 +143,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
     }
 
     @Test
-    public void testNumberRegexp() throws IOException, UpdateException {
+    public void testEscapedCharRegexp() throws IOException, UpdateException {
 
         monitor.update(new MonitorQuery("1", "/amazon\\.c.m/"));
 
