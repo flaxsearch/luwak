@@ -7,3 +7,6 @@ bin/
 .project
 .classpath
 .settings/
+.vscode
+Dockerfile
+docker-compose.yml
