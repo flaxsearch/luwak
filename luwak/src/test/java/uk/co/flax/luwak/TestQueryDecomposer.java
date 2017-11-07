@@ -2,9 +2,7 @@ package uk.co.flax.luwak;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.DisjunctionMaxQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 import org.junit.Test;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
@@ -111,5 +109,19 @@ public class TestQueryDecomposer {
         assertThat(decomposer.decompose(q))
                 .hasSize(3)
                 .containsExactly(q("hello"), q("goodbye"), q("world"));
+    }
+
+    @Test
+    public void testFilterAndShouldClause() throws Exception {
+        final Query shouldTermQuery = new TermQuery(new Term("f", "should"));
+        final Query filterTermQuery = new TermQuery(new Term("f", "filter"));
+        Query q = new BooleanQuery.Builder()
+                .add(shouldTermQuery, BooleanClause.Occur.SHOULD)
+                .add(filterTermQuery, BooleanClause.Occur.FILTER)
+                .build();
+
+        assertThat(decomposer.decompose(q))
+                .hasSize(1)
+                .containsExactly(q);
     }
 }

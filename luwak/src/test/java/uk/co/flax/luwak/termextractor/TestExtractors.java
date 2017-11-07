@@ -124,4 +124,15 @@ public class TestExtractors {
                 .containsExactly(new QueryTerm("f1", "t1", QueryTerm.Type.EXACT), new QueryTerm("f2", "t2", QueryTerm.Type.EXACT));
     }
 
+    @Test
+    public void testBooleanExtractsFilter() {
+        Query q = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term("f", "must")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term("f", "filter")), BooleanClause.Occur.FILTER)
+                .build();
+        assertThat(treeBuilder.collectTerms(q))
+                .containsExactly(new QueryTerm("f", "filter", QueryTerm.Type.EXACT)); // it's longer, so it wins
+    }
+
+
 }

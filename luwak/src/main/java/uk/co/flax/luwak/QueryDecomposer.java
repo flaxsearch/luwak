@@ -87,7 +87,7 @@ public class QueryDecomposer {
         List<Query> mandatory = new LinkedList<>();
 
         for (BooleanClause clause : q) {
-            if (clause.getOccur() == BooleanClause.Occur.MUST)
+            if (clause.getOccur() == BooleanClause.Occur.MUST || clause.getOccur() == BooleanClause.Occur.FILTER)
                 mandatory.add(clause.getQuery());
             else if (clause.getOccur() == BooleanClause.Occur.MUST_NOT)
                 exclusions.add(clause.getQuery());
