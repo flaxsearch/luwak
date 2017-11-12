@@ -64,8 +64,10 @@ public class QueryTermFilter {
      * @return a {@link BytesRefHash} containing all terms for the specified field
      */
     public BytesRefHash getTerms(String field) {
-        if (termsHash.containsKey(field))
-            return termsHash.get(field);
+        BytesRefHash existing = termsHash.get(field);
+        if (existing != null)
+            return existing;
+
         return new BytesRefHash();
     }
 }

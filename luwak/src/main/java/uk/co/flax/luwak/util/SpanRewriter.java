@@ -105,10 +105,8 @@ public class SpanRewriter {
             PrefixCodedTerms.TermIterator it = terms.iterator();
             for (int i = 0; i < terms.size(); i++) {
                 BytesRef term = BytesRef.deepCopyOf(it.next());
-                if (spanQueries.containsKey(it.field()) == false) {
-                    spanQueries.put(it.field(), new ArrayList<>());
-                }
-                spanQueries.get(it.field()).add(new SpanTermQuery(new Term(it.field(), term)));
+                List<SpanTermQuery> termQueryList = spanQueries.computeIfAbsent(it.field(), f -> new ArrayList<>());
+                termQueryList.add(new SpanTermQuery(new Term(it.field(), term)));
             }
             BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (Map.Entry<String,List<SpanTermQuery>> entry : spanQueries.entrySet()) {

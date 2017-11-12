@@ -80,8 +80,9 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     private void addMatch(String queryId, String docId, T match) {
         MatchHolder<T> docMatches = matches.computeIfAbsent(docId, k -> new MatchHolder<>());
-        if (docMatches.matches.containsKey(queryId)) {
-            docMatches.matches.put(queryId, resolve(match, docMatches.matches.get(queryId)));
+        T found = docMatches.matches.get(queryId);
+        if (found != null) {
+            docMatches.matches.put(queryId, resolve(match, found));
         }
         else {
             docMatches.matches.put(queryId, match);
@@ -151,8 +152,9 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
         Map<String, DocumentMatches<T>> results = new HashMap<>();
         for (InputDocument doc : docs) {
             String id = doc.getId();
-            if (matches.containsKey(id))
-                results.put(id, new DocumentMatches<>(id, matches.get(id).matches.values()));
+            MatchHolder<T> matchHolder = matches.get(id);
+            if (matchHolder != null)
+                results.put(id, new DocumentMatches<>(id, matchHolder.matches.values()));
             else
                 results.put(id, DocumentMatches.noMatches(id));
         }
