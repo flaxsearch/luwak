@@ -1,6 +1,6 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.lucene.analysis.TokenStream;
@@ -66,7 +66,7 @@ public class WildcardNGramPresearcherComponent extends PresearcherComponent {
         this.ngramSuffix = ngramSuffix;
         this.maxTokenSize = maxTokenSize;
         this.wildcardToken = wildcardToken;
-        this.excludedFields = excludedFields == null ? new HashSet<>() : excludedFields;
+        this.excludedFields = excludedFields == null ? Collections.emptySet() : excludedFields;
     }
 
     /**

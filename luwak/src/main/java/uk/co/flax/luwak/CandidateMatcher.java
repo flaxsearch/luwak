@@ -80,13 +80,12 @@ public abstract class CandidateMatcher<T extends QueryMatch> {
 
     private void addMatch(String queryId, String docId, T match) {
         MatchHolder<T> docMatches = matches.computeIfAbsent(docId, k -> new MatchHolder<>());
-        T found = docMatches.matches.get(queryId);
-        if (found != null) {
-            docMatches.matches.put(queryId, resolve(match, found));
-        }
-        else {
-            docMatches.matches.put(queryId, match);
-        }
+        docMatches.matches.compute(queryId, (key, oldValue) -> {
+            if (oldValue != null) {
+                return resolve(match, oldValue);
+            }
+            return match;
+        });
     }
 
     /**
