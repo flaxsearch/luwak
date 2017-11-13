@@ -158,6 +158,7 @@ public abstract class DocumentBatch implements Closeable, Iterable<InputDocument
     public IndexSearcher getSearcher() throws IOException {
         IndexSearcher searcher = new IndexSearcher(getIndexReader());
         searcher.setSimilarity(similarity);
+        searcher.setQueryCache(null);
         return searcher;
     }
 
