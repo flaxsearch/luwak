@@ -624,9 +624,7 @@ public class Monitor implements Closeable {
             SpanCollector collector = new SpanCollector() {
                 @Override
                 public void collectLeaf(PostingsEnum postingsEnum, int position, Term term) throws IOException {
-                    if (!matchingTerms.containsKey(id))
-                        matchingTerms.put(id, new StringBuilder());
-                    matchingTerms.get(id)
+                    matchingTerms.computeIfAbsent(id, i -> new StringBuilder())
                             .append(" ")
                             .append(term.field())
                             .append(":")

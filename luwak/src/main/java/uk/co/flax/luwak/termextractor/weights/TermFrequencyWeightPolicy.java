@@ -45,8 +45,9 @@ public class TermFrequencyWeightPolicy extends WeightPolicy {
 
     @Override
     public float weighTerm(QueryTerm term) {
-        if (this.frequencies.containsKey(term.term.text()))
-            return (n / this.frequencies.get(term.term.text())) + k;
+        Integer mapVal = this.frequencies.get(term.term.text());
+        if (mapVal != null)
+            return (n / mapVal) + k;
         return 1;
     }
 

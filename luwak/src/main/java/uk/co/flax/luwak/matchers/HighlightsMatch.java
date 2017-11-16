@@ -69,9 +69,10 @@ public class HighlightsMatch extends QueryMatch {
      * @return the Hits found in this field
      */
     public Collection<Hit> getHits(String field) {
-        if (hits.containsKey(field))
-            return Collections.unmodifiableCollection(hits.get(field));
-        return new LinkedList<>();
+        Collection<Hit> found = hits.get(field);
+        if (found != null)
+            return Collections.unmodifiableCollection(found);
+        return Collections.emptyList();
     }
 
     /**
@@ -90,9 +91,8 @@ public class HighlightsMatch extends QueryMatch {
         for (HighlightsMatch match : matches) {
             assert newMatch.getDocId().equals(match.getDocId());
             for (String field : match.getFields()) {
-                if (!newMatch.hits.containsKey(field))
-                    newMatch.hits.put(field, new TreeSet<Hit>());
-                newMatch.hits.get(field).addAll(match.getHits(field));
+                Set<Hit> hitSet = newMatch.hits.computeIfAbsent(field, f->new TreeSet<>());
+                hitSet.addAll(match.getHits(field));
             }
         }
         return newMatch;
@@ -126,9 +126,8 @@ public class HighlightsMatch extends QueryMatch {
     }
 
     void addHit(String field, int startPos, int endPos, int startOffset, int endOffset) {
-        if (!hits.containsKey(field))
-            hits.put(field, new TreeSet<>());
-        hits.get(field).add(new Hit(startPos, startOffset, endPos, endOffset));
+        Set<Hit> hitSet = hits.computeIfAbsent(field, f->new TreeSet<>());
+        hitSet.add(new Hit(startPos, startOffset, endPos, endOffset));
     }
 
     /**

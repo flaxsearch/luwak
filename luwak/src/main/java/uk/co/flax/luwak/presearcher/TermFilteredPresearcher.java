@@ -206,21 +206,15 @@ public class TermFilteredPresearcher extends Presearcher {
 
         for (QueryTerm queryTerm : extractor.collectTerms(tree)) {
             if (queryTerm.type.equals(QueryTerm.Type.ANY)) {
-                if (!fieldTerms.containsKey(ANYTOKEN_FIELD)) {
+                fieldTerms.computeIfAbsent(ANYTOKEN_FIELD, f -> {
                     BytesRefHash hash = new BytesRefHash();
                     hash.add(new BytesRef(ANYTOKEN));
-                    fieldTerms.put(ANYTOKEN_FIELD, hash);
-                }
-            }
-            else {
-                if (!fieldTerms.containsKey(queryTerm.term.field()))
-                    fieldTerms.put(queryTerm.term.field(), new BytesRefHash());
-
-                BytesRefHash termslist = fieldTerms.get(queryTerm.term.field());
-                if (queryTerm.type.equals(QueryTerm.Type.EXACT)) {
-                    termslist.add(queryTerm.term.bytes());
-                } else {
-                    termslist.add(queryTerm.term.bytes());
+                    return hash;
+                });
+            } else {
+                BytesRefHash termslist = fieldTerms.computeIfAbsent(queryTerm.term.field(), f -> new BytesRefHash());
+                termslist.add(queryTerm.term.bytes());
+                if (!queryTerm.type.equals(QueryTerm.Type.EXACT)) {
                     for (PresearcherComponent component : components) {
                         BytesRef extratoken = component.extraToken(queryTerm);
                         if (extratoken != null)

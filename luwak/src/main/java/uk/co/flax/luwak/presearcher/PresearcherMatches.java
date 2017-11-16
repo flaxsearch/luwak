@@ -33,8 +33,9 @@ public class PresearcherMatches<T extends QueryMatch> implements Iterable<Presea
     }
 
     public PresearcherMatch<T> match(String queryId, String docId) {
-        if (matchingTerms.containsKey(queryId))
-            return new PresearcherMatch<>(queryId, matchingTerms.get(queryId).toString(), matcher.matches(queryId, docId));
+        StringBuilder found = matchingTerms.get(queryId);
+        if (found != null)
+            return new PresearcherMatch<>(queryId, found.toString(), matcher.matches(queryId, docId));
         return null;
     }
 
