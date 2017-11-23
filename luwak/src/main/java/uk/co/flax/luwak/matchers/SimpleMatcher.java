@@ -39,6 +39,24 @@ public class SimpleMatcher extends CollectingMatcher<QueryMatch> {
         return new QueryMatch(queryId, docId);
     }
 
+
+    @Override
+    protected MatchCollector buildMatchCollector(String queryId) {
+        return new SimpleMatchCollector(queryId);
+    }
+
+
     public static final MatcherFactory<QueryMatch> FACTORY = SimpleMatcher::new;
 
+
+    private class SimpleMatchCollector extends MatchCollector {
+        public SimpleMatchCollector(String queryId) {
+            super(queryId);
+        }
+
+        @Override
+        public boolean needsScores() {
+            return false;
+        }
+    }
 }

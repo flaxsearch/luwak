@@ -256,7 +256,7 @@ class QueryIndex {
 
         @Override
         public boolean needsScores() {
-            return true;
+            return false;
         }
 
     }
