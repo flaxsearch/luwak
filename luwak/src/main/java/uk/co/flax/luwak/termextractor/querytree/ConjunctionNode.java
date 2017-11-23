@@ -24,6 +24,9 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 
 public class ConjunctionNode extends QueryTree {
+    private static final float MINIMUM_WEIGHT = -Float.MAX_VALUE;
+    private Boolean isAdvanceable;
+    private float weight = -Float.MAX_VALUE;
 
     private ConjunctionNode(List<QueryTree> children) {
         for (QueryTree child : children) {
@@ -45,7 +48,17 @@ public class ConjunctionNode extends QueryTree {
 
     @Override
     public float weight(TreeWeightor weightor) {
-        return weightor.select(children).weight(weightor);
+        if (weight == MINIMUM_WEIGHT) {
+            weight = weightor.select(children).weight(weightor);
+        }
+        return weight;
+    }
+
+    @Override
+    protected void addChild(QueryTree child) {
+        super.addChild(child);
+        if(isAdvanceable != null)
+            throw new IllegalStateException();//Just making sure about this.. Otherwise we need to clear on every addChild
     }
 
     @Override
@@ -59,15 +72,23 @@ public class ConjunctionNode extends QueryTree {
             PriorityQueue<QueryTree> pq = buildPriorityQueue(weightor);
             while (pq.size() > 0) {
                 QueryTree child = pq.pop();
-                if (child.advancePhase(weightor, advancer))
+                if (child.advancePhase(weightor, advancer)) {
+                    clearCachedValues();
                     return true;
+                }
             }
             return false;
         }
         if (children.size() <= 1)
             return false;
         children.remove(weightor.select(children));
+        clearCachedValues();
         return true;
+    }
+
+    private void clearCachedValues() {
+        isAdvanceable = null;
+        weight = MINIMUM_WEIGHT;
     }
 
     private PriorityQueue<QueryTree> buildPriorityQueue(final TreeWeightor weightor) {
@@ -93,14 +114,19 @@ public class ConjunctionNode extends QueryTree {
 
     @Override
     public boolean isAdvanceable(TreeAdvancer advancer) {
-        if (hasAdvanceableDescendents(advancer))
-            return false;
-        int c = children.size();
-        for (QueryTree child : children) {
-            if (!advancer.canAdvanceOver(child))
-                c--;
+        if (isAdvanceable == null) {
+            if (hasAdvanceableDescendents(advancer)) {
+                isAdvanceable = Boolean.FALSE;
+            } else {
+                int c = children.size();
+                for (QueryTree child : children) {
+                    if (!advancer.canAdvanceOver(child))
+                        c--;
+                }
+                isAdvanceable = c > 1;
+            }
         }
-        return c > 1;
+        return isAdvanceable;
     }
 
     @Override
