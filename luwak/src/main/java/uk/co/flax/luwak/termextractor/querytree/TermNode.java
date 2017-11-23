@@ -24,8 +24,9 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 
 public class TermNode extends QueryTree {
-
     protected final QueryTerm term;
+    // Cache its score. TermNode scoped to a single TermWeightor, so can do it. Initialize to most negative
+    protected float score = -Float.MAX_VALUE;
 
     public TermNode(QueryTerm term) {
         this.term = term;
@@ -42,7 +43,10 @@ public class TermNode extends QueryTree {
 
     @Override
     public float weight(TreeWeightor weightor) {
-        return weightor.weigh(term);
+        if (score == -Float.MAX_VALUE) {
+            score = weightor.weigh(term);
+        }
+        return score;
     }
 
     @Override
