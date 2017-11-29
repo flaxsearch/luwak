@@ -46,9 +46,6 @@ public class BooleanQueryTreeBuilder extends QueryTreeBuilder<BooleanQuery> {
     protected Clauses analyze(BooleanQuery query) {
         Clauses clauses = new Clauses();
         for (BooleanClause clause : query) {
-            if (clause.getQuery() instanceof MatchAllDocsQuery) {
-                continue;       // ignored for term extraction
-            }
             if (clause.getOccur() == BooleanClause.Occur.MUST || clause.getOccur() == BooleanClause.Occur.FILTER) {
                 clauses.conjunctions.add(clause.getQuery());
             }
