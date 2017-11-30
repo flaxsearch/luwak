@@ -24,6 +24,9 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 
 public class DisjunctionNode extends QueryTree {
+    private static final float MINIMUM_WEIGHT = -Float.MAX_VALUE;
+    private Boolean isAdvanceable;
+    private float weight = MINIMUM_WEIGHT;
 
     private DisjunctionNode(List<QueryTree> children) {
         for (QueryTree child : children) {
@@ -41,7 +44,10 @@ public class DisjunctionNode extends QueryTree {
 
     @Override
     public float weight(TreeWeightor weightor) {
-        return weightor.combine(children);
+        if (weight == MINIMUM_WEIGHT) {
+            weight = weightor.combine(children);
+        }
+        return weight;
     }
 
     @Override
@@ -57,11 +63,14 @@ public class DisjunctionNode extends QueryTree {
 
     @Override
     public boolean isAdvanceable(TreeAdvancer advancer) {
-        boolean result = false;
-        for (QueryTree child : children) {
-            result |= child.isAdvanceable(advancer);
+        if (isAdvanceable == null) {
+            boolean result = false;
+            for (QueryTree child : children) {
+                result |= child.isAdvanceable(advancer);
+            }
+            isAdvanceable = result;
         }
-        return result;
+        return isAdvanceable;
     }
 
     @Override
@@ -99,7 +108,15 @@ public class DisjunctionNode extends QueryTree {
         for (QueryTree child : children) {
             changed |= child.advancePhase(weightor, advancer);
         }
+        if (changed) {
+            clearCachedValues();
+        }
         return changed;
+    }
+
+    private void clearCachedValues() {
+        isAdvanceable = null;
+        weight = MINIMUM_WEIGHT;
     }
 
     @Override
