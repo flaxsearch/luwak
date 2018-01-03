@@ -45,6 +45,7 @@ class QueryIndex {
         @Override
         public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
             IndexSearcher searcher = super.newSearcher(reader, previousReader);
+            searcher.setQueryCache(null);
             termFilters.put(reader, new QueryTermFilter(reader));
             reader.addReaderClosedListener(termFilters::remove);
             return searcher;
