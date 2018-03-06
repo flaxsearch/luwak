@@ -114,12 +114,12 @@ public class TestMonitor {
     @Test
     public void canRetrieveQuery() throws IOException, UpdateException {
 
-        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that"));
+        monitor.update(new MonitorQuery("query1", "this"), new MonitorQuery("query2", "that other"));
         Assertions.assertThat(monitor.getQueryCount()).isEqualTo(2);
         Assertions.assertThat(monitor.getQueryIds()).contains("query1", "query2");
 
         MonitorQuery mq = monitor.getQuery("query2");
-        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that"));
+        Assertions.assertThat(mq).isEqualTo(new MonitorQuery("query2", "that other"));
 
     }
 
