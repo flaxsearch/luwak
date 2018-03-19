@@ -23,7 +23,7 @@ import org.apache.lucene.util.BytesRef;
 
 public interface DocumentQueryBuilder {
 
-    void addTerm(String field, BytesRef term) throws IOException;
+    void addTerm(BytesRef term) throws IOException;
 
     Query build();
 

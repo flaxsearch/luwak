@@ -8,11 +8,10 @@ import java.util.Map;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
@@ -107,8 +106,8 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     }
 
     @Override
-    protected DocumentQueryBuilder getQueryBuilder() {
-        return new MultipassDocumentQueryBuilder();
+    protected DocumentQueryBuilder getQueryBuilder(String field) {
+        return new MultipassDocumentQueryBuilder(field);
     }
 
     static String field(String field, int pass) {
@@ -117,20 +116,23 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private class MultipassDocumentQueryBuilder implements DocumentQueryBuilder {
 
+        String[] fields;
         BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
-        List<List<Term>> terms = new ArrayList<List<Term>>(passes);
+        List<List<BytesRef>> terms = new ArrayList<List<BytesRef>>(passes);
 
-        public MultipassDocumentQueryBuilder() {
+        public MultipassDocumentQueryBuilder(String fieldName) {
+            fields = new String[queries.length];
             for (int i = 0; i < queries.length; i++) {
+                fields[i] = field(fieldName, i);
                 queries[i] = new BooleanQuery.Builder();
-                terms.add(i, new ArrayList<Term>());
+                terms.add(i, new ArrayList<BytesRef>());
             }
         }
 
         @Override
-        public void addTerm(String field, BytesRef term) throws IOException {
+        public void addTerm(BytesRef term) throws IOException {
             for (int i = 0; i < passes; i++) {
-                terms.get(i).add(new Term(field(field, i), term));
+                terms.get(i).add(term);
             }
         }
 
@@ -138,7 +140,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         public Query build() {
             BooleanQuery.Builder parent = new BooleanQuery.Builder();
             for (int i = 0; i < passes; i++) {
-                parent.add(new TermsQuery(terms.get(i)), BooleanClause.Occur.MUST);
+                parent.add(new TermInSetQuery(fields[i], terms.get(i)), BooleanClause.Occur.MUST);
             }
             return parent.build();
         }

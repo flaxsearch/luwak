@@ -2,7 +2,6 @@ package uk.co.flax.luwak.termextractor;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
 import org.junit.Test;
 import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
@@ -51,7 +50,6 @@ public class TestExtractors {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testRangeQueriesReturnAnyToken() {
 
         LegacyNumericRangeQuery<Long> nrq = LegacyNumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
@@ -115,13 +113,6 @@ public class TestExtractors {
         assertThat(treeBuilder.collectTerms(query))
                 .hasSize(2)
                 .containsExactly(new QueryTerm("f", "t1", QueryTerm.Type.EXACT), new QueryTerm("f", "t2", QueryTerm.Type.EXACT));
-    }
-
-    @Test
-    public void testTermsQueryExtractor() {
-        Query q = new TermsQuery(new Term("f1", "t1"), new Term("f2", "t2"));
-        assertThat(treeBuilder.collectTerms(q))
-                .containsExactly(new QueryTerm("f1", "t1", QueryTerm.Type.EXACT), new QueryTerm("f2", "t2", QueryTerm.Type.EXACT));
     }
 
     @Test

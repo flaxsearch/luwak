@@ -16,10 +16,10 @@ package uk.co.flax.luwak.util;
  */
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,9 +29,16 @@ public class TestSpanRewriter {
     @Test
     public void testTermsQueryWithMultipleFields() throws Exception {
 
-        TermsQuery tq = new TermsQuery(new Term("field1", "term1"), new Term("field2", "term1"), new Term("field2", "term2"));
+        BooleanQuery.Builder bqb = new BooleanQuery.Builder();
+        bqb.add(new TermQuery(new Term("field1", "term1")), BooleanClause.Occur.SHOULD);
 
-        Query q = new SpanRewriter().rewrite(tq, null);
+        BytesRef bytes[] = new BytesRef[2];
+        bytes[0] = new BytesRef("term1");
+        bytes[1] = new BytesRef("term2");
+
+        bqb.add(new TermInSetQuery("field2", bytes), BooleanClause.Occur.SHOULD);
+
+        Query q = new SpanRewriter().rewrite(bqb.build(), null);
         assertThat(q).isInstanceOf(BooleanQuery.class);
     }
 

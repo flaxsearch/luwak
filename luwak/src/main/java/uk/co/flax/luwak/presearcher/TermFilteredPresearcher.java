@@ -27,10 +27,10 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
@@ -82,8 +82,16 @@ public class TermFilteredPresearcher extends Presearcher {
     @Override
     public final Query buildQuery(LeafReader reader, QueryTermFilter queryTermFilter) {
         try {
-            DocumentQueryBuilder queryBuilder = getQueryBuilder();
-            for (String field : reader.fields()) {
+            List<String> indexedFields = new ArrayList<>();
+            for (FieldInfo fieldInfo : reader.getFieldInfos()) {
+                if (fieldInfo.getIndexOptions() != IndexOptions.NONE) {
+                    indexedFields.add(fieldInfo.name);
+                }
+            }
+            Collections.sort(indexedFields);
+            BooleanQuery.Builder bq = new BooleanQuery.Builder();
+            for (String field : indexedFields) {
+                DocumentQueryBuilder queryBuilder = getQueryBuilder(field);
 
                 TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator());
                 for (PresearcherComponent component : components) {
@@ -94,17 +102,14 @@ public class TermFilteredPresearcher extends Presearcher {
 
                 TermToBytesRefAttribute termAtt = ts.addAttribute(TermToBytesRefAttribute.class);
                 while (ts.incrementToken()) {
-                    queryBuilder.addTerm(field, BytesRef.deepCopyOf(termAtt.getBytesRef()));
+                    queryBuilder.addTerm(BytesRef.deepCopyOf(termAtt.getBytesRef()));
                 }
                 ts.close();
 
+                bq.add(queryBuilder.build(), BooleanClause.Occur.SHOULD);
             }
-            Query presearcherQuery = queryBuilder.build();
-
-            BooleanQuery.Builder bq = new BooleanQuery.Builder();
-            bq.add(presearcherQuery, BooleanClause.Occur.SHOULD);
             bq.add(new TermQuery(new Term(ANYTOKEN_FIELD, ANYTOKEN)), BooleanClause.Occur.SHOULD);
-            presearcherQuery = bq.build();
+            Query presearcherQuery = bq.build();
 
             for (PresearcherComponent component : components) {
                 presearcherQuery = component.adjustPresearcherQuery(reader, presearcherQuery);
@@ -118,19 +123,20 @@ public class TermFilteredPresearcher extends Presearcher {
         }
     }
 
-    protected DocumentQueryBuilder getQueryBuilder() {
+    protected DocumentQueryBuilder getQueryBuilder(String fieldName) {
         return new DocumentQueryBuilder() {
 
-            List<Term> terms = new ArrayList<>();
+            String field = fieldName;
+            List<BytesRef> terms = new ArrayList<>();
 
             @Override
-            public void addTerm(String field, BytesRef term) throws IOException {
-                terms.add(new Term(field, term));
+            public void addTerm(BytesRef term) throws IOException {
+                terms.add(term);
             }
 
             @Override
             public Query build() {
-                return new TermsQuery(terms);
+                return new TermInSetQuery(field, terms);
             }
         };
     }

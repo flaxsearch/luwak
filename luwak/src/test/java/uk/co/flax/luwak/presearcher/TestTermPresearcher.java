@@ -6,12 +6,13 @@ import java.util.Map;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -121,7 +122,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(batch.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
-                        .add(should(new TermsQuery(new Term("f", "test"))))
+                        .add(should(new TermInSetQuery("f", new BytesRef("test"))))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();
 

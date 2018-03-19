@@ -23,7 +23,6 @@ import java.util.Map;
 
 import org.apache.lucene.index.PrefixCodedTerms;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.*;
 import org.apache.lucene.util.BytesRef;
@@ -50,8 +49,6 @@ public class SpanRewriter {
             return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in, searcher);
         if (in instanceof TermInSetQuery)
             return rewriteTermInSetQuery((TermInSetQuery) in);
-        if (in instanceof TermsQuery)
-            return rewrite(in.rewrite(null), null);
         if (in instanceof BoostQuery)
             return rewrite(((BoostQuery) in).getQuery(), searcher);   // we don't care about boosts for rewriting purposes
         if (in instanceof PhraseQuery)
