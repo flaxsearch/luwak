@@ -1,6 +1,7 @@
 package uk.co.flax.luwak.termextractor;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
@@ -54,7 +55,7 @@ public class TestExtractors {
     @SuppressWarnings("deprecation")
     public void testRangeQueriesReturnAnyToken() {
 
-        LegacyNumericRangeQuery<Long> nrq = LegacyNumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
+        Query nrq = LongPoint.newRangeQuery("field", 0L, 10L);
 
         assertThat(treeBuilder.collectTerms(nrq))
                 .hasSize(1)
