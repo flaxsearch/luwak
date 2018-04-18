@@ -53,7 +53,7 @@ public class TestSlowLog {
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        return new ConstantScoreWeight(this, boost) {
+                        return new ConstantScoreWeight(this) {
                             @Override
                             public final Scorer scorer(LeafReaderContext context) throws IOException {
                               final Bits matchingDocs = getMatchingDocs(context);
@@ -81,11 +81,6 @@ public class TestSlowLog {
 
                             protected Bits getMatchingDocs(LeafReaderContext context) throws IOException {
                                 return new Bits.MatchAllBits(context.reader().maxDoc());
-                            }
-
-                            @Override
-                            public boolean isCacheable(LeafReaderContext ctx) {
-                              return true;
                             }
 
                             public String toString() {
