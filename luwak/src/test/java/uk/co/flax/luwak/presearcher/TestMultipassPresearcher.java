@@ -4,17 +4,16 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
-
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
 /**
@@ -95,10 +94,10 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(docs.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new BooleanQuery.Builder()
-                                        .add(must(new TermsQuery(new Term("f_0", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_1", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_2", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_3", "test"))))
+                                        .add(must(new TermQuery(new Term("f_0", "test"))))
+                                        .add(must(new TermQuery(new Term("f_1", "test"))))
+                                        .add(must(new TermQuery(new Term("f_2", "test"))))
+                                        .add(must(new TermQuery(new Term("f_3", "test"))))
                                         .build()))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();

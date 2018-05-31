@@ -9,12 +9,13 @@ import java.util.Map;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
+
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
@@ -138,7 +139,15 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
         public Query build() {
             BooleanQuery.Builder parent = new BooleanQuery.Builder();
             for (int i = 0; i < passes; i++) {
-                parent.add(new TermsQuery(terms.get(i)), BooleanClause.Occur.MUST);
+                if (terms.get(i).size() == 1) {
+                    parent.add(new TermQuery(terms.get(i).iterator().next()), BooleanClause.Occur.MUST);
+                } else {
+                    BooleanQuery.Builder bq = new BooleanQuery.Builder();
+                    for (Term term : terms.get(i)) {
+                        bq.add(new TermQuery(term), BooleanClause.Occur.SHOULD);
+                    }
+                    parent.add(bq.build(), BooleanClause.Occur.MUST);
+                }
             }
             return parent.build();
         }

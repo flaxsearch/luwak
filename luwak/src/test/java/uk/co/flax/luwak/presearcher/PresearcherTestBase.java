@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LegacyNumericTokenStream;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
@@ -213,41 +212,6 @@ public abstract class PresearcherTestBase {
                     .hasQueriesRunCount(1);
         }
 
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void filtersOnNumericTermQueries() throws IOException, UpdateException {
-
-        // Rudimentary query parser which returns numeric encoded BytesRefs
-        try (Monitor numeric_monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception
-            {
-                BytesRefBuilder brb = new BytesRefBuilder();
-                LegacyNumericUtils.intToPrefixCoded(Integer.parseInt(queryString), 0, brb);
-
-                Term t = new Term(TEXTFIELD, brb.get());
-                return new TermQuery(t);
-            }
-        }, presearcher)) {
-
-            for (int i = 8; i <= 15; i++) {
-                numeric_monitor.update(new MonitorQuery("query" + i, "" + i));
-            }
-
-            for (int i = 8; i <= 15; i++) {
-                LegacyNumericTokenStream nts = new LegacyNumericTokenStream(1);
-                nts.setIntValue(i);
-                InputDocument doc = InputDocument.builder("doc" + i)
-                        .addField(new TextField(TEXTFIELD, nts)).build();
-                assertThat(numeric_monitor.match(doc, SimpleMatcher.FACTORY))
-                        .matchesDoc("doc" + i)
-                        .hasMatchCount("doc" + i, 1)
-                        .matchesQuery("query" + i, "doc" + i);
-            }
-
-        }
     }
 
     public static BooleanClause must(Query q) {

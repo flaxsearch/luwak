@@ -7,9 +7,9 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.*;
 import org.apache.lucene.util.Bits;
 import org.junit.Test;
+
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -48,19 +48,50 @@ public class TestSlowLog {
                     }
 
                     @Override
-                    public Weight createWeight(IndexSearcher searcher, boolean needsScores) {
+                    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) {
                         try {
                             Thread.sleep(delay);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        return new RandomAccessWeight(this) {
+                        return new ConstantScoreWeight(this, boost) {
+                            @Override
+                            public final Scorer scorer(LeafReaderContext context) throws IOException {
+                              final Bits matchingDocs = getMatchingDocs(context);
+                              if (matchingDocs == null || matchingDocs instanceof Bits.MatchNoBits) {
+                                return null;
+                              }
+                              final DocIdSetIterator approximation = DocIdSetIterator.all(context.reader().maxDoc());
+                              final TwoPhaseIterator twoPhase = new TwoPhaseIterator(approximation) {
+
+                                @Override
+                                public boolean matches() throws IOException {
+                                  final int doc = approximation.docID();
+
+                                  return matchingDocs.get(doc);
+                                }
+
+                                @Override
+                                public float matchCost() {
+                                  return 10; // TODO: use some cost of matchingDocs
+                                }
+                              };
+
+                              return new ConstantScoreScorer(this, score(), twoPhase);
+                            }
+
                             protected Bits getMatchingDocs(LeafReaderContext context) throws IOException {
                                 return new Bits.MatchAllBits(context.reader().maxDoc());
                             }
 
                             public String toString() {
                                 return "weight(MatchAllDocs)";
+                            }
+
+                            @Override
+                            public boolean isCacheable(LeafReaderContext ctx) {
+                                // TODO Auto-generated method stub
+                                return false;
                             }
                         };
                     }

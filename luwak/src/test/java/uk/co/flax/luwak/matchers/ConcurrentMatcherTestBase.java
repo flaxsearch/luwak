@@ -87,7 +87,7 @@ public abstract class ConcurrentMatcherTestBase {
                 // 'test' and 'doc' parts will match.  'test' will have a higher score,
                 // because of it's lower termfreq.  We need to check that each query ends
                 // up with the score for the 'test' subquery, not the 'doc' subquery
-                assertThat(match.getScore()).isEqualTo(2.5316024f);
+                assertThat(match.getScore()).isEqualTo(2.8768208f);
             }
         }
     }
@@ -98,6 +98,7 @@ public abstract class ConcurrentMatcherTestBase {
         ExecutorService executor = Executors.newCachedThreadPool();
 
         try (Monitor monitor = new Monitor(new TestSlowLog.SlowQueryParser(250), new MatchAllPresearcher())) {
+            monitor.setSlowLogLimit(20000000);
             monitor.update(new MonitorQuery("1", "slow"), new MonitorQuery("2", "fast"), new MonitorQuery("3", "slow"));
 
             DocumentBatch batch = DocumentBatch.of(InputDocument.builder("doc1").build());

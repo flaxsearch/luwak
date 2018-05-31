@@ -5,7 +5,7 @@
     <parent>
         <artifactId>luwak-parent</artifactId>
         <groupId>com.github.flaxsearch</groupId>
-        <version>1.6.0-SNAPSHOT</version>
+        <version>1.7.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>luwak</artifactId>

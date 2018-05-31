@@ -75,7 +75,7 @@ public class FieldFilterPresearcherComponent extends PresearcherComponent {
 
     private Query buildFilterClause(LeafReader reader) throws IOException {
 
-        Terms terms = reader.fields().terms(field);
+        Terms terms = reader.terms(field);
         if (terms == null)
             return null;
 
