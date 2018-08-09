@@ -30,6 +30,7 @@ import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ public class TestBenchmark {
 
     @Before
     public void startMonitor() throws IOException, UpdateException {
-        monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher());
+        monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT));
         monitor.update(new MonitorQuery("1", "cheese"));
         monitor.update(new MonitorQuery("2", "sesquipedalian"));
         monitor.update(new MonitorQuery("3", "+goodbye +world"));
