@@ -22,6 +22,7 @@ import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class SpanPayloadCheckQueryTreeBuilder extends QueryTreeBuilder<SpanPayloadCheckQuery> {
 
@@ -40,9 +41,9 @@ public class SpanPayloadCheckQueryTreeBuilder extends QueryTreeBuilder<SpanPaylo
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, SpanPayloadCheckQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, SpanPayloadCheckQuery query) {
         try {
-            return builder.buildTree((Query) this.queryField.get(query));
+            return builder.buildTree((Query) this.queryField.get(query), weightor);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

@@ -206,6 +206,10 @@ class QueryIndex {
 
         void matchQuery(String id, QueryCacheEntry query, DataValues dataValues) throws IOException;
 
+        default boolean needsScores() {
+            return false;
+        }
+
     }
 
     // ---------------------------------------------
@@ -257,7 +261,7 @@ class QueryIndex {
 
         @Override
         public boolean needsScores() {
-            return false;
+            return matcher.needsScores();
         }
 
     }

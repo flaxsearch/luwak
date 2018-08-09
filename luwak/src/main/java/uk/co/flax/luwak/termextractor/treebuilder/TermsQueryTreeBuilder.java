@@ -21,6 +21,7 @@ import org.apache.lucene.queries.TermsQuery;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class TermsQueryTreeBuilder extends QueryTreeBuilder<TermsQuery> {
 
@@ -31,9 +32,9 @@ public class TermsQueryTreeBuilder extends QueryTreeBuilder<TermsQuery> {
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, TermsQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, TermsQuery query) {
         try {
-            return builder.buildTree(query.rewrite(null));
+            return builder.buildTree(query.rewrite(null), weightor);
         } catch (IOException e) {
             throw new RuntimeException(e);  // should never happen
         }

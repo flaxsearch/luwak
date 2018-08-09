@@ -43,7 +43,7 @@ import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -59,6 +59,7 @@ public class TermFilteredPresearcher extends Presearcher {
     }
 
     protected final QueryAnalyzer extractor;
+    protected final TermWeightor weightor;
 
     private final List<PresearcherComponent> components = new ArrayList<>();
 
@@ -66,17 +67,10 @@ public class TermFilteredPresearcher extends Presearcher {
 
     public static final String ANYTOKEN = "__ANYTOKEN__";
 
-    public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
-        this.extractor = QueryAnalyzer.fromComponents(weightor, components);
+    public TermFilteredPresearcher(TermWeightor weightor, PresearcherComponent... components) {
+        this.extractor = QueryAnalyzer.fromComponents(components);
         this.components.addAll(Arrays.asList(components));
-    }
-
-    public TermFilteredPresearcher(PresearcherComponent... components) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, components);
-    }
-
-    public TermFilteredPresearcher() {
-        this(TreeWeightor.DEFAULT_WEIGHTOR);
+        this.weightor = weightor;
     }
 
     @Override
@@ -145,7 +139,7 @@ public class TermFilteredPresearcher extends Presearcher {
     @Override
     public final Document indexQuery(Query query, Map<String, String> metadata) {
 
-        QueryTree querytree = extractor.buildTree(query);
+        QueryTree querytree = extractor.buildTree(query, weightor);
         Document doc = buildQueryDocument(querytree);
 
         for (PresearcherComponent component : components) {
@@ -162,7 +156,7 @@ public class TermFilteredPresearcher extends Presearcher {
      * @param out   a {@link PrintStream}
      */
     public void showQueryTree(Query query, PrintStream out) {
-        QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, out);
+        QueryTreeViewer.view(extractor.buildTree(query, weightor), out);
     }
 
     protected Document buildQueryDocument(QueryTree querytree) {

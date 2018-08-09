@@ -565,6 +565,7 @@ public class Monitor implements Closeable {
                 matcher.reportError(new MatchError(id, e));
             }
         }
+
     }
 
     /**
@@ -642,6 +643,10 @@ public class Monitor implements Closeable {
             super.matchQuery(id, query, dataValues);
         }
 
+        @Override
+        public boolean needsScores() {
+            return true;
+        }
     }
 
 }

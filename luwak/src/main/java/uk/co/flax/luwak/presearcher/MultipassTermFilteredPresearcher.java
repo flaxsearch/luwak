@@ -1,7 +1,6 @@
 package uk.co.flax.luwak.presearcher;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +16,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -42,8 +39,6 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  * from different routes through a querytree.  Each route will produce a set of terms
  * that are *sufficient* to select the query, and are indexed into a separate, suffixed field.
  *
- * Routes are selected using a {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer}.
- *
  * Incoming InputDocuments are then converted to a set of Disjunction queries over each
  * suffixed field, and these queries are combined into a conjunction query, such that the
  * document's set of terms must match a term from each route.
@@ -60,50 +55,15 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private final int passes;
 
-    protected final TreeAdvancer advancer;
-
     /**
      * Construct a new MultipassTermFilteredPresearcher
      * @param passes the number of times a query should be indexed
-     * @param advancer the Advancer to use
      * @param weightor the TreeWeightor to use
      * @param components the PresearcherComponents to use
      */
-    public MultipassTermFilteredPresearcher(int passes, TreeAdvancer advancer, TreeWeightor weightor, PresearcherComponent... components) {
+    public MultipassTermFilteredPresearcher(int passes, TermWeightor weightor, PresearcherComponent... components) {
         super(weightor, components);
-        this.advancer = advancer;
         this.passes = passes;
-    }
-
-    /**
-     * Construct a new MultipassTermFilteredPresearcher, using a MinWeightAdvancer
-     * @param passes the number of times a query should be indexed
-     * @param minWeight the minimum weight a query term can have to be advanced over
-     * @param weightor the TreeWeightor to use
-     * @param components the PresearcherComponents to use
-     */
-    public MultipassTermFilteredPresearcher(int passes, float minWeight, TreeWeightor weightor, PresearcherComponent... components) {
-        this(passes, new TreeAdvancer.MinWeightTreeAdvancer(weightor, minWeight), weightor, components);
-    }
-
-    /**
-     * Construct a new MultipassTermFilteredPresearcher, using the default TreeWeightor
-     * @param passes the number of times a query should be indexed
-     * @param advancer the {@link uk.co.flax.luwak.termextractor.querytree.TreeAdvancer} to use on subsequent passes
-     * @param components the PresearcherComponents to use
-     */
-    public MultipassTermFilteredPresearcher(int passes, TreeAdvancer advancer, PresearcherComponent... components) {
-        this(passes, advancer, TreeWeightor.DEFAULT_WEIGHTOR, components);
-    }
-
-    /**
-     * Construct a new MultipassTermFilteredPresearcher, using the default TreeWeightor and a MinWeightAdvancer
-     * @param passes the number of times a query should be indexed
-     * @param minWeight the minimum weight a query term can have to be advanced over
-     * @param components the PresearcherComponents to use
-     */
-    public MultipassTermFilteredPresearcher(int passes, float minWeight, PresearcherComponent... components) {
-        this(passes, minWeight, TreeWeightor.DEFAULT_WEIGHTOR, components);
     }
 
     @Override
@@ -160,7 +120,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
                 doc.add(new Field(entry.getKey(),
                         new TermsEnumTokenStream(new BytesRefHashIterator(entry.getValue())), QUERYFIELDTYPE));
             }
-            extractor.advancePhase(querytree, advancer);
+            querytree.advancePhase();
         }
 
         return doc;
@@ -173,8 +133,4 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
      */
     protected void debug(QueryTree tree, Map<String, BytesRefHash> terms) {}
 
-    @Override
-    public void showQueryTree(Query query, PrintStream out) {
-        QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, advancer, out);
-    }
 }

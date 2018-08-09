@@ -18,34 +18,22 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * limitations under the License.
  */
 
-public abstract class WeightPolicy {
+public final class TermWeightor {
 
     private final WeightNorm[] norms;
 
-    protected WeightPolicy(WeightNorm... norms) {
+    public TermWeightor(WeightNorm... norms) {
         this.norms = norms;
     }
 
-    protected abstract float weighTerm(QueryTerm term);
-
     public float weigh(QueryTerm term) {
-        float termweight = weighTerm(term);
+        float termweight = 1;
         for (WeightNorm norm : norms) {
             termweight *= norm.norm(term);
         }
         return termweight;
     }
 
-    public static class Default extends WeightPolicy {
+    public static final TermWeightor DEFAULT = new TermWeightor(new TokenLengthNorm());
 
-        public Default(WeightNorm... norms) {
-            super(norms);
-        }
-
-        @Override
-        protected float weighTerm(QueryTerm term) {
-            return 1;
-        }
-
-    }
 }

@@ -14,6 +14,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.testutils.FileUtils;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
@@ -48,7 +49,7 @@ public class TestMonitorPersistence {
 
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
                                         new MMapDirectory(indexDirectory))) {
             monitor.update(new MonitorQuery("1", "test"),
                 new MonitorQuery("2", "test"),
@@ -60,7 +61,7 @@ public class TestMonitorPersistence {
 
         }
 
-        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
                                         new MMapDirectory(indexDirectory))) {
 
             Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
@@ -75,7 +76,7 @@ public class TestMonitorPersistence {
         QueryIndexConfiguration config = new QueryIndexConfiguration().storeQueries(false);
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
                 new MMapDirectory(indexDirectory), config)) {
 
             monitor.update(new MonitorQuery("1", "test"),
@@ -88,7 +89,7 @@ public class TestMonitorPersistence {
 
         }
 
-        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
                 new MMapDirectory(indexDirectory), config)) {
 
             Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(0);

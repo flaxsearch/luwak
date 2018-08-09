@@ -14,6 +14,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -37,7 +38,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new MultipassTermFilteredPresearcher(4, 0.0f);
+        return new MultipassTermFilteredPresearcher(4, TermWeightor.DEFAULT);
     }
 
     @Test

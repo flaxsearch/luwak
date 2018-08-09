@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Fail.fail;
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
@@ -34,7 +35,7 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
 
         @Override
         protected Presearcher createPresearcher() {
-            return new TermFilteredPresearcher(new FieldFilterPresearcherComponent("language"));
+            return new TermFilteredPresearcher(TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
         }
     }
 
@@ -42,7 +43,7 @@ public abstract class FieldFilterPresearcherComponentTestBase extends Presearche
 
         @Override
         protected Presearcher createPresearcher() {
-            return new MultipassTermFilteredPresearcher(2, 0.0f, new FieldFilterPresearcherComponent("language"));
+            return new MultipassTermFilteredPresearcher(2, TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
         }
     }
 

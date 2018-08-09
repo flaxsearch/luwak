@@ -22,6 +22,7 @@ import uk.co.flax.luwak.matchers.HighlightingMatcher;
 import uk.co.flax.luwak.matchers.HighlightsMatch;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -53,7 +54,7 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher())) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher(TermWeightor.DEFAULT))) {
             addQueries(monitor, queriesFile);
             DocumentBatch batch = DocumentBatch.of(buildDocs(inputDirectory));
             Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);

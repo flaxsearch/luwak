@@ -3,10 +3,9 @@ package uk.co.flax.luwak.termextractor;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.FieldWeightNorm;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
 /**
@@ -31,20 +30,19 @@ public class DumpQueryTree {
 
         Query bq = ParserUtils.parse("+(+(+story:start term +(+story:data +story:user +story:google)) +(+hello +world +howdyedo))");
 
-        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0.0f, "start"),
+        TermWeightor weightor = new TermWeightor(new TermWeightNorm(0.0f, "start"),
                                                  new TermWeightNorm(1, "google"),
                                                  new TermWeightNorm(4, "user", "data"),
                                                  new FieldWeightNorm(0.1f, "wire"));
-        QueryAnalyzer analyzer = new QueryAnalyzer(weightor);
-        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
+        QueryAnalyzer analyzer = new QueryAnalyzer();
 
-        QueryTree tree = analyzer.buildTree(bq);
+        QueryTree tree = analyzer.buildTree(bq, weightor);
 
         do {
-            QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
+            QueryTreeViewer.view(tree, System.out);
             System.out.println(analyzer.collectTerms(tree));
         }
-        while (analyzer.advancePhase(tree, advancer));
+        while (tree.advancePhase());
 
         System.out.flush();
         System.out.println("done");

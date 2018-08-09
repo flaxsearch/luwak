@@ -10,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.spans.*;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ public class TestSpanExtractors {
                 new SpanTermQuery(new Term("field1", "term"))
         }, 0, true);
 
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm("field1", "term1", QueryTerm.Type.EXACT));
     }
 
@@ -50,14 +51,15 @@ public class TestSpanExtractors {
                 new SpanTermQuery(new Term("field", "is"))
         }, 0, true);
 
-        assertThat(treeBuilder.collectTerms(q)).containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
+                .containsExactly(new QueryTerm("field", "is", QueryTerm.Type.EXACT));
     }
 
     @Test
     public void testSpanOrExtractor() {
         SpanOrQuery or = new SpanOrQuery(new SpanTermQuery(new Term("field", "term1")),
                                          new SpanTermQuery(new Term("field", "term2")));
-        assertThat(treeBuilder.collectTerms(or)).containsOnly(
+        assertThat(treeBuilder.collectTerms(or, TermWeightor.DEFAULT)).containsOnly(
                 new QueryTerm("field", "term1", QueryTerm.Type.EXACT),
                 new QueryTerm("field", "term2", QueryTerm.Type.EXACT)
         );
@@ -66,7 +68,7 @@ public class TestSpanExtractors {
     @Test
     public void testSpanMultiTerms() {
         SpanQuery q = new SpanMultiTermQueryWrapper<>(new RegexpQuery(new Term("field", "term.*")));
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .hasSize(1)
                 .extracting("type")
                 .containsOnly(QueryTerm.Type.ANY);
@@ -84,7 +86,7 @@ public class TestSpanExtractors {
                     .build(),
                 new SpanTermQuery(t3));
 
-        assertThat(treeBuilder.collectTerms(swq))
+        assertThat(treeBuilder.collectTerms(swq, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t3));
 
     }
@@ -101,7 +103,7 @@ public class TestSpanExtractors {
                         .build(),
                 new SpanTermQuery(t3));
 
-        assertThat(treeBuilder.collectTerms(swq))
+        assertThat(treeBuilder.collectTerms(swq, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t3));
 
     }
@@ -110,7 +112,7 @@ public class TestSpanExtractors {
     public void testSpanBoost() {
         Term t1 = new Term("field", "term1");
         SpanBoostQuery q = new SpanBoostQuery(new SpanTermQuery(t1), 0.1f);
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t1));
     }
 
@@ -118,7 +120,7 @@ public class TestSpanExtractors {
     public void testFieldMaskingSpanQuery() {
         Term t1 = new Term("field", "term1");
         FieldMaskingSpanQuery q = new FieldMaskingSpanQuery(new SpanTermQuery(t1), "field2");
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t1));
     }
 
@@ -126,7 +128,7 @@ public class TestSpanExtractors {
     public void testSpanPositionQuery() {
         Term t1 = new Term("field", "term");
         Query q = new SpanFirstQuery(new SpanTermQuery(t1), 10);
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t1));
     }
 
@@ -134,7 +136,7 @@ public class TestSpanExtractors {
     public void testPayloadScoreQuery() {
         Term t1 = new Term("field", "term");
         Query q = new PayloadScoreQuery(new SpanTermQuery(t1), new MaxPayloadFunction());
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t1));
     }
 
@@ -142,7 +144,7 @@ public class TestSpanExtractors {
     public void testSpanPayloadCheckQuery() {
         Term t1 = new Term("field", "term");
         Query q = new SpanPayloadCheckQuery(new SpanTermQuery(t1), Collections.emptyList());
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
                 .containsExactly(new QueryTerm(t1));
     }
 }

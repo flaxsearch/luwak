@@ -7,6 +7,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +34,7 @@ public class TestPresearcherMatchCollector {
     @Test
     public void testMatchCollectorShowMatches() throws IOException, UpdateException {
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher())) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher(TermWeightor.DEFAULT))) {
             monitor.update(new MonitorQuery("1", "test"));
             monitor.update(new MonitorQuery("2", "foo bar -baz f2:quuz"));
             monitor.update(new MonitorQuery("3", "foo -test"));

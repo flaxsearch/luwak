@@ -22,6 +22,7 @@ import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class PayloadScoreQueryTreeBuilder extends QueryTreeBuilder<PayloadScoreQuery> {
 
@@ -40,9 +41,9 @@ public class PayloadScoreQueryTreeBuilder extends QueryTreeBuilder<PayloadScoreQ
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, PayloadScoreQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, PayloadScoreQuery query) {
         try {
-            return builder.buildTree((Query) queryField.get(query));
+            return builder.buildTree((Query) queryField.get(query), weightor);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

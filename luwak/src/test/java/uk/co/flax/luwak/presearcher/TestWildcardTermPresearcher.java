@@ -14,6 +14,7 @@ import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.assertions.TokenStreamAssert;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -82,7 +83,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(new WildcardNGramPresearcherComponent());
+        return new TermFilteredPresearcher(TermWeightor.DEFAULT, new WildcardNGramPresearcherComponent());
     }
 
     @Test

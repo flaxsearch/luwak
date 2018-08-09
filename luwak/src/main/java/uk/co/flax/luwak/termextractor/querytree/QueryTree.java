@@ -24,20 +24,11 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public abstract class QueryTree {
 
-    protected Set<QueryTree> children = new LinkedHashSet<>();
+    public abstract double weight();
 
-    public QueryTree parent = null;
+    public abstract void collectTerms(Set<QueryTerm> termsList);
 
-    protected void addChild(QueryTree child) {
-        child.parent = this;
-        children.add(child);
-    }
-
-    public abstract float weight(TreeWeightor weightor);
-
-    public abstract void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor);
-
-    public abstract boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer);
+    public abstract boolean advancePhase();
 
     public abstract void visit(QueryTreeVisitor visitor, int depth);
 
@@ -45,17 +36,8 @@ public abstract class QueryTree {
         visit(visitor, 0);
     }
 
-    public abstract boolean isAdvanceable(TreeAdvancer advancer);
-
-    public abstract boolean hasAdvanceableDescendents(TreeAdvancer advancer);
-
     public abstract boolean isAny();
 
-    public abstract String toString(TreeWeightor weightor, TreeAdvancer advancer);
-
-    public final String toString(TreeWeightor weightor) {
-        return this.toString(weightor, TreeAdvancer.NOOP);
-    }
-
-    public abstract Set<QueryTerm> terms(TreeWeightor weightor);
+    @Override
+    public abstract String toString();
 }

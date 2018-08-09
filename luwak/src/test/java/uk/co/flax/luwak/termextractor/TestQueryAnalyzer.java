@@ -2,11 +2,10 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
@@ -32,23 +31,21 @@ public class TestQueryAnalyzer {
 
     public static final QueryAnalyzer analyzer = new QueryAnalyzer();
 
-    public static final TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
-
     @Test
     public void testAdvancesCollectDifferentTerms() throws Exception {
 
         Query q = ParserUtils.parse("field:(+hello +goodbye)");
-        QueryTree querytree = analyzer.buildTree(q);
+        QueryTree querytree = analyzer.buildTree(q, TermWeightor.DEFAULT);
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(querytree, advancer)).isTrue();
+        assertThat(querytree.advancePhase()).isTrue();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(querytree, advancer)).isFalse();
+        assertThat(querytree.advancePhase()).isFalse();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
@@ -61,8 +58,9 @@ public class TestQueryAnalyzer {
         // disjunction containing a pure negative - we can't narrow this down
         Query q = ParserUtils.parse("hello goodbye (*:* -term)");
 
-        assertThat(analyzer.collectTerms(q))
-                .containsOnly(new QueryTerm("", "DISJUNCTION WITH ANYTOKEN", QueryTerm.Type.ANY));
+        assertThat(analyzer.collectTerms(q, TermWeightor.DEFAULT))
+                .extracting("type")
+                .containsOnly(QueryTerm.Type.ANY);
 
     }
 
@@ -70,15 +68,15 @@ public class TestQueryAnalyzer {
     public void testConjunctionsCannotAdvanceOverANYTOKENs() throws Exception {
 
         Query q = ParserUtils.parse("+hello +howdyedo +(goodbye (*:* -whatever))");
-        QueryTree tree = analyzer.buildTree(q);
+        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "howdyedo", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
+        assertThat(tree.advancePhase()).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
-        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
-        assertThat(analyzer.advancePhase(tree, advancer)).isFalse();
+        QueryTreeViewer.view(tree, System.out);
+        assertThat(tree.advancePhase()).isFalse();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
@@ -87,55 +85,52 @@ public class TestQueryAnalyzer {
     @Test
     public void testConjunctionsCannotAdvanceOverZeroWeightedTokens() throws Exception {
 
-        TreeWeightor weightor = new TreeWeightor(new TermWeightNorm(0, "startterm"), new TokenLengthNorm(1, 1));
+        TermWeightor weightor = new TermWeightor(new TermWeightNorm(0, "startterm"), new TokenLengthNorm(1, 1));
 
-        QueryAnalyzer analyzer = new QueryAnalyzer(weightor);
-        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(weightor, 0);
+        QueryAnalyzer analyzer = new QueryAnalyzer();
 
         Query q = ParserUtils.parse("+startterm +hello +goodbye");
-        QueryTree tree = analyzer.buildTree(q);
+        QueryTree tree = analyzer.buildTree(q, weightor);
 
-        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
+        QueryTreeViewer.view(tree, System.out);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer))
+        assertThat(tree.advancePhase())
                 .isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
-        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
-        assertThat(analyzer.advancePhase(tree, advancer))
+        QueryTreeViewer.view(tree, System.out);
+        assertThat(tree.advancePhase())
                 .isFalse();
-        QueryTreeViewer.view(tree, analyzer.weightor, advancer, System.out);
+        QueryTreeViewer.view(tree, System.out);
 
     }
 
     @Test
     public void testNestedConjunctions() throws Exception {
 
-        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
-
         Query q = ParserUtils.parse("+(+(+(+aaaa +cc) +(+d +bbb)))");
-        QueryTree tree = analyzer.buildTree(q);
+        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer))
+        assertThat(tree.advancePhase())
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer))
+        assertThat(tree.advancePhase())
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer))
+        assertThat(tree.advancePhase())
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "d", QueryTerm.Type.EXACT));
-        assertThat(analyzer.advancePhase(tree, advancer))
+        assertThat(tree.advancePhase())
                 .isFalse();
 
     }
@@ -143,26 +138,24 @@ public class TestQueryAnalyzer {
     @Test
     public void testNestedDisjunctions() throws Exception {
 
-        TreeAdvancer advancer = new TreeAdvancer.MinWeightTreeAdvancer(analyzer.weightor, 0);
-
         Query q = ParserUtils.parse("+(+((+aaaa +cc) (+dd +bbb +f)))");
-        QueryTree tree = analyzer.buildTree(q);
+        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT),
                               new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
+        assertThat(tree.advancePhase()).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
                               new QueryTerm("field", "dd", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(tree, advancer)).isTrue();
+        assertThat(tree.advancePhase()).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
                         new QueryTerm("field", "f", QueryTerm.Type.EXACT));
 
-        assertThat(analyzer.advancePhase(tree, advancer)).isFalse();
+        assertThat(tree.advancePhase()).isFalse();
     }
 
 }

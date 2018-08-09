@@ -2,6 +2,9 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
+import java.util.function.ToDoubleFunction;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -34,6 +37,6 @@ public abstract class QueryTreeBuilder<T extends Query> {
         this.cls = cls;
     }
 
-    public abstract QueryTree buildTree(QueryAnalyzer builder, T query);
+    public abstract QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, T query);
 
 }
