@@ -72,7 +72,7 @@ public class QueryTerm {
      * @param term the term
      */
     public QueryTerm(Term term) {
-        this(term.field(), term.text(), Type.EXACT);
+        this(term, Type.EXACT, null);
     }
 
     public enum Type { EXACT, ANY, CUSTOM }

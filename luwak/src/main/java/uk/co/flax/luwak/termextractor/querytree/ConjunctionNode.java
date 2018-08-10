@@ -28,11 +28,13 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class ConjunctionNode extends QueryTree {
 
+    private static final Comparator<QueryTree> COMPARATOR = Comparator.comparingDouble(QueryTree::weight).reversed();
+
     private final List<QueryTree> children = new ArrayList<>();
 
     private ConjunctionNode(List<QueryTree> children) {
         this.children.addAll(children);
-        this.children.sort(Comparator.comparingDouble(QueryTree::weight).reversed());
+        this.children.sort(COMPARATOR);
     }
 
     public static QueryTree build(List<QueryTree> children) {
@@ -68,7 +70,7 @@ public class ConjunctionNode extends QueryTree {
     @Override
     public boolean advancePhase() {
         if (children.get(0).advancePhase()) {
-            this.children.sort(Comparator.comparingDouble(QueryTree::weight).reversed());
+            this.children.sort(COMPARATOR);
             return true;
         }
         if (children.size() == 1) {
