@@ -87,14 +87,14 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(TermWeightor.DEFAULT);
+        return new TermFilteredPresearcher();
     }
 
     @Test
     public void testAnyTermsAreCorrectlyAnalyzed() {
 
-        TermFilteredPresearcher presearcher = new TermFilteredPresearcher(TermWeightor.DEFAULT);
-        QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery(), TermWeightor.DEFAULT);
+        TermFilteredPresearcher presearcher = new TermFilteredPresearcher();
+        QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery(), TermFilteredPresearcher.DEFAULT_WEIGHTOR);
 
         Map<String, BytesRefHash> extractedTerms = presearcher.collectTerms(qt);
 

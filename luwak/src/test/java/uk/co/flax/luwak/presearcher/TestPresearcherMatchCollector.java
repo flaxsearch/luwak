@@ -34,7 +34,7 @@ public class TestPresearcherMatchCollector {
     @Test
     public void testMatchCollectorShowMatches() throws IOException, UpdateException {
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher(TermWeightor.DEFAULT))) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(TEXTFIELD), new TermFilteredPresearcher())) {
             monitor.update(new MonitorQuery("1", "test"));
             monitor.update(new MonitorQuery("2", "foo bar -baz f2:quuz"));
             monitor.update(new MonitorQuery("3", "foo -test"));

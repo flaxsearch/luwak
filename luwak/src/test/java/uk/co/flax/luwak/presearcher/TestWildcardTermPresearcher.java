@@ -83,7 +83,7 @@ public class TestWildcardTermPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(TermWeightor.DEFAULT, new WildcardNGramPresearcherComponent());
+        return new TermFilteredPresearcher(new WildcardNGramPresearcherComponent());
     }
 
     @Test

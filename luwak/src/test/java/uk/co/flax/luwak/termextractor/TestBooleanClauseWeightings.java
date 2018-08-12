@@ -31,7 +31,7 @@ public class TestBooleanClauseWeightings {
 
         Query bq = ParserUtils.parse("+field2:[1 TO 2] +(field1:term1 field1:term2)");
 
-        assertThat(treeBuilder.collectTerms(bq, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(bq, new TermWeightor()))
                 .hasSize(2);
     }
 
@@ -40,7 +40,7 @@ public class TestBooleanClauseWeightings {
 
         Query q = ParserUtils.parse("field1:(+a +supercalifragilisticexpialidocious +b)");
 
-        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(q, new TermWeightor()))
                 .containsExactly(new QueryTerm("field1", "supercalifragilisticexpialidocious", QueryTerm.Type.EXACT));
     }
 

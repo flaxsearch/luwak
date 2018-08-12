@@ -38,7 +38,7 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
 
     @Override
     protected Presearcher createPresearcher() {
-        return new MultipassTermFilteredPresearcher(4, 0, TermWeightor.DEFAULT);
+        return new MultipassTermFilteredPresearcher(4);
     }
 
     @Test

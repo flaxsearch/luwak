@@ -49,7 +49,7 @@ public class TestMonitorPersistence {
 
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
                                         new MMapDirectory(indexDirectory))) {
             monitor.update(new MonitorQuery("1", "test"),
                 new MonitorQuery("2", "test"),
@@ -61,7 +61,7 @@ public class TestMonitorPersistence {
 
         }
 
-        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
                                         new MMapDirectory(indexDirectory))) {
 
             Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(4);
@@ -76,7 +76,7 @@ public class TestMonitorPersistence {
         QueryIndexConfiguration config = new QueryIndexConfiguration().storeQueries(false);
         InputDocument doc = InputDocument.builder("doc1").addField("f", "test", new StandardAnalyzer()).build();
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
+        try (Monitor monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
                 new MMapDirectory(indexDirectory), config)) {
 
             monitor.update(new MonitorQuery("1", "test"),
@@ -89,7 +89,7 @@ public class TestMonitorPersistence {
 
         }
 
-        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT),
+        try (Monitor monitor2 = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(),
                 new MMapDirectory(indexDirectory), config)) {
 
             Assertions.assertThat(monitor2.getQueryCount()).isEqualTo(0);

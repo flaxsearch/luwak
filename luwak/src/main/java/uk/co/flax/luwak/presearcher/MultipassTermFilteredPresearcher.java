@@ -50,6 +50,9 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
  *
  * The number of passes the presearcher makes is configurable.  More passes will improve the
  * selected/matched ratio, but will take longer to index and will use more RAM.
+ *
+ * A minimum weight can we set for terms to be chosen for the second and subsequent passes.  This
+ * allows users to avoid indexing stopwords, for example.
  */
 public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
@@ -59,13 +62,26 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     /**
      * Construct a new MultipassTermFilteredPresearcher
      * @param passes the number of times a query should be indexed
+     * @param minWeight the minimum weight a querytree should be advanced over
      * @param weightor the TreeWeightor to use
-     * @param components the PresearcherComponents to use
+     * @param components optional PresearcherComponents
      */
     public MultipassTermFilteredPresearcher(int passes, float minWeight, TermWeightor weightor, PresearcherComponent... components) {
         super(weightor, components);
         this.passes = passes;
         this.minWeight = minWeight;
+    }
+
+    /**
+     * Construct a new MultipassTermFilteredPresearcher using {@link TermFilteredPresearcher#DEFAULT_WEIGHTOR}
+     *
+     * Note that this will be constructed with a minimum advance weight of zero
+     *
+     * @param passes        the number of times a query should be indexed
+     * @param components    optional PresearcherComponents
+     */
+    public MultipassTermFilteredPresearcher(int passes, PresearcherComponent... components) {
+        this(passes, 0, TermFilteredPresearcher.DEFAULT_WEIGHTOR, components);
     }
 
     @Override

@@ -44,6 +44,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -53,6 +54,8 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
  * This Presearcher uses a QueryTermExtractor to extract terms from queries.
  */
 public class TermFilteredPresearcher extends Presearcher {
+
+    public static final TermWeightor DEFAULT_WEIGHTOR = new TermWeightor(new TokenLengthNorm());
 
     static {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
@@ -71,6 +74,10 @@ public class TermFilteredPresearcher extends Presearcher {
         this.extractor = QueryAnalyzer.fromComponents(components);
         this.components.addAll(Arrays.asList(components));
         this.weightor = weightor;
+    }
+
+    public TermFilteredPresearcher(PresearcherComponent... components) {
+        this(DEFAULT_WEIGHTOR, components);
     }
 
     @Override

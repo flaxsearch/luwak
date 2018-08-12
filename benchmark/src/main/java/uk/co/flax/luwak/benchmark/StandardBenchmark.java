@@ -40,10 +40,10 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 public class StandardBenchmark {
 
     public static final List<? extends Presearcher> PRESEARCHERS = ImmutableList.of(
-            new TermFilteredPresearcher(TermWeightor.DEFAULT),
-            new MultipassTermFilteredPresearcher(2, 0, TermWeightor.DEFAULT),
-            new TermFilteredPresearcher(TermWeightor.DEFAULT, new WildcardNGramPresearcherComponent()),
-            new MultipassTermFilteredPresearcher(2, 0, TermWeightor.DEFAULT, new WildcardNGramPresearcherComponent())
+            new TermFilteredPresearcher(),
+            new MultipassTermFilteredPresearcher(2),
+            new TermFilteredPresearcher(new WildcardNGramPresearcherComponent()),
+            new MultipassTermFilteredPresearcher(2, new WildcardNGramPresearcherComponent())
     );
 
     public static final List<? extends MatcherFactory<? extends QueryMatch>> MATCHERS = ImmutableList.of(

@@ -7,6 +7,6 @@ public class TestFieldTermFilteredPresearcher extends FieldFilterPresearcherComp
 
     @Override
     protected Presearcher createPresearcher() {
-        return new TermFilteredPresearcher(TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
+        return new TermFilteredPresearcher(new FieldFilterPresearcherComponent("language"));
     }
 }

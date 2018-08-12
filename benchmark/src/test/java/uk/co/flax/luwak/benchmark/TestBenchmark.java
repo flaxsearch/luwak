@@ -40,7 +40,7 @@ public class TestBenchmark {
 
     @Before
     public void startMonitor() throws IOException, UpdateException {
-        monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher(TermWeightor.DEFAULT));
+        monitor = new Monitor(new LuceneQueryParser("f"), new TermFilteredPresearcher());
         monitor.update(new MonitorQuery("1", "cheese"));
         monitor.update(new MonitorQuery("2", "sesquipedalian"));
         monitor.update(new MonitorQuery("3", "+goodbye +world"));

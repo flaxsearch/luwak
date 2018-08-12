@@ -37,12 +37,13 @@ import static org.junit.Assert.assertFalse;
 public class TestQueryAnalyzer {
 
     public static final QueryAnalyzer analyzer = new QueryAnalyzer();
+    private static final TermWeightor WEIGHTOR = new TermWeightor(new TokenLengthNorm());
 
     @Test
     public void testAdvancesCollectDifferentTerms() throws Exception {
 
         Query q = ParserUtils.parse("field:(+hello +goodbye)");
-        QueryTree querytree = analyzer.buildTree(q, TermWeightor.DEFAULT);
+        QueryTree querytree = analyzer.buildTree(q, WEIGHTOR);
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
@@ -65,7 +66,7 @@ public class TestQueryAnalyzer {
         // disjunction containing a pure negative - we can't narrow this down
         Query q = ParserUtils.parse("hello goodbye (*:* -term)");
 
-        assertThat(analyzer.collectTerms(q, TermWeightor.DEFAULT))
+        assertThat(analyzer.collectTerms(q, WEIGHTOR))
                 .extracting("type")
                 .containsOnly(QueryTerm.Type.ANY);
 
@@ -75,7 +76,7 @@ public class TestQueryAnalyzer {
     public void testConjunctionsDoNotAdvanceOverANYTOKENs() throws Exception {
 
         Query q = ParserUtils.parse("+hello +howdyedo +(goodbye (*:* -whatever))");
-        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
+        QueryTree tree = analyzer.buildTree(q, WEIGHTOR);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "howdyedo", QueryTerm.Type.EXACT));
@@ -118,7 +119,7 @@ public class TestQueryAnalyzer {
     public void testNestedConjunctions() throws Exception {
 
         Query q = ParserUtils.parse("+(+(+(+aaaa +cc) +(+d +bbb)))");
-        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
+        QueryTree tree = analyzer.buildTree(q, WEIGHTOR);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT));
@@ -146,7 +147,7 @@ public class TestQueryAnalyzer {
     public void testNestedDisjunctions() throws Exception {
 
         Query q = ParserUtils.parse("+(+((+aaaa +cc) (+dd +bbb +f)))");
-        QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
+        QueryTree tree = analyzer.buildTree(q, WEIGHTOR);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT),

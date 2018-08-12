@@ -54,7 +54,7 @@ public class LuwakDemo {
 
     public LuwakDemo(String queriesFile, String inputDirectory) throws Exception {
 
-        try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher(TermWeightor.DEFAULT))) {
+        try (Monitor monitor = new Monitor(new LuceneQueryParser(FIELD, ANALYZER), new TermFilteredPresearcher())) {
             addQueries(monitor, queriesFile);
             DocumentBatch batch = DocumentBatch.of(buildDocs(inputDirectory));
             Matches<HighlightsMatch> matches = monitor.match(batch, HighlightingMatcher.FACTORY);

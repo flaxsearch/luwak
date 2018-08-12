@@ -5,8 +5,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.*;
 import org.junit.Test;
+import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,19 +35,21 @@ public class TestExtractors {
         return new QueryAnalyzer(queryTreeBuilder);
     }
 
+    private static final TermWeightor WEIGHTOR = new TermWeightor(new TokenLengthNorm());
+
     @Test
     public void testRegexpExtractor() {
 
         RegexpNGramTermQueryTreeBuilder extractor = new RegexpNGramTermQueryTreeBuilder("XX", "WILDCARD");
         QueryAnalyzer builder = getBuilder(extractor);
 
-        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "super.*califragilistic")), TermWeightor.DEFAULT))
+        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "super.*califragilistic")), WEIGHTOR))
                 .containsExactly(new QueryTerm("field", "califragilisticXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
-        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hell.")), TermWeightor.DEFAULT))
+        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hell.")), WEIGHTOR))
                 .containsExactly(new QueryTerm("field", "hellXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
-        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hel?o")), TermWeightor.DEFAULT))
+        assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hel?o")), WEIGHTOR))
                 .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
     }
@@ -56,7 +60,7 @@ public class TestExtractors {
 
         LegacyNumericRangeQuery<Long> nrq = LegacyNumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
 
-        assertThat(treeBuilder.collectTerms(nrq, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(nrq, WEIGHTOR))
                 .hasSize(1)
                 .extracting("type")
                 .containsExactly(QueryTerm.Type.ANY);
@@ -65,7 +69,7 @@ public class TestExtractors {
         bq.add(nrq, BooleanClause.Occur.MUST);
         bq.add(new TermQuery(new Term("field", "term")), BooleanClause.Occur.MUST);
 
-        assertThat(treeBuilder.collectTerms(bq.build(), TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(bq.build(), WEIGHTOR))
                 .containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
     }
 
@@ -77,7 +81,7 @@ public class TestExtractors {
         bq.add(new TermQuery(new Term("f", "q2")), BooleanClause.Occur.SHOULD);
 
         Query csqWithQuery = new ConstantScoreQuery(bq.build());
-        assertThat(treeBuilder.collectTerms(csqWithQuery, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(csqWithQuery, WEIGHTOR))
                 .containsExactly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT));
         
     }
@@ -89,7 +93,7 @@ public class TestExtractors {
         pq.add(new Term("f", "hello"));
         pq.add(new Term("f", "encyclopedia"));
 
-        assertThat(treeBuilder.collectTerms(pq.build(), TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(pq.build(), WEIGHTOR))
                 .containsOnly(new QueryTerm("f", "encyclopedia", QueryTerm.Type.EXACT));
 
     }
@@ -102,7 +106,7 @@ public class TestExtractors {
         bq.add(new TermQuery(new Term("f", "q2")), BooleanClause.Occur.SHOULD);
 
         Query boostQuery = new BoostQuery(bq.build(), 0.5f);
-        assertThat(treeBuilder.collectTerms(boostQuery, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(boostQuery, WEIGHTOR))
                 .containsExactly(new QueryTerm("f", "q1", QueryTerm.Type.EXACT));
     }
 
@@ -112,7 +116,7 @@ public class TestExtractors {
         Query query = new DisjunctionMaxQuery(
                 ImmutableList.<Query>of(new TermQuery(new Term("f", "t1")), new TermQuery(new Term("f", "t2"))), 0.1f
         );
-        assertThat(treeBuilder.collectTerms(query, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(query, WEIGHTOR))
                 .hasSize(2)
                 .containsOnly(new QueryTerm("f", "t1", QueryTerm.Type.EXACT), new QueryTerm("f", "t2", QueryTerm.Type.EXACT));
     }
@@ -120,7 +124,7 @@ public class TestExtractors {
     @Test
     public void testTermsQueryExtractor() {
         Query q = new TermsQuery(new Term("f1", "t1"), new Term("f2", "t2"));
-        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(q, WEIGHTOR))
                 .containsOnly(new QueryTerm("f1", "t1", QueryTerm.Type.EXACT), new QueryTerm("f2", "t2", QueryTerm.Type.EXACT));
     }
 
@@ -130,7 +134,7 @@ public class TestExtractors {
                 .add(new TermQuery(new Term("f", "must")), BooleanClause.Occur.MUST)
                 .add(new TermQuery(new Term("f", "filter")), BooleanClause.Occur.FILTER)
                 .build();
-        assertThat(treeBuilder.collectTerms(q, TermWeightor.DEFAULT))
+        assertThat(treeBuilder.collectTerms(q, WEIGHTOR))
                 .containsExactly(new QueryTerm("f", "filter", QueryTerm.Type.EXACT)); // it's longer, so it wins
     }
 
