@@ -55,6 +55,9 @@ import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
  */
 public class TermFilteredPresearcher extends Presearcher {
 
+    /**
+     * The default TermWeightor, weighting by token length
+     */
     public static final TermWeightor DEFAULT_WEIGHTOR = new TermWeightor(new TokenLengthNorm());
 
     static {
@@ -70,12 +73,21 @@ public class TermFilteredPresearcher extends Presearcher {
 
     public static final String ANYTOKEN = "__ANYTOKEN__";
 
+    /**
+     * Create a new TermFilteredPresearcher using a defined TermWeightor
+     * @param weightor      the TermWeightor
+     * @param components    optional PresearcherComponents
+     */
     public TermFilteredPresearcher(TermWeightor weightor, PresearcherComponent... components) {
         this.extractor = QueryAnalyzer.fromComponents(components);
         this.components.addAll(Arrays.asList(components));
         this.weightor = weightor;
     }
 
+    /**
+     * Create a new TermFilteredPresearcher using the default term weighting
+     * @param components    optional PresearcherComponents
+     */
     public TermFilteredPresearcher(PresearcherComponent... components) {
         this(DEFAULT_WEIGHTOR, components);
     }
