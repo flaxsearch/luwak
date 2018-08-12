@@ -31,22 +31,6 @@ import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
  */
 public abstract class FieldFilterPresearcherComponentTestBase extends PresearcherTestBase {
 
-    public static class TestTermFiltered extends FieldFilterPresearcherComponentTestBase {
-
-        @Override
-        protected Presearcher createPresearcher() {
-            return new TermFilteredPresearcher(TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
-        }
-    }
-
-    public static class TestMultipass extends FieldFilterPresearcherComponentTestBase {
-
-        @Override
-        protected Presearcher createPresearcher() {
-            return new MultipassTermFilteredPresearcher(2, TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
-        }
-    }
-
     public static final Analyzer ANALYZER = new StandardAnalyzer();
 
     @Test

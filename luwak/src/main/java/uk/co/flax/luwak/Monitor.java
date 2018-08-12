@@ -620,6 +620,11 @@ public class Monitor implements Closeable {
         }
 
         @Override
+        public boolean needsScores() {
+            return true;
+        }
+
+        @Override
         public void matchQuery(final String id, QueryCacheEntry query, QueryIndex.DataValues dataValues) throws IOException {
 
             SpanCollector collector = new SpanCollector() {
@@ -643,10 +648,6 @@ public class Monitor implements Closeable {
             super.matchQuery(id, query, dataValues);
         }
 
-        @Override
-        public boolean needsScores() {
-            return true;
-        }
     }
 
 }
