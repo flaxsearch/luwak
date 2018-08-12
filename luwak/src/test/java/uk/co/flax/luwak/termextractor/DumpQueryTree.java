@@ -42,7 +42,7 @@ public class DumpQueryTree {
             QueryTreeViewer.view(tree, System.out);
             System.out.println(analyzer.collectTerms(tree));
         }
-        while (tree.advancePhase());
+        while (tree.advancePhase(0));
 
         System.out.flush();
         System.out.println("done");

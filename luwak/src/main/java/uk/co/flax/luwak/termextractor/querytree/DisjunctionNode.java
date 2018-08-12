@@ -89,10 +89,10 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase() {
+    public boolean advancePhase(float minWeight) {
         boolean changed = false;
         for (QueryTree child : children) {
-            changed |= child.advancePhase();
+            changed |= child.advancePhase(minWeight);
         }
         children.sort(Comparator.comparingDouble(QueryTree::weight));
         return changed;

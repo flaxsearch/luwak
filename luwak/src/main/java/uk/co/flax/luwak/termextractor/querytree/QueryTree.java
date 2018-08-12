@@ -28,7 +28,7 @@ public abstract class QueryTree {
 
     public abstract void collectTerms(Set<QueryTerm> termsList);
 
-    public abstract boolean advancePhase();
+    public abstract boolean advancePhase(float minWeight);
 
     public abstract void visit(QueryTreeVisitor visitor, int depth);
 

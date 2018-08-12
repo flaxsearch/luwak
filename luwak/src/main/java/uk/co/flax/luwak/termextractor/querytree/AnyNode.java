@@ -49,7 +49,7 @@ public class AnyNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase() {
+    public boolean advancePhase(float minWeight) {
         return false;
     }
 

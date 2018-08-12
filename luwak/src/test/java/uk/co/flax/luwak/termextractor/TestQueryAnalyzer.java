@@ -1,15 +1,22 @@
 package uk.co.flax.luwak.termextractor;
 
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
+import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
+import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
+import uk.co.flax.luwak.termextractor.querytree.TermNode;
 import uk.co.flax.luwak.termextractor.weights.TermWeightNorm;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -40,12 +47,12 @@ public class TestQueryAnalyzer {
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
 
-        assertThat(querytree.advancePhase()).isTrue();
+        assertThat(querytree.advancePhase(0)).isTrue();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
-        assertThat(querytree.advancePhase()).isFalse();
+        assertThat(querytree.advancePhase(0)).isFalse();
 
         assertThat(analyzer.collectTerms(querytree))
                 .containsExactly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
@@ -65,18 +72,18 @@ public class TestQueryAnalyzer {
     }
 
     @Test
-    public void testConjunctionsCannotAdvanceOverANYTOKENs() throws Exception {
+    public void testConjunctionsDoNotAdvanceOverANYTOKENs() throws Exception {
 
         Query q = ParserUtils.parse("+hello +howdyedo +(goodbye (*:* -whatever))");
         QueryTree tree = analyzer.buildTree(q, TermWeightor.DEFAULT);
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "howdyedo", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase()).isTrue();
+        assertThat(tree.advancePhase(0)).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
         QueryTreeViewer.view(tree, System.out);
-        assertThat(tree.advancePhase()).isFalse();
+        assertThat(tree.advancePhase(0)).isFalse();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
 
@@ -96,12 +103,12 @@ public class TestQueryAnalyzer {
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "goodbye", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "hello", QueryTerm.Type.EXACT));
         QueryTreeViewer.view(tree, System.out);
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isFalse();
         QueryTreeViewer.view(tree, System.out);
 
@@ -115,22 +122,22 @@ public class TestQueryAnalyzer {
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isTrue();
 
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "d", QueryTerm.Type.EXACT));
-        assertThat(tree.advancePhase())
+        assertThat(tree.advancePhase(0))
                 .isFalse();
 
     }
@@ -145,17 +152,46 @@ public class TestQueryAnalyzer {
                 .containsOnly(new QueryTerm("field", "aaaa", QueryTerm.Type.EXACT),
                               new QueryTerm("field", "bbb", QueryTerm.Type.EXACT));
 
-        assertThat(tree.advancePhase()).isTrue();
+        assertThat(tree.advancePhase(0)).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
                               new QueryTerm("field", "dd", QueryTerm.Type.EXACT));
 
-        assertThat(tree.advancePhase()).isTrue();
+        assertThat(tree.advancePhase(0)).isTrue();
         assertThat(analyzer.collectTerms(tree))
                 .containsOnly(new QueryTerm("field", "cc", QueryTerm.Type.EXACT),
                         new QueryTerm("field", "f", QueryTerm.Type.EXACT));
 
-        assertThat(tree.advancePhase()).isFalse();
+        assertThat(tree.advancePhase(0)).isFalse();
+    }
+
+    @Test
+    public void testMinWeightAdvances() {
+        QueryTree tree = DisjunctionNode.build(
+                ConjunctionNode.build(
+                        new TermNode(new QueryTerm("field", "term1", QueryTerm.Type.EXACT), 1),
+                        new TermNode(new QueryTerm("field", "term2", QueryTerm.Type.EXACT), 0.1),
+                        new AnyNode("*:*")
+                ),
+                ConjunctionNode.build(
+                        DisjunctionNode.build(
+                                new TermNode(new QueryTerm("field", "term4", QueryTerm.Type.EXACT), 0.2),
+                                new TermNode(new QueryTerm("field", "term5", QueryTerm.Type.EXACT), 1)
+                        ),
+                        new TermNode(new QueryTerm("field", "term3", QueryTerm.Type.EXACT), 0.5)
+                )
+        );
+
+        assertThat(analyzer.collectTerms(tree))
+                .extracting("term")
+                .containsOnly(new Term("field", "term1"), new Term("field", "term3"));
+
+        assertTrue(tree.advancePhase(0.1f));
+        assertThat(analyzer.collectTerms(tree))
+                .extracting("term")
+                .containsOnly(new Term("field", "term1"), new Term("field", "term4"), new Term("field", "term5"));
+
+        assertFalse(tree.advancePhase(0.1f));
     }
 
 }

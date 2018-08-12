@@ -7,6 +7,6 @@ public class TestFieldFilteredMultipassPresearcher extends FieldFilterPresearche
 
     @Override
     protected Presearcher createPresearcher() {
-        return new MultipassTermFilteredPresearcher(2, TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
+        return new MultipassTermFilteredPresearcher(2, 0, TermWeightor.DEFAULT, new FieldFilterPresearcherComponent("language"));
     }
 }

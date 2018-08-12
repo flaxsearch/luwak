@@ -68,16 +68,19 @@ public class ConjunctionNode extends QueryTree {
     }
 
     @Override
-    public boolean advancePhase() {
-        if (children.get(0).advancePhase()) {
+    public boolean advancePhase(float minWeight) {
+        if (children.get(0).advancePhase(minWeight)) {
             this.children.sort(COMPARATOR);
             return true;
         }
         if (children.size() == 1) {
             return false;
         }
+        if (children.get(1).weight() <= minWeight) {
+            return false;
+        }
         children.remove(0);
-        return children.get(0).weight() > 0;
+        return true;
     }
 
     @Override

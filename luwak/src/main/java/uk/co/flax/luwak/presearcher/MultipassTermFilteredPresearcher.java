@@ -54,6 +54,7 @@ import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
 
     private final int passes;
+    private final float minWeight;
 
     /**
      * Construct a new MultipassTermFilteredPresearcher
@@ -61,9 +62,10 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
      * @param weightor the TreeWeightor to use
      * @param components the PresearcherComponents to use
      */
-    public MultipassTermFilteredPresearcher(int passes, TermWeightor weightor, PresearcherComponent... components) {
+    public MultipassTermFilteredPresearcher(int passes, float minWeight, TermWeightor weightor, PresearcherComponent... components) {
         super(weightor, components);
         this.passes = passes;
+        this.minWeight = minWeight;
     }
 
     @Override
@@ -120,7 +122,7 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
                 doc.add(new Field(entry.getKey(),
                         new TermsEnumTokenStream(new BytesRefHashIterator(entry.getValue())), QUERYFIELDTYPE));
             }
-            querytree.advancePhase();
+            querytree.advancePhase(minWeight);
         }
 
         return doc;
