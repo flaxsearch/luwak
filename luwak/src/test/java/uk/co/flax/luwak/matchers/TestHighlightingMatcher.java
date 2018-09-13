@@ -374,8 +374,8 @@ public class TestHighlightingMatcher {
             }
 
             @Override
-            public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-                return inner.createWeight(searcher, needsScores);
+            public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+                return inner.createWeight(searcher, needsScores, boost);
             }
         }, new MatchAllPresearcher());
 

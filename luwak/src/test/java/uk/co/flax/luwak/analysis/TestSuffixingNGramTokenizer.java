@@ -139,7 +139,7 @@ public class TestSuffixingNGramTokenizer {
 
             // Cannot use try-with-resources here as we assign to ts in the block.
             LeafReader reader = batch.getIndexReader();
-            TokenStream ts = new TermsEnumTokenStream(reader.fields().terms("f").iterator());
+            TokenStream ts = new TermsEnumTokenStream(reader.terms("f").iterator());
             try {
                 ts = new SuffixingNGramTokenFilter(ts, "XX", "__WILDCARD__", 20);
                 //ts = new DuplicateRemovalTokenFilter(ts);

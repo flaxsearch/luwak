@@ -87,8 +87,8 @@ public class SpanOffsetReportingQuery extends SpanQuery {
     }
 
     @Override
-    public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        return new SpanOffsetWeight(searcher, in.createWeight(searcher, needsScores));
+    public SpanWeight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+        return new SpanOffsetWeight(searcher, in.createWeight(searcher, needsScores, boost), boost);
     }
 
     /**
@@ -107,8 +107,8 @@ public class SpanOffsetReportingQuery extends SpanQuery {
 
         private final SpanWeight in;
 
-        private SpanOffsetWeight(IndexSearcher searcher, SpanWeight in) throws IOException {
-            super(SpanOffsetReportingQuery.this, searcher, termContexts(in));
+        private SpanOffsetWeight(IndexSearcher searcher, SpanWeight in, float boost) throws IOException {
+            super(SpanOffsetReportingQuery.this, searcher, termContexts(in), boost);
             this.in = in;
         }
 
@@ -125,6 +125,12 @@ public class SpanOffsetReportingQuery extends SpanQuery {
         @Override
         public void extractTerms(Set<Term> terms) {
             in.extractTerms(terms);
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            // TODO Auto-generated method stub
+            return false;
         }
     }
 }

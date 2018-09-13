@@ -231,7 +231,8 @@ public class Monitor implements Closeable {
             }
             seenIds.add(id);
 
-            BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+            dataValues.mq.advanceExact(dataValues.doc);
+            BytesRef serializedMQ = dataValues.mq.binaryValue();
             MonitorQuery mq = MonitorQuery.deserialize(serializedMQ);
 
             BytesRef hash = mq.hash();
@@ -494,7 +495,8 @@ public class Monitor implements Closeable {
             throw new IllegalStateException("Cannot call getQuery() as queries are not stored");
         final MonitorQuery[] queryHolder = new MonitorQuery[]{ null };
         queryIndex.search(new TermQuery(new Term(FIELDS.id, queryId)), (id, query, dataValues) -> {
-            BytesRef serializedMQ = dataValues.mq.get(dataValues.doc);
+            dataValues.mq.advanceExact(dataValues.doc);
+            BytesRef serializedMQ = dataValues.mq.binaryValue();
             queryHolder[0] = MonitorQuery.deserialize(serializedMQ);
         });
         return queryHolder[0];

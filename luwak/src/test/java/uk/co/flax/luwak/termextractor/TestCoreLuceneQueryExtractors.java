@@ -44,7 +44,10 @@ public class TestCoreLuceneQueryExtractors {
             "org.apache.lucene.search.FieldValueQuery",
             "org.apache.lucene.search.BlendedTermQuery",
             "org.apache.lucene.search.AutomatonQuery",
-            "org.apache.lucene.queries.BoostingQuery"
+            "org.apache.lucene.queries.BoostingQuery",
+            "org.apache.lucene.search.NormsFieldExistsQuery",
+            "org.apache.lucene.search.CoveringQuery",
+            "org.apache.lucene.search.DocValuesFieldExistsQuery"
     );
 
     public static Set<String> unhandledQueries = ImmutableSet.of(

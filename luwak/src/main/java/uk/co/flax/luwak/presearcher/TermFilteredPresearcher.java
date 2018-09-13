@@ -27,7 +27,6 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -83,18 +82,18 @@ public class TermFilteredPresearcher extends Presearcher {
     public final Query buildQuery(LeafReader reader, QueryTermFilter queryTermFilter) {
         try {
             DocumentQueryBuilder queryBuilder = getQueryBuilder();
-            for (String field : reader.fields()) {
+            for (FieldInfo fieldInfo : reader.getFieldInfos()) {
 
-                TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator());
+                TokenStream ts = new TermsEnumTokenStream(reader.terms(fieldInfo.name).iterator());
                 for (PresearcherComponent component : components) {
-                    ts = component.filterDocumentTokens(field, ts);
+                    ts = component.filterDocumentTokens(fieldInfo.name, ts);
                 }
 
-                ts = new BytesRefFilteredTokenFilter(ts, queryTermFilter.getTerms(field));
+                ts = new BytesRefFilteredTokenFilter(ts, queryTermFilter.getTerms(fieldInfo.name));
 
                 TermToBytesRefAttribute termAtt = ts.addAttribute(TermToBytesRefAttribute.class);
                 while (ts.incrementToken()) {
-                    queryBuilder.addTerm(field, BytesRef.deepCopyOf(termAtt.getBytesRef()));
+                    queryBuilder.addTerm(fieldInfo.name, BytesRef.deepCopyOf(termAtt.getBytesRef()));
                 }
                 ts.close();
 
@@ -130,7 +129,15 @@ public class TermFilteredPresearcher extends Presearcher {
 
             @Override
             public Query build() {
-                return new TermsQuery(terms);
+                if (terms.size() == 1) {
+                    return new TermQuery(terms.iterator().next());
+                } else {
+                    BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                    for (Term term : terms) {
+                        builder.add(new TermQuery(term), BooleanClause.Occur.SHOULD);
+                    }
+                    return builder.build();
+                }
             }
         };
     }
