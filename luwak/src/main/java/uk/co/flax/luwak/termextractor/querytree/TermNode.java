@@ -3,9 +3,11 @@ package uk.co.flax.luwak.termextractor.querytree;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.ToDoubleFunction;
 
 import org.apache.lucene.index.Term;
 import uk.co.flax.luwak.termextractor.QueryTerm;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -25,33 +27,34 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class TermNode extends QueryTree {
 
-    protected final QueryTerm term;
+    private final QueryTerm term;
+    private final double weight;
 
-    public TermNode(QueryTerm term) {
+    public TermNode(QueryTerm term, double weight) {
         this.term = term;
+        this.weight = weight;
     }
 
-    public TermNode(Term term) {
-        this(new QueryTerm(term));
+    public TermNode(QueryTerm term, TermWeightor weightor) {
+        this(term, weightor.weigh(term));
     }
 
-    @Override
-    public void addChild(QueryTree child) {
-        throw new UnsupportedOperationException("Cannot add child to a TermNode");
-    }
-
-    @Override
-    public float weight(TreeWeightor weightor) {
-        return weightor.weigh(term);
+    public TermNode(Term term, TermWeightor weightor) {
+        this(new QueryTerm(term), weightor);
     }
 
     @Override
-    public void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor) {
+    public double weight() {
+        return weight;
+    }
+
+    @Override
+    public void collectTerms(Set<QueryTerm> termsList) {
         termsList.add(term);
     }
 
     @Override
-    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
+    public boolean advancePhase(float minWeight) {
         return false;
     }
 
@@ -61,34 +64,12 @@ public class TermNode extends QueryTree {
     }
 
     @Override
-    public boolean isAdvanceable(TreeAdvancer advancer) {
-        return false;
-    }
-
-    @Override
-    public boolean hasAdvanceableDescendents(TreeAdvancer advancer) {
-        return false;
-    }
-
-    @Override
     public boolean isAny() {
         return term.type == QueryTerm.Type.ANY;
     }
 
     @Override
-    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
-        return this.toString() + " " + this.weight(weightor);
-    }
-
-    @Override
-    public Set<QueryTerm> terms(TreeWeightor weightor) {
-        Set<QueryTerm> ts = new HashSet<>();
-        ts.add(term);
-        return ts;
-    }
-
-    @Override
     public String toString() {
-        return "Node [" + term.toString() + "]";
+        return "Node [" + term.toString() + "]^" + weight;
     }
 }

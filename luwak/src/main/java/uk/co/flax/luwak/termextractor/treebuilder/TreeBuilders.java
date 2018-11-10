@@ -18,7 +18,6 @@ package uk.co.flax.luwak.termextractor.treebuilder;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,16 +26,16 @@ import org.apache.lucene.queries.function.FunctionScoreQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.spans.*;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
-import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.*;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.util.CollectionUtils;
 
 public class TreeBuilders {
 
     public static final QueryTreeBuilder<Query> ANY_NODE_BUILDER = new QueryTreeBuilder<Query>(Query.class) {
         @Override
-        public QueryTree buildTree(QueryAnalyzer builder, Query query) {
+        public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, Query query) {
             return new AnyNode("Cannot filter on query of type " + query.getClass().getName());
         }
     };
@@ -55,32 +54,32 @@ public class TreeBuilders {
     public static final List<QueryTreeBuilder<? extends Query>> DEFAULT_BUILDERS = CollectionUtils.makeUnmodifiableList(
             new BooleanQueryTreeBuilder(),
             newConjunctionBuilder(PhraseQuery.class,
-                    (b, q) -> Arrays.asList(q.getTerms()).stream().map(TermNode::new).collect(Collectors.toList())),
+                    (b, w, q) -> Arrays.stream(q.getTerms()).map(qq -> new TermNode(qq, w)).collect(Collectors.toList())),
             newFilteringQueryBuilder(ConstantScoreQuery.class, ConstantScoreQuery::getQuery),
             newFilteringQueryBuilder(BoostQuery.class, BoostQuery::getQuery),
-            newQueryBuilder(TermQuery.class, q -> new TermNode(new QueryTerm(q.getTerm()))),
-            newQueryBuilder(SpanTermQuery.class, q -> new TermNode(new QueryTerm(q.getTerm()))),
+            newQueryBuilder(TermQuery.class, (q, w) -> new TermNode(q.getTerm(), w)),
+            newQueryBuilder(SpanTermQuery.class, (q, w) -> new TermNode(q.getTerm(), w)),
             newConjunctionBuilder(SpanNearQuery.class,
-                    (b, q) -> Arrays.asList(q.getClauses()).stream().map(b::buildTree).collect(Collectors.toList())),
+                    (b, w, q) -> Arrays.stream(q.getClauses()).map(qq -> b.buildTree(qq, w)).collect(Collectors.toList())),
             newDisjunctionBuilder(SpanOrQuery.class,
-                    (b, q) -> Arrays.asList(q.getClauses()).stream().map(b::buildTree).collect(Collectors.toList())),
+                    (b, w, q) -> Arrays.stream(q.getClauses()).map(qq -> b.buildTree(qq, w)).collect(Collectors.toList())),
             newFilteringQueryBuilder(SpanMultiTermQueryWrapper.class, SpanMultiTermQueryWrapper::getWrappedQuery),
             newFilteringQueryBuilder(SpanNotQuery.class, SpanNotQuery::getInclude),
             newFilteringQueryBuilder(BoostedQuery.class, BoostedQuery::getQuery),
             newDisjunctionBuilder(DisjunctionMaxQuery.class,
-                    (b, q) -> q.getDisjuncts().stream().map(b::buildTree).collect(Collectors.toList())),
+                    (b, w, q) -> q.getDisjuncts().stream().map(qq -> b.buildTree(qq, w)).collect(Collectors.toList())),
             TermsQueryTreeBuilder.INSTANCE,
             TermInSetQueryTreeBuilder.INSTANCE,
             new QueryTreeBuilder<SpanWithinQuery>(SpanWithinQuery.class) {
                 @Override
-                public QueryTree buildTree(QueryAnalyzer builder, SpanWithinQuery query) {
-                    return ConjunctionNode.build(builder.buildTree(query.getBig()), builder.buildTree(query.getLittle()));
+                public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, SpanWithinQuery query) {
+                    return ConjunctionNode.build(builder.buildTree(query.getBig(), weightor), builder.buildTree(query.getLittle(), weightor));
                 }
             },
             new QueryTreeBuilder<SpanContainingQuery>(SpanContainingQuery.class) {
                 @Override
-                public QueryTree buildTree(QueryAnalyzer builder, SpanContainingQuery query) {
-                    return ConjunctionNode.build(builder.buildTree(query.getBig()), builder.buildTree(query.getLittle()));
+                public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, SpanContainingQuery query) {
+                    return ConjunctionNode.build(builder.buildTree(query.getBig(), weightor), builder.buildTree(query.getLittle(), weightor));
                 }
             },
             newFilteringQueryBuilder(SpanBoostQuery.class, SpanBoostQuery::getQuery),
@@ -95,39 +94,47 @@ public class TreeBuilders {
     public static <T extends Query> QueryTreeBuilder<T> newFilteringQueryBuilder(Class<T> queryType, Function<T, Query> filter) {
         return new QueryTreeBuilder<T>(queryType) {
             @Override
-            public QueryTree buildTree(QueryAnalyzer builder, T query) {
-                return builder.buildTree(filter.apply(query));
+            public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, T query) {
+                return builder.buildTree(filter.apply(query), weightor);
             }
         };
     }
 
-    public static <T extends Query> QueryTreeBuilder<T> newQueryBuilder(Class<T> queryType, Function<T, QueryTree> nodeBuilder) {
+    public static <T extends Query> QueryTreeBuilder<T> newQueryBuilder(Class<T> queryType, NodeExtractor<T> nodeBuilder) {
         return new QueryTreeBuilder<T>(queryType) {
             @Override
-            public QueryTree buildTree(QueryAnalyzer builder, T query) {
-                return nodeBuilder.apply(query);
-            }
-        };
-    }
-
-    public static <T extends Query> QueryTreeBuilder<T>
-            newConjunctionBuilder(Class<T> queryType, BiFunction<QueryAnalyzer, T, List<QueryTree>> extractor) {
-        return new QueryTreeBuilder<T>(queryType) {
-            @Override
-            public QueryTree buildTree(QueryAnalyzer builder, T query) {
-                return ConjunctionNode.build(extractor.apply(builder, query));
+            public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, T query) {
+                return nodeBuilder.extract(query, weightor);
             }
         };
     }
 
     public static <T extends Query> QueryTreeBuilder<T>
-            newDisjunctionBuilder(Class<T> queryType, BiFunction<QueryAnalyzer, T, List<QueryTree>> extractor) {
+            newConjunctionBuilder(Class<T> queryType, MultiExtractor<T> extractor) {
         return new QueryTreeBuilder<T>(queryType) {
             @Override
-            public QueryTree buildTree(QueryAnalyzer builder, T query) {
-                return DisjunctionNode.build(extractor.apply(builder, query));
+            public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, T query) {
+                return ConjunctionNode.build(extractor.extract(builder, weightor, query));
             }
         };
+    }
+
+    public static <T extends Query> QueryTreeBuilder<T>
+            newDisjunctionBuilder(Class<T> queryType, MultiExtractor<T> extractor) {
+        return new QueryTreeBuilder<T>(queryType) {
+            @Override
+            public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, T query) {
+                return DisjunctionNode.build(extractor.extract(builder, weightor, query));
+            }
+        };
+    }
+
+    public interface NodeExtractor<T extends Query> {
+        QueryTree extract(T query, TermWeightor weightor);
+    }
+
+    public interface MultiExtractor<T extends Query> {
+        List<QueryTree> extract(QueryAnalyzer builder, TermWeightor weightor, T query);
     }
 
 }

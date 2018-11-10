@@ -23,8 +23,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  */
 public class TokenLengthNorm extends WeightNorm {
 
-    private final float a;
-    private final float k;
+    private final float[] lengthNorms = new float[32];
 
     /**
      * Create a new TokenLengthNorm
@@ -35,15 +34,20 @@ public class TokenLengthNorm extends WeightNorm {
      * @param k k
      */
     public TokenLengthNorm(float a, float k) {
-        this.a = a;
-        this.k = k;
+        for (int i = 0; i < 32; i++) {
+            lengthNorms[i] = (float) (a * (Math.exp(-k * i)));
+        }
+    }
+
+    public TokenLengthNorm() {
+        this(3, 0.3f);
     }
 
     @Override
     public float norm(QueryTerm term) {
-        if (term.type == QueryTerm.Type.ANY)
-            return 1;
-        else
-            return (4 - WeightNorm.exp(a, k, term.term.text().length()));
+        if (term.term.bytes().length >= 32) {
+            return Integer.MAX_VALUE;
+        }
+        return 4 - lengthNorms[term.term.bytes().length];
     }
 }

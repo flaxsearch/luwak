@@ -35,14 +35,15 @@ import uk.co.flax.luwak.presearcher.MultipassTermFilteredPresearcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcherComponent;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class StandardBenchmark {
 
     public static final List<? extends Presearcher> PRESEARCHERS = ImmutableList.of(
             new TermFilteredPresearcher(),
-            new MultipassTermFilteredPresearcher(2, 0.1f),
+            new MultipassTermFilteredPresearcher(2),
             new TermFilteredPresearcher(new WildcardNGramPresearcherComponent()),
-            new MultipassTermFilteredPresearcher(2, 0.1f, new WildcardNGramPresearcherComponent())
+            new MultipassTermFilteredPresearcher(2, new WildcardNGramPresearcherComponent())
     );
 
     public static final List<? extends MatcherFactory<? extends QueryMatch>> MATCHERS = ImmutableList.of(

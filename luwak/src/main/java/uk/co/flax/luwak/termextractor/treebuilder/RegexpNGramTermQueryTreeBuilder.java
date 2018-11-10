@@ -6,6 +6,7 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -47,10 +48,11 @@ public class RegexpNGramTermQueryTreeBuilder extends QueryTreeBuilder<RegexpQuer
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, RegexpQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, RegexpQuery query) {
         String regexp = parseOutRegexp(query.toString(""));
         String selected = selectLongestSubstring(regexp);
-        return new TermNode(new QueryTerm(query.getField(), selected + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken));
+        QueryTerm term = new QueryTerm(query.getField(), selected + ngramSuffix, QueryTerm.Type.CUSTOM, wildcardToken);
+        return new TermNode(term, weightor.weigh(term));
     }
 
     /**

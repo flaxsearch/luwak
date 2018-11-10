@@ -2,6 +2,8 @@ package uk.co.flax.luwak.termextractor.querytree;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
+import java.util.Set;
+
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
  * <p/>
@@ -18,23 +20,12 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * limitations under the License.
  */
 
-public class AnyNode extends TermNode {
+public class AnyNode extends QueryTree {
 
-    public AnyNode(QueryTerm term) {
-        super(term);
-    }
+    private final String reason;
 
     public AnyNode(String reason) {
-        this(new QueryTerm("", reason, QueryTerm.Type.ANY));
-    }
-
-    public AnyNode(String field, String reason) {
-        this(new QueryTerm(field, reason, QueryTerm.Type.ANY));
-    }
-
-    @Override
-    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
-        return "AnyNode [" + term.toString() + "] " + this.weight(weightor);
+        this.reason = reason;
     }
 
     @Override
@@ -43,7 +34,27 @@ public class AnyNode extends TermNode {
     }
 
     @Override
-    public float weight(TreeWeightor weightor) {
+    public String toString() {
+        return null;
+    }
+
+    @Override
+    public double weight() {
         return 0;
+    }
+
+    @Override
+    public void collectTerms(Set<QueryTerm> termsList) {
+        termsList.add(new QueryTerm("__any__", reason, QueryTerm.Type.ANY));
+    }
+
+    @Override
+    public boolean advancePhase(float minWeight) {
+        return false;
+    }
+
+    @Override
+    public void visit(QueryTreeVisitor visitor, int depth) {
+        visitor.visit(this, 0);
     }
 }

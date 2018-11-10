@@ -18,34 +18,35 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
  * limitations under the License.
  */
 
-public abstract class WeightPolicy {
+/**
+ * A combination of {@link WeightNorm} classes that calculates the weight
+ * of a {@link QueryTerm}
+ *
+ * Individual {@link WeightNorm} results are combined by multiplication.
+ */
+public final class TermWeightor {
 
     private final WeightNorm[] norms;
 
-    protected WeightPolicy(WeightNorm... norms) {
+    /**
+     * Create a new TermWeightor from a combination of WeightNorms
+     *
+     * Note that passing an empty list will result in all terms being given
+     * a weight of {@code 1f}
+     */
+    public TermWeightor(WeightNorm... norms) {
         this.norms = norms;
     }
 
-    protected abstract float weighTerm(QueryTerm term);
-
+    /**
+     * Calculates the weight of a specific term
+     */
     public float weigh(QueryTerm term) {
-        float termweight = weighTerm(term);
+        float termweight = 1;
         for (WeightNorm norm : norms) {
             termweight *= norm.norm(term);
         }
         return termweight;
     }
 
-    public static class Default extends WeightPolicy {
-
-        public Default(WeightNorm... norms) {
-            super(norms);
-        }
-
-        @Override
-        protected float weighTerm(QueryTerm term) {
-            return 1;
-        }
-
-    }
 }

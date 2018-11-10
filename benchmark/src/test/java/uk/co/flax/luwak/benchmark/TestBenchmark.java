@@ -30,6 +30,7 @@ import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

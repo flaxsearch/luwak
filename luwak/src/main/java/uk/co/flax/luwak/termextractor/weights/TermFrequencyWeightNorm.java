@@ -23,28 +23,26 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 /**
  * Weights more infrequent terms more highly
  */
-public class TermFrequencyWeightPolicy extends WeightPolicy {
+public class TermFrequencyWeightNorm extends WeightNorm {
 
-    final Map<String, Integer> frequencies;
-    final float n;
-    final float k;
+    private final Map<String, Integer> frequencies;
+    private final float n;
+    private final float k;
 
     /**
      * Creates a TermFrequencyNorm
      * @param frequencies map of terms to term frequencies
      * @param n scaling factor to use for frequencies
      * @param k minimum weight to scale to
-     * @param norms WeightNorms to use for further normalization
      */
-    public TermFrequencyWeightPolicy(Map<String, Integer> frequencies, float n, float k, WeightNorm... norms) {
-        super(norms);
+    public TermFrequencyWeightNorm(Map<String, Integer> frequencies, float n, float k) {
         this.frequencies = frequencies;
         this.n = n;
         this.k = k;
     }
 
     @Override
-    public float weighTerm(QueryTerm term) {
+    public float norm(QueryTerm term) {
         Integer mapVal = this.frequencies.get(term.term.text());
         if (mapVal != null)
             return (n / mapVal) + k;

@@ -22,6 +22,7 @@ import uk.co.flax.luwak.matchers.HighlightingMatcher;
 import uk.co.flax.luwak.matchers.HighlightsMatch;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.

@@ -19,6 +19,7 @@ import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -93,7 +94,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
     public void testAnyTermsAreCorrectlyAnalyzed() {
 
         TermFilteredPresearcher presearcher = new TermFilteredPresearcher();
-        QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery());
+        QueryTree qt = presearcher.extractor.buildTree(new MatchAllDocsQuery(), TermFilteredPresearcher.DEFAULT_WEIGHTOR);
 
         Map<String, BytesRefHash> extractedTerms = presearcher.collectTerms(qt);
 

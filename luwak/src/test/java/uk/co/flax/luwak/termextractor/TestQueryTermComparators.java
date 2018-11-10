@@ -1,15 +1,19 @@
 package uk.co.flax.luwak.termextractor;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.lucene.index.Term;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
+import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
+import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.weights.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,28 +36,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestQueryTermComparators {
 
-    private static TreeWeightor WEIGHT = new ReportingWeightor(TreeWeightor.DEFAULT_WEIGHTOR);
-
     @Test
     public void testAnyTokensAreNotPreferred() {
 
-        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.ANY));
+        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.EXACT), 1.0);
+        QueryTree node2 = new AnyNode("*:*");
 
-        assertThat(WEIGHT.select(Sets.newSet(node1, node2)))
-                .isSameAs(node1);
-
+        QueryTree conjunction = ConjunctionNode.build(node1, node2);
+        Set<QueryTerm> terms = new HashSet<>();
+        conjunction.collectTerms(terms);
+        assertThat(terms).containsOnly(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
     }
 
     @Test
-    public void testLongerTokensArePreferred() {
+    public void testHigherWeightsArePreferred() {
 
-        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
+        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.EXACT), 1);
+        QueryTree node2 = new TermNode(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT), 1.5);
 
-        assertThat(WEIGHT.select(Sets.newSet(node1, node2)))
-                .isSameAs(node2);
-
+        QueryTree conjunction = ConjunctionNode.build(node1, node2);
+        Set<QueryTerm> terms = new HashSet<>();
+        conjunction.collectTerms(terms);
+        assertThat(terms).containsOnly(new QueryTerm("f", "foobar", QueryTerm.Type.EXACT));
     }
 
     @Test
@@ -61,115 +65,69 @@ public class TestQueryTermComparators {
 
         Term term = new Term("f", "foobar");
 
-        QueryTree node1 = new TermNode(new QueryTerm(term));
-        QueryTree node2 = ConjunctionNode.build(new TermNode(new QueryTerm(term)),
-                                                new TermNode(new QueryTerm(term)));
+        QueryTree node1 = new TermNode(new QueryTerm(term), 1);
+        QueryTree node2 = DisjunctionNode.build(new TermNode(new QueryTerm(term), 1),
+                                                new TermNode(new QueryTerm(term), 1));
 
-        assertThat(WEIGHT.select(Sets.newSet(node1, node2)))
-                .isSameAs(node1);
+        QueryTree conjunction = ConjunctionNode.build(node1, node2);
+        Set<QueryTerm> terms = new HashSet<>();
+        conjunction.collectTerms(terms);
+        assertThat(terms).hasSize(1);
     }
 
     @Test
-    public void testUndesireableFieldsAreNotPreferred() {
+    public void testFieldWeights() {
 
-        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(0.7f,  "g"));
+        TermWeightor weightor = new TermWeightor(new FieldWeightNorm(1.5f, "g"));
+        assertThat(weightor.weigh(new QueryTerm("f", "foo", QueryTerm.Type.EXACT)))
+                .isEqualTo(1);
 
-        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.ANY));
-        QueryTree node2 = new TermNode(new QueryTerm("g", "bar", QueryTerm.Type.EXACT));
-
-        assertThat(weight.select(Sets.newSet(node1, node2)))
-                .isSameAs(node1);
-
+        assertThat(weightor.weigh(new QueryTerm("g", "foo", QueryTerm.Type.EXACT)))
+                .isEqualTo(1.5f);
     }
 
     @Test
-    public void testUndesireableFieldsAreStillSelectedIfNecessary() {
+    public void testTermWeights() {
 
-        TreeWeightor weight = new TreeWeightor(new FieldWeightNorm(0.7f, "f"));
-
-        QueryTree node1 = new TermNode(new QueryTerm("f", "foo", QueryTerm.Type.EXACT));
-        assertThat(weight.select(Sets.newSet(node1)))
-                .isSameAs(node1);
-
-    }
-
-    @Test
-    public void testUndesirableTokensAreNotPreferred() {
-
-        Map<String, Float> termweights = ImmutableMap.of("START", 0.01f);
-        TreeWeightor weight = new TreeWeightor(new TermWeightPolicy(termweights));
-
-        QueryTree node1 = new TermNode(new QueryTerm("f", "START", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("f", "a", QueryTerm.Type.EXACT));
-
-        assertThat(weight.select(Sets.newSet(node1, node2)))
-                .isSameAs(node2);
+        TermWeightor weight = new TermWeightor(new TermWeightNorm(0.01f, Collections.singleton("START")));
+        assertThat(weight.weigh(new QueryTerm("f", "START", QueryTerm.Type.EXACT)))
+                .isEqualTo(0.01f);
     }
 
     @Test
     public void testTermFrequencyNorms() {
 
         Map<String, Integer> termfreqs = ImmutableMap.of("france", 31635, "s", 47088);
-        TreeWeightor weight = new TreeWeightor(new TermFrequencyWeightPolicy(termfreqs, 100, 0.8f));
+        TermWeightor weight = new TermWeightor(new TermFrequencyWeightNorm(termfreqs, 100, 0.8f));
 
-        QueryTree node1 = new TermNode(new QueryTerm("f", "france", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("f", "s", QueryTerm.Type.EXACT));
-
-        assertThat(weight.select(Sets.newSet(node1, node2)))
-                .isSameAs(node1);
-
-    }
-
-    @Test
-    public void testTermWeightNorms() {
-
-        TreeWeightor weight = new TreeWeightor(new TermWeightNorm(0.1f, "f"));
-
-        QueryTree node1 = new TermNode(new QueryTerm("f", "f", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("f", "g", QueryTerm.Type.EXACT));
-        assertThat(weight.select(Sets.newSet(node1, node2)))
-                .isSameAs(node2);
+        assertThat(weight.weigh(new QueryTerm("f", "france", QueryTerm.Type.EXACT)))
+                .isGreaterThan(weight.weigh(new QueryTerm("f", "s", QueryTerm.Type.EXACT)));
 
     }
 
     @Test
     public void testFieldSpecificTermWeightNorms() {
 
-        TreeWeightor weight = new TreeWeightor(new FieldSpecificTermWeightNorm(0.1f, "field1", "f", "g"));
+        TermWeightor weight = new TermWeightor(new FieldSpecificTermWeightNorm(0.1f, "field1", "f", "g"));
 
-        QueryTree node1 = new TermNode(new QueryTerm("field2", "f", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("field1", "f", QueryTerm.Type.EXACT));
-        QueryTree node3 = new TermNode(new QueryTerm("field1", "g", QueryTerm.Type.EXACT));
-
-        assertThat(weight.select(Sets.newSet(node1, node2, node3)))
-                .isSameAs(node1);
+        assertThat(weight.weigh(new QueryTerm("field1", "f", QueryTerm.Type.EXACT)))
+                .isEqualTo(0.1f);
+        assertThat(weight.weigh(new QueryTerm("field2", "f", QueryTerm.Type.EXACT)))
+                .isEqualTo(1);
     }
 
     @Test
     public void testTermTypeWeightNorms() {
 
-        Map<String, Integer> termFreqs = ImmutableMap.of(
-                "foo", 400, "bar", 4000
-        );
-        TreeWeightor weight = new TreeWeightor(new TermFrequencyWeightPolicy(termFreqs, 100, 0,
-                                                new TermTypeNorm(QueryTerm.Type.CUSTOM, 0.2f),
-                                                new TermTypeNorm(QueryTerm.Type.CUSTOM, "wildcard", 0.1f)));
+        TermWeightor weight = new TermWeightor(new TermTypeNorm(QueryTerm.Type.CUSTOM, 0.2f),
+                                                new TermTypeNorm(QueryTerm.Type.CUSTOM, "wildcard", 0.1f));
 
-        QueryTree node1 = new TermNode(new QueryTerm("field", "foo", QueryTerm.Type.EXACT));
-        QueryTree node2 = new TermNode(new QueryTerm("field", "fooXX", QueryTerm.Type.CUSTOM, "wildcard"));
-        QueryTree node3 = new TermNode(new QueryTerm("field", "wibble", QueryTerm.Type.CUSTOM));
-        QueryTree node4 = new TermNode(new QueryTerm("field", "bar", QueryTerm.Type.EXACT));
-
-        assertThat(weight.select(Sets.newSet(node1, node2, node3, node4)))
-                .isSameAs(node1);
-
-        assertThat(weight.select(Sets.newSet(node2, node3)))
-                .isSameAs(node3);
-
-        //weight = new ReportingWeightor(weight);
-
-        assertThat(weight.select(Sets.newSet(node2, node4)))
-                .isSameAs(node2);
+        assertThat(weight.weigh(new QueryTerm("field", "fooXX", QueryTerm.Type.CUSTOM, "wildcard")))
+                .isEqualTo(0.1f);
+        assertThat(weight.weigh(new QueryTerm("field", "foo", QueryTerm.Type.EXACT)))
+                .isEqualTo(1);
+        assertThat(weight.weigh(new QueryTerm("field", "foo", QueryTerm.Type.CUSTOM)))
+                .isEqualTo(0.2f);
     }
 
 }

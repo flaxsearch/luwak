@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
@@ -14,6 +13,7 @@ import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2013 Lemur Consulting Ltd.
@@ -60,7 +60,7 @@ public class BooleanQueryTreeBuilder extends QueryTreeBuilder<BooleanQuery> {
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, BooleanQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor,  BooleanQuery query) {
 
         Clauses clauses = analyze(query);
 
@@ -68,14 +68,14 @@ public class BooleanQueryTreeBuilder extends QueryTreeBuilder<BooleanQuery> {
             return new AnyNode("PURE NEGATIVE BOOLEAN");
 
         if (clauses.isDisjunctionQuery()) {
-            return DisjunctionNode.build(buildChildTrees(builder, clauses.getDisjunctions()));
+            return DisjunctionNode.build(buildChildTrees(builder, weightor, clauses.getDisjunctions()));
         }
 
-        return ConjunctionNode.build(buildChildTrees(builder, clauses.getConjunctions()));
+        return ConjunctionNode.build(buildChildTrees(builder, weightor, clauses.getConjunctions()));
     }
 
-    private List<QueryTree> buildChildTrees(QueryAnalyzer builder, List<Query> children) {
-        return children.stream().map(builder::buildTree).collect(Collectors.toList());
+    private List<QueryTree> buildChildTrees(QueryAnalyzer builder, TermWeightor weightor, List<Query> children) {
+        return children.stream().map(q -> builder.buildTree(q, weightor)).collect(Collectors.toList());
     }
 
     public static class Clauses {

@@ -2,6 +2,7 @@ package uk.co.flax.luwak.termextractor;
 
 import org.apache.lucene.search.Query;
 import org.junit.Test;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,7 @@ public class TestBooleanClauseWeightings {
 
         Query bq = ParserUtils.parse("+field2:[1 TO 2] +(field1:term1 field1:term2)");
 
-        assertThat(treeBuilder.collectTerms(bq))
+        assertThat(treeBuilder.collectTerms(bq, new TermWeightor()))
                 .hasSize(2);
     }
 
@@ -39,7 +40,7 @@ public class TestBooleanClauseWeightings {
 
         Query q = ParserUtils.parse("field1:(+a +supercalifragilisticexpialidocious +b)");
 
-        assertThat(treeBuilder.collectTerms(q))
+        assertThat(treeBuilder.collectTerms(q, new TermWeightor()))
                 .containsExactly(new QueryTerm("field1", "supercalifragilisticexpialidocious", QueryTerm.Type.EXACT));
     }
 

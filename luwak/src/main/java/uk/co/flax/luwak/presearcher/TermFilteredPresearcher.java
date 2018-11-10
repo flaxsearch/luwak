@@ -43,7 +43,8 @@ import uk.co.flax.luwak.termextractor.QueryAnalyzer;
 import uk.co.flax.luwak.termextractor.QueryTerm;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -54,11 +55,17 @@ import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
  */
 public class TermFilteredPresearcher extends Presearcher {
 
+    /**
+     * The default TermWeightor, weighting by token length
+     */
+    public static final TermWeightor DEFAULT_WEIGHTOR = new TermWeightor(new TokenLengthNorm());
+
     static {
         BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
     }
 
     protected final QueryAnalyzer extractor;
+    protected final TermWeightor weightor;
 
     private final List<PresearcherComponent> components = new ArrayList<>();
 
@@ -66,17 +73,23 @@ public class TermFilteredPresearcher extends Presearcher {
 
     public static final String ANYTOKEN = "__ANYTOKEN__";
 
-    public TermFilteredPresearcher(TreeWeightor weightor, PresearcherComponent... components) {
-        this.extractor = QueryAnalyzer.fromComponents(weightor, components);
+    /**
+     * Create a new TermFilteredPresearcher using a defined TermWeightor
+     * @param weightor      the TermWeightor
+     * @param components    optional PresearcherComponents
+     */
+    public TermFilteredPresearcher(TermWeightor weightor, PresearcherComponent... components) {
+        this.extractor = QueryAnalyzer.fromComponents(components);
         this.components.addAll(Arrays.asList(components));
+        this.weightor = weightor;
     }
 
+    /**
+     * Create a new TermFilteredPresearcher using the default term weighting
+     * @param components    optional PresearcherComponents
+     */
     public TermFilteredPresearcher(PresearcherComponent... components) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, components);
-    }
-
-    public TermFilteredPresearcher() {
-        this(TreeWeightor.DEFAULT_WEIGHTOR);
+        this(DEFAULT_WEIGHTOR, components);
     }
 
     @Override
@@ -145,7 +158,7 @@ public class TermFilteredPresearcher extends Presearcher {
     @Override
     public final Document indexQuery(Query query, Map<String, String> metadata) {
 
-        QueryTree querytree = extractor.buildTree(query);
+        QueryTree querytree = extractor.buildTree(query, weightor);
         Document doc = buildQueryDocument(querytree);
 
         for (PresearcherComponent component : components) {
@@ -162,7 +175,7 @@ public class TermFilteredPresearcher extends Presearcher {
      * @param out   a {@link PrintStream}
      */
     public void showQueryTree(Query query, PrintStream out) {
-        QueryTreeViewer.view(extractor.buildTree(query), extractor.weightor, out);
+        QueryTreeViewer.view(extractor.buildTree(query, weightor), out);
     }
 
     protected Document buildQueryDocument(QueryTree querytree) {

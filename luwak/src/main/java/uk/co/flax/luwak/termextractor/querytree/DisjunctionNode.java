@@ -1,9 +1,13 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;
 
@@ -25,10 +29,11 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class DisjunctionNode extends QueryTree {
 
+    private final List<QueryTree> children;
+
     private DisjunctionNode(List<QueryTree> children) {
-        for (QueryTree child : children) {
-            this.addChild(child);
-        }
+        this.children = new ArrayList<>(children);
+        this.children.sort(Comparator.comparingDouble(QueryTree::weight));
     }
 
     public static QueryTree build(List<QueryTree> children) {
@@ -36,32 +41,29 @@ public class DisjunctionNode extends QueryTree {
             throw new IllegalArgumentException("Cannot build DisjunctionNode with no children");
         if (children.size() == 1)
             return children.get(0);
-        return new DisjunctionNode(children);
+        Optional<QueryTree> firstAnyChild = children.stream().filter(QueryTree::isAny).findAny();
+        // if any of the children is an ANY node, just return that, otherwise build the disjunction
+        return firstAnyChild.orElseGet(() -> new DisjunctionNode(children));
+    }
+
+    public static QueryTree build(QueryTree... children) {
+        return build(Arrays.asList(children));
     }
 
     @Override
-    public float weight(TreeWeightor weightor) {
-        return weightor.combine(children);
+    public double weight() {
+        return children.get(0).weight();
     }
 
     @Override
-    public void collectTerms(List<QueryTerm> termsList, TreeWeightor weightor) {
+    public void collectTerms(Set<QueryTerm> termsList) {
         if (isAny()) {
             termsList.add(new QueryTerm("", "DISJUNCTION WITH ANYTOKEN", QueryTerm.Type.ANY));
             return;
         }
         for (QueryTree child : children) {
-            child.collectTerms(termsList, weightor);
+            child.collectTerms(termsList);
         }
-    }
-
-    @Override
-    public boolean isAdvanceable(TreeAdvancer advancer) {
-        boolean result = false;
-        for (QueryTree child : children) {
-            result |= child.isAdvanceable(advancer);
-        }
-        return result;
     }
 
     @Override
@@ -74,41 +76,27 @@ public class DisjunctionNode extends QueryTree {
     }
 
     @Override
-    public String toString(TreeWeightor weightor, TreeAdvancer advancer) {
+    public String toString() {
         StringBuilder sb = new StringBuilder("Disjunction[");
-        sb.append(children.size()).append("] ");
-        sb.append(weight(weightor)).append(" { ");
+        sb.append(children.size()).append("]^");
+        sb.append(weight()).append(" { ");
         for (QueryTree child : children) {
-            sb.append(child.terms(weightor)).append(" ");
+            sb.append(child.toString()).append(" ");
         }
         return sb.append("}").toString();
     }
 
     @Override
-    public Set<QueryTerm> terms(TreeWeightor weightor) {
-        List<QueryTerm> qterms = new ArrayList<>();
-        this.collectTerms(qterms, weightor);
-        Set<QueryTerm> terms = new HashSet<>();
-        terms.addAll(qterms);
-        return terms;
-    }
-
-    @Override
-    public boolean advancePhase(TreeWeightor weightor, TreeAdvancer advancer) {
+    public boolean advancePhase(float minWeight) {
         boolean changed = false;
         for (QueryTree child : children) {
-            changed |= child.advancePhase(weightor, advancer);
+            changed |= child.advancePhase(minWeight);
         }
+        if (changed == false) {
+            return false;
+        }
+        children.sort(Comparator.comparingDouble(QueryTree::weight));
         return changed;
-    }
-
-    @Override
-    public boolean hasAdvanceableDescendents(TreeAdvancer advancer) {
-        for (QueryTree child : children) {
-            if (child.hasAdvanceableDescendents(advancer))
-                return true;
-        }
-        return false;
     }
 
     @Override

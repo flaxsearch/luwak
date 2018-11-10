@@ -1,15 +1,16 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Query;
 import uk.co.flax.luwak.presearcher.PresearcherComponent;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.querytree.TreeAdvancer;
-import uk.co.flax.luwak.termextractor.querytree.TreeWeightor;
 import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -30,47 +31,29 @@ import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
 /**
  * Class to analyze and extract terms from a lucene query, to be used by
  * a {@link uk.co.flax.luwak.Presearcher} in indexing.
- *
- * QueryAnalyzer uses a {@link uk.co.flax.luwak.termextractor.querytree.TreeWeightor}
- * to choose which branches of a conjunction query to collect terms from.
  */
 public class QueryAnalyzer {
 
     private final List<QueryTreeBuilder<?>> queryTreeBuilders;
 
-    public final TreeWeightor weightor;
-
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
      *
-     * @param weightor a TreeWeightor to use for conjunctions
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
-    public QueryAnalyzer(TreeWeightor weightor, List<QueryTreeBuilder<?>> queryTreeBuilders) {
+    public QueryAnalyzer(List<QueryTreeBuilder<?>> queryTreeBuilders) {
         this.queryTreeBuilders = new ArrayList<>();
         this.queryTreeBuilders.addAll(queryTreeBuilders);
         this.queryTreeBuilders.addAll(TreeBuilders.DEFAULT_BUILDERS);
-        this.weightor = weightor;
     }
 
     /**
      * Create a QueryAnalyzer using provided QueryTreeBuilders, in addition to the default set
-     *
-     * @param weightor a TreeWeightor to use for conjunctions
-     * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
-     */
-    public QueryAnalyzer(TreeWeightor weightor, QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(weightor, Arrays.asList(queryTreeBuilders));
-    }
-
-    /**
-     * Create a QueryAnalyzer using the default TreeWeightor, and the provided QueryTreeBuilders,
-     * in addition to the default set
      *
      * @param queryTreeBuilders QueryTreeBuilders used to analyze queries
      */
     public QueryAnalyzer(QueryTreeBuilder<?>... queryTreeBuilders) {
-        this(TreeWeightor.DEFAULT_WEIGHTOR, queryTreeBuilders);
+        this(Arrays.asList(queryTreeBuilders));
     }
 
     /**
@@ -79,29 +62,15 @@ public class QueryAnalyzer {
      * A list of QueryTreeBuilders is extracted from each component, and combined to use
      * on the QueryAnalyzer
      *
-     * @param weightor a TreeWeightor
-     * @param components a list of PresearcherComponents
-     * @return a QueryAnalyzer
-     */
-    public static QueryAnalyzer fromComponents(TreeWeightor weightor, PresearcherComponent... components) {
-        List<QueryTreeBuilder<?>> builders = new ArrayList<>();
-        for (PresearcherComponent component : components) {
-            builders.addAll(component.getQueryTreeBuilders());
-        }
-        return new QueryAnalyzer(weightor, builders);
-    }
-
-    /**
-     * Build a new QueryAnalyzer using a list of PresearcherComponents
-     *
-     * A list of QueryTreeBuilders is extracted from each component, and combined to use
-     * on the QueryAnalyzer with a default TreeWeightor.
-     *
      * @param components a list of PresearcherComponents
      * @return a QueryAnalyzer
      */
     public static QueryAnalyzer fromComponents(PresearcherComponent... components) {
-        return fromComponents(TreeWeightor.DEFAULT_WEIGHTOR, components);
+        List<QueryTreeBuilder<?>> builders = new ArrayList<>();
+        for (PresearcherComponent component : components) {
+            builders.addAll(component.getQueryTreeBuilders());
+        }
+        return new QueryAnalyzer(builders);
     }
 
     /**
@@ -110,11 +79,11 @@ public class QueryAnalyzer {
      * @return a QueryTree describing the analyzed query
      */
     @SuppressWarnings("unchecked")
-    public QueryTree buildTree(Query luceneQuery) {
+    public QueryTree buildTree(Query luceneQuery, TermWeightor weightor) {
         QueryTreeBuilder builder = getTreeBuilderForQuery(luceneQuery.getClass());
         if (builder == null)
             throw new UnsupportedOperationException("Can't build query tree from query of type " + luceneQuery.getClass());
-        return builder.buildTree(this, luceneQuery);
+        return builder.buildTree(this, weightor, luceneQuery);
     }
 
     public QueryTreeBuilder getTreeBuilderForQuery(Class<? extends Query> queryClass) {
@@ -131,9 +100,9 @@ public class QueryAnalyzer {
      * @param queryTree the analyzed QueryTree to collect terms from
      * @return a list of QueryTerms
      */
-    public List<QueryTerm> collectTerms(QueryTree queryTree) {
-        List<QueryTerm> terms = new ArrayList<>();
-        queryTree.collectTerms(terms, weightor);
+    public Set<QueryTerm> collectTerms(QueryTree queryTree) {
+        Set<QueryTerm> terms = new HashSet<>();
+        queryTree.collectTerms(terms);
         return terms;
     }
 
@@ -142,12 +111,8 @@ public class QueryAnalyzer {
      * @param luceneQuery the query to analyze and collect terms from
      * @return a list of QueryTerms
      */
-    public List<QueryTerm> collectTerms(Query luceneQuery) {
-        return collectTerms(buildTree(luceneQuery));
-    }
-
-    public boolean advancePhase(QueryTree queryTree, TreeAdvancer advancer) {
-        return queryTree.advancePhase(weightor, advancer);
+    public Set<QueryTerm> collectTerms(Query luceneQuery, TermWeightor weightor) {
+        return collectTerms(buildTree(luceneQuery, weightor));
     }
 
 }

@@ -27,6 +27,7 @@ import uk.co.flax.luwak.termextractor.QueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.TermNode;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class TermInSetQueryTreeBuilder extends QueryTreeBuilder<TermInSetQuery> {
 
@@ -37,12 +38,12 @@ public class TermInSetQueryTreeBuilder extends QueryTreeBuilder<TermInSetQuery> 
     }
 
     @Override
-    public QueryTree buildTree(QueryAnalyzer builder, TermInSetQuery query) {
+    public QueryTree buildTree(QueryAnalyzer builder, TermWeightor weightor, TermInSetQuery query) {
         PrefixCodedTerms.TermIterator it = query.getTermData().iterator();
         List<QueryTree> terms = new ArrayList<>();
         BytesRef term;
         while ((term = it.next()) != null) {
-            terms.add(new TermNode(new Term(it.field(), term)));
+            terms.add(new TermNode(new Term(it.field(), term), weightor));
         }
         return DisjunctionNode.build(terms);
     }

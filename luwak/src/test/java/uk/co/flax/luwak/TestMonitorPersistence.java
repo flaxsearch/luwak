@@ -14,6 +14,7 @@ import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.testutils.FileUtils;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
