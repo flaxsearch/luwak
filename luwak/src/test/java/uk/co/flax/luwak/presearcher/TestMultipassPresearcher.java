@@ -88,6 +88,20 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
     }
 
     @Test
+    public void testMultipleFields() throws IOException, UpdateException {
+
+        monitor.update(new MonitorQuery("1", "field1:(foo OR bar) AND field2:cormorant"));
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField("field1", "a badger walked into a bar", WHITESPACE)
+                .addField("field2", "cormorant", WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasQueriesRunCount(1)
+                .hasMatchCount("doc1", 1);
+    }
+
+    @Test
     public void testQueryBuilder() throws IOException, UpdateException {
 
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
