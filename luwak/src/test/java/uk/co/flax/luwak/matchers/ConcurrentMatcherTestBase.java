@@ -67,8 +67,9 @@ public abstract class ConcurrentMatcherTestBase {
             for (int i = 0; i < 10; i++) {
                 queries.add(new MonitorQuery(Integer.toString(i), "test^10 doc " + Integer.toString(i)));
             }
+            queries.add(new MonitorQuery("11", "test^10"));
             monitor.update(queries);
-            assertThat(monitor.getDisjunctCount()).isEqualTo(30);
+            assertThat(monitor.getDisjunctCount()).isEqualTo(31);
 
             ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -79,15 +80,19 @@ public abstract class ConcurrentMatcherTestBase {
             Matches<ScoringMatch> matches
                 = monitor.match(batch, matcherFactory(executor, ScoringMatcher.FACTORY, 10));
 
-            assertThat(matches.getMatchCount("1")).isEqualTo(10);
-            assertThat(matches.getQueriesRun()).isEqualTo(30);
+            assertThat(matches.getMatchCount("1")).isEqualTo(11);
+            assertThat(matches.getQueriesRun()).isEqualTo(31);
             assertThat(matches.getErrors()).isEmpty();
+
+            // The queries are all split into three by the QueryDecomposer, and the
+            // 'test' and 'doc' parts will match.  'test' will have a higher score,
+            // because of its lower termfreq.  We need to check that each query ends
+            // up with the score for the 'test' subquery, not the 'doc' subquery
+            float testScore =
+                    matches.getMatches("1").getMatches().stream().filter(m -> m.getQueryId().equals("11")).findFirst().get().getScore();
+
             for (ScoringMatch match : matches.getMatches("1")) {
-                // The queries are all split into three by the QueryDecomposer, and the
-                // 'test' and 'doc' parts will match.  'test' will have a higher score,
-                // because of it's lower termfreq.  We need to check that each query ends
-                // up with the score for the 'test' subquery, not the 'doc' subquery
-                assertThat(match.getScore()).isEqualTo(2.5316024f);
+                assertThat(match.getScore()).isEqualTo(testScore);
             }
         }
     }

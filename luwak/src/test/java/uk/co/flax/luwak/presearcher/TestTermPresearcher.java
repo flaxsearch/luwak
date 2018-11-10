@@ -134,7 +134,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(batch.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
-                        .add(should(new TermInSetQuery("f", new BytesRef("test"))))
+                        .add(should(new BooleanQuery.Builder().add(should(new TermInSetQuery("f", new BytesRef("test")))).build()))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();
 

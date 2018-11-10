@@ -108,10 +108,10 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(docs.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new BooleanQuery.Builder()
-                                .add(must(new TermInSetQuery("f_0", new BytesRef("test"))))
-                                .add(must(new TermInSetQuery("f_1", new BytesRef("test"))))
-                                .add(must(new TermInSetQuery("f_2", new BytesRef("test"))))
-                                .add(must(new TermInSetQuery("f_3", new BytesRef("test"))))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_0", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_1", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_2", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_3", new BytesRef("test")))).build()))
                                 .build()))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();
