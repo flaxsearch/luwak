@@ -62,11 +62,16 @@ public class ForceNoBulkScoringQuery extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
 
-        final Weight innerWeight = inner.createWeight(searcher, needsScores);
+        final Weight innerWeight = inner.createWeight(searcher, needsScores, boost);
 
         return new Weight(ForceNoBulkScoringQuery.this) {
+            @Override
+            public boolean isCacheable(LeafReaderContext leafReaderContext) {
+                return innerWeight.isCacheable(leafReaderContext);
+            }
+
             @Override
             public void extractTerms(Set<Term> set) {
                 innerWeight.extractTerms(set);
@@ -75,16 +80,6 @@ public class ForceNoBulkScoringQuery extends Query {
             @Override
             public Explanation explain(LeafReaderContext leafReaderContext, int i) throws IOException {
                 return innerWeight.explain(leafReaderContext, i);
-            }
-
-            @Override
-            public float getValueForNormalization() throws IOException {
-                return innerWeight.getValueForNormalization();
-            }
-
-            @Override
-            public void normalize(float v, float v1) {
-                innerWeight.normalize(v, v1);
             }
 
             @Override

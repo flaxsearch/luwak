@@ -1,10 +1,6 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.LegacyNumericTokenStream;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
@@ -15,12 +11,23 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.*;
+import org.apache.lucene.util.AttributeImpl;
+import org.apache.lucene.util.AttributeReflector;
+import org.apache.lucene.util.BytesRef;
 import org.junit.Before;
 import org.junit.Test;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.DocumentBatch;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.MonitorQueryParser;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
+
+import java.io.IOException;
+import java.util.Map;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -213,41 +220,6 @@ public abstract class PresearcherTestBase {
                     .hasQueriesRunCount(1);
         }
 
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void filtersOnNumericTermQueries() throws IOException, UpdateException {
-
-        // Rudimentary query parser which returns numeric encoded BytesRefs
-        try (Monitor numeric_monitor = new Monitor(new MonitorQueryParser() {
-            @Override
-            public Query parse(String queryString, Map<String, String> metadata) throws Exception
-            {
-                BytesRefBuilder brb = new BytesRefBuilder();
-                LegacyNumericUtils.intToPrefixCoded(Integer.parseInt(queryString), 0, brb);
-
-                Term t = new Term(TEXTFIELD, brb.get());
-                return new TermQuery(t);
-            }
-        }, presearcher)) {
-
-            for (int i = 8; i <= 15; i++) {
-                numeric_monitor.update(new MonitorQuery("query" + i, "" + i));
-            }
-
-            for (int i = 8; i <= 15; i++) {
-                LegacyNumericTokenStream nts = new LegacyNumericTokenStream(1);
-                nts.setIntValue(i);
-                InputDocument doc = InputDocument.builder("doc" + i)
-                        .addField(new TextField(TEXTFIELD, nts)).build();
-                assertThat(numeric_monitor.match(doc, SimpleMatcher.FACTORY))
-                        .matchesDoc("doc" + i)
-                        .hasMatchCount("doc" + i, 1)
-                        .matchesQuery("query" + i, "doc" + i);
-            }
-
-        }
     }
 
     public static BooleanClause must(Query q) {

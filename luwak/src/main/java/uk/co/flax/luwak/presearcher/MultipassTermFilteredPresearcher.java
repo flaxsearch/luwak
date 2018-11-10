@@ -1,22 +1,21 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import uk.co.flax.luwak.analysis.TermsEnumTokenStream;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+import uk.co.flax.luwak.util.CollectionUtils;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.
@@ -96,27 +95,33 @@ public class MultipassTermFilteredPresearcher extends TermFilteredPresearcher {
     private class MultipassDocumentQueryBuilder implements DocumentQueryBuilder {
 
         BooleanQuery.Builder[] queries = new BooleanQuery.Builder[passes];
-        List<List<Term>> terms = new ArrayList<List<Term>>(passes);
+        Map<String, BytesRefHash> terms = new HashMap<>();
 
         public MultipassDocumentQueryBuilder() {
             for (int i = 0; i < queries.length; i++) {
                 queries[i] = new BooleanQuery.Builder();
-                terms.add(i, new ArrayList<Term>());
             }
         }
 
         @Override
         public void addTerm(String field, BytesRef term) throws IOException {
-            for (int i = 0; i < passes; i++) {
-                terms.get(i).add(new Term(field(field, i), term));
-            }
+            BytesRefHash t = terms.computeIfAbsent(field, f -> new BytesRefHash());
+            t.add(term);
         }
 
         @Override
         public Query build() {
+            Map<String, BytesRef[]> collectedTerms = new HashMap<>();
+            for (String field : terms.keySet()) {
+                collectedTerms.put(field, CollectionUtils.convertHash(terms.get(field)));
+            }
             BooleanQuery.Builder parent = new BooleanQuery.Builder();
             for (int i = 0; i < passes; i++) {
-                parent.add(new TermsQuery(terms.get(i)), BooleanClause.Occur.MUST);
+                BooleanQuery.Builder child = new BooleanQuery.Builder();
+                for (String field : terms.keySet()) {
+                    child.add(new TermInSetQuery(field(field, i), collectedTerms.get(field)), BooleanClause.Occur.SHOULD);
+                }
+                parent.add(child.build(), BooleanClause.Occur.MUST);
             }
             return parent.build();
         }

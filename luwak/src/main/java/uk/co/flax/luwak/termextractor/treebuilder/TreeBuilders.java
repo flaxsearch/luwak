@@ -68,7 +68,6 @@ public class TreeBuilders {
             newFilteringQueryBuilder(BoostedQuery.class, BoostedQuery::getQuery),
             newDisjunctionBuilder(DisjunctionMaxQuery.class,
                     (b, w, q) -> q.getDisjuncts().stream().map(qq -> b.buildTree(qq, w)).collect(Collectors.toList())),
-            TermsQueryTreeBuilder.INSTANCE,
             TermInSetQueryTreeBuilder.INSTANCE,
             new QueryTreeBuilder<SpanWithinQuery>(SpanWithinQuery.class) {
                 @Override

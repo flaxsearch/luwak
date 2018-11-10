@@ -15,18 +15,31 @@ package uk.co.flax.luwak.util;
  *   limitations under the License.
  */
 
+import org.apache.lucene.index.PrefixCodedTerms;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MultiTermQuery;
+import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanOrQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.util.BytesRef;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.lucene.index.PrefixCodedTerms;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
-import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.*;
-import org.apache.lucene.util.BytesRef;
 
 public class SpanRewriter {
 
@@ -50,8 +63,6 @@ public class SpanRewriter {
             return rewriteDisjunctionMaxQuery((DisjunctionMaxQuery) in, searcher);
         if (in instanceof TermInSetQuery)
             return rewriteTermInSetQuery((TermInSetQuery) in);
-        if (in instanceof TermsQuery)
-            return rewrite(in.rewrite(null), null);
         if (in instanceof BoostQuery)
             return rewrite(((BoostQuery) in).getQuery(), searcher);   // we don't care about boosts for rewriting purposes
         if (in instanceof PhraseQuery)

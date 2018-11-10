@@ -30,7 +30,7 @@ class QueryIndex {
     // NB this is not final because it can be replaced by purgeCache()
 
     // package-private for testing
-    final Map<IndexReader, QueryTermFilter> termFilters = new HashMap<>();
+    final Map<IndexReader.CacheKey, QueryTermFilter> termFilters = new HashMap<>();
     
     QueryIndex(IndexWriter indexWriter) throws IOException {
         this.writer = indexWriter;
@@ -46,8 +46,8 @@ class QueryIndex {
         public IndexSearcher newSearcher(IndexReader reader, IndexReader previousReader) throws IOException {
             IndexSearcher searcher = super.newSearcher(reader, previousReader);
             searcher.setQueryCache(null);
-            termFilters.put(reader, new QueryTermFilter(reader));
-            reader.addReaderClosedListener(termFilters::remove);
+            termFilters.put(reader.getReaderCacheHelper().getKey(), new QueryTermFilter(reader));
+            reader.getReaderCacheHelper().addClosedListener(termFilters::remove);
             return searcher;
         }
     }
@@ -108,7 +108,7 @@ class QueryIndex {
 
             MonitorQueryCollector collector = new MonitorQueryCollector(queries, matcher);
             long buildTime = System.nanoTime();
-            Query query = queryBuilder.buildQuery(termFilters.get(searcher.getIndexReader()));
+            Query query = queryBuilder.buildQuery(termFilters.get(searcher.getIndexReader().getReaderCacheHelper().getKey()));
             buildTime = System.nanoTime() - buildTime;
             searcher.search(query, collector);
             return buildTime;
@@ -222,6 +222,15 @@ class QueryIndex {
         public BinaryDocValues mq;
         public Scorer scorer;
         public int doc;
+
+        void advance(int doc) throws IOException {
+            this.doc = doc;
+            hash.advanceExact(doc);
+            id.advanceExact(doc);
+            if (mq != null) {
+                mq.advanceExact(doc);
+            }
+        }
     }
 
     /**
@@ -245,10 +254,10 @@ class QueryIndex {
 
         @Override
         public void collect(int doc) throws IOException {
-            BytesRef hash = dataValues.hash.get(doc);
-            BytesRef id = dataValues.id.get(doc);
+            dataValues.advance(doc);
+            BytesRef hash = dataValues.hash.binaryValue();
+            BytesRef id = dataValues.id.binaryValue();
             QueryCacheEntry query = queries.get(hash);
-            dataValues.doc = doc;
             matcher.matchQuery(id.utf8ToString(), query, dataValues);
         }
 

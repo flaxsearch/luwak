@@ -16,21 +16,20 @@ package uk.co.flax.luwak.presearcher;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.*;
-
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
@@ -45,6 +44,15 @@ import uk.co.flax.luwak.termextractor.querytree.QueryTree;
 import uk.co.flax.luwak.termextractor.querytree.QueryTreeViewer;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
+import uk.co.flax.luwak.util.CollectionUtils;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Presearcher implementation that uses terms extracted from queries to index
@@ -96,7 +104,9 @@ public class TermFilteredPresearcher extends Presearcher {
     public final Query buildQuery(LeafReader reader, QueryTermFilter queryTermFilter) {
         try {
             DocumentQueryBuilder queryBuilder = getQueryBuilder();
-            for (String field : reader.fields()) {
+            for (FieldInfo fi : reader.getFieldInfos()) {
+
+                final String field = fi.name;
 
                 TokenStream ts = new TermsEnumTokenStream(reader.terms(field).iterator());
                 for (PresearcherComponent component : components) {
@@ -134,16 +144,21 @@ public class TermFilteredPresearcher extends Presearcher {
     protected DocumentQueryBuilder getQueryBuilder() {
         return new DocumentQueryBuilder() {
 
-            List<Term> terms = new ArrayList<>();
+            Map<String, BytesRefHash> terms = new HashMap<>();
 
             @Override
             public void addTerm(String field, BytesRef term) throws IOException {
-                terms.add(new Term(field, term));
+                BytesRefHash hash = terms.computeIfAbsent(field, f -> new BytesRefHash());
+                hash.add(term);
             }
 
             @Override
             public Query build() {
-                return new TermsQuery(terms);
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (String field : terms.keySet()) {
+                    builder.add(new TermInSetQuery(field, CollectionUtils.convertHash(terms.get(field))), BooleanClause.Occur.SHOULD);
+                }
+                return builder.build();
             }
         };
     }

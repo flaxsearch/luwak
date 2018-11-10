@@ -1,14 +1,15 @@
 package uk.co.flax.luwak;
 
-import java.io.IOException;
-import java.util.Map;
-
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.*;
-import org.apache.lucene.util.Bits;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Weight;
 import org.junit.Test;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
+
+import java.io.IOException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ public class TestSlowLog {
         }
 
         @Override
-        public Query parse(String queryString, Map<String, String> metadata) throws Exception {
+        public Query parse(String queryString, Map<String, String> metadata) {
             if (queryString.equals("slow")) {
                 return new Query() {
                     @Override
@@ -48,21 +49,13 @@ public class TestSlowLog {
                     }
 
                     @Override
-                    public Weight createWeight(IndexSearcher searcher, boolean needsScores) {
+                    public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) {
                         try {
                             Thread.sleep(delay);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
-                        return new RandomAccessWeight(this) {
-                            protected Bits getMatchingDocs(LeafReaderContext context) throws IOException {
-                                return new Bits.MatchAllBits(context.reader().maxDoc());
-                            }
-
-                            public String toString() {
-                                return "weight(MatchAllDocs)";
-                            }
-                        };
+                        return new MatchAllDocsQuery().createWeight(searcher, needsScores, boost);
                     }
 
                     @Override
@@ -101,7 +94,7 @@ public class TestSlowLog {
                     .contains("2 [")
                     .contains("3 [");
 
-            monitor.setSlowLogLimit(2000000000000l);
+            monitor.setSlowLogLimit(2000000000000L);
             assertThat(monitor.match(doc1, SimpleMatcher.FACTORY).getSlowLog())
                     .isEmpty();
         }
