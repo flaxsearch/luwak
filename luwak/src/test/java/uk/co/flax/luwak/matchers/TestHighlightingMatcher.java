@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.Matches;
 import uk.co.flax.luwak.presearcher.MatchAllPresearcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 import static uk.co.flax.luwak.assertions.HighlightingMatchAssert.assertThat;
@@ -374,8 +375,8 @@ public class TestHighlightingMatcher {
             }
 
             @Override
-            public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-                return inner.createWeight(searcher, needsScores);
+            public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+                return inner.createWeight(searcher, needsScores, boost);
             }
         }, new MatchAllPresearcher());
 

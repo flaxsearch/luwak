@@ -47,7 +47,7 @@ class QueryIndex {
             IndexSearcher searcher = super.newSearcher(reader, previousReader);
             searcher.setQueryCache(null);
             termFilters.put(reader, new QueryTermFilter(reader));
-            reader.addReaderClosedListener(termFilters::remove);
+            reader.getReaderCacheHelper().addClosedListener(termFilters::remove);
             return searcher;
         }
     }
@@ -222,6 +222,12 @@ class QueryIndex {
         public BinaryDocValues mq;
         public Scorer scorer;
         public int doc;
+
+        void advance(int doc) throws IOException {
+            hash.advanceExact(doc);
+            id.advanceExact(doc);
+            mq.advanceExact(doc);
+        }
     }
 
     /**
@@ -245,8 +251,9 @@ class QueryIndex {
 
         @Override
         public void collect(int doc) throws IOException {
-            BytesRef hash = dataValues.hash.get(doc);
-            BytesRef id = dataValues.id.get(doc);
+            dataValues.advance(doc);
+            BytesRef hash = dataValues.hash.binaryValue();
+            BytesRef id = dataValues.id.binaryValue();
             QueryCacheEntry query = queries.get(hash);
             dataValues.doc = doc;
             matcher.matchQuery(id.utf8ToString(), query, dataValues);

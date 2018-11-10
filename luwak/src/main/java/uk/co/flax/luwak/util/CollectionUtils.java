@@ -1,5 +1,8 @@
 package uk.co.flax.luwak.util;
 
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.BytesRefHash;
+
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +46,15 @@ public final class CollectionUtils {
             start = (int) Math.floor(accum);
         }
         return list;
+    }
+
+    public static BytesRef[] convertHash(BytesRefHash hash) {
+        BytesRef terms[] = new BytesRef[hash.size()];
+        for (int i = 0; i < terms.length; i++) {
+            BytesRef t = new BytesRef();
+            terms[i] = hash.get(i, t);
+        }
+        return terms;
     }
 
     /**

@@ -16,8 +16,12 @@ package uk.co.flax.luwak.util;
  */
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.junit.Test;
@@ -25,15 +29,6 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestSpanRewriter {
-
-    @Test
-    public void testTermsQueryWithMultipleFields() throws Exception {
-
-        TermsQuery tq = new TermsQuery(new Term("field1", "term1"), new Term("field2", "term1"), new Term("field2", "term2"));
-
-        Query q = new SpanRewriter().rewrite(tq, null);
-        assertThat(q).isInstanceOf(BooleanQuery.class);
-    }
 
     @Test
     public void testBoostQuery() throws Exception {
