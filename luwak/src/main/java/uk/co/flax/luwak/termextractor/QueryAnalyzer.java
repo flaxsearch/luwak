@@ -1,17 +1,16 @@
 package uk.co.flax.luwak.termextractor;
 
+import org.apache.lucene.search.Query;
+import uk.co.flax.luwak.presearcher.PresearcherComponent;
+import uk.co.flax.luwak.termextractor.querytree.QueryTree;
+import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
+import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.ToDoubleFunction;
-
-import org.apache.lucene.search.*;
-import uk.co.flax.luwak.presearcher.PresearcherComponent;
-import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.treebuilder.TreeBuilders;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 /*
  * Copyright (c) 2014 Lemur Consulting Ltd.

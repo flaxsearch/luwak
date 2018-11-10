@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,10 +29,10 @@ import uk.co.flax.luwak.termextractor.QueryTerm;
 
 public class DisjunctionNode extends QueryTree {
 
-    private final List<QueryTree> children = new ArrayList<>();
+    private final List<QueryTree> children;
 
     private DisjunctionNode(List<QueryTree> children) {
-        this.children.addAll(children);
+        this.children = new ArrayList<>(children);
         this.children.sort(Comparator.comparingDouble(QueryTree::weight));
     }
 
@@ -40,12 +41,9 @@ public class DisjunctionNode extends QueryTree {
             throw new IllegalArgumentException("Cannot build DisjunctionNode with no children");
         if (children.size() == 1)
             return children.get(0);
-        List<QueryTree> anyChildren = children.stream().filter(QueryTree::isAny).collect(Collectors.toList());
-        if (anyChildren.isEmpty() == false) {
-            // if any of the children is an ANY node, just return that
-            return anyChildren.get(0);
-        }
-        return new DisjunctionNode(children);
+        Optional<QueryTree> firstAnyChild = children.stream().filter(QueryTree::isAny).findAny();
+        // if any of the children is an ANY node, just return that, otherwise build the disjunction
+        return firstAnyChild.orElseGet(() -> new DisjunctionNode(children));
     }
 
     public static QueryTree build(QueryTree... children) {
@@ -93,6 +91,9 @@ public class DisjunctionNode extends QueryTree {
         boolean changed = false;
         for (QueryTree child : children) {
             changed |= child.advancePhase(minWeight);
+        }
+        if (changed == false) {
+            return false;
         }
         children.sort(Comparator.comparingDouble(QueryTree::weight));
         return changed;
