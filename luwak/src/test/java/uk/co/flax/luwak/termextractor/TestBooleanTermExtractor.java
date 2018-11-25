@@ -1,19 +1,15 @@
 package uk.co.flax.luwak.termextractor;
 
-import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.junit.Test;
-import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
-import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.testutils.ParserUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;

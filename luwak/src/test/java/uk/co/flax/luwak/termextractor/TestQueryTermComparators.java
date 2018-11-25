@@ -8,7 +8,6 @@ import java.util.Set;
 import com.google.common.collect.ImmutableMap;
 import org.apache.lucene.index.Term;
 import org.junit.Test;
-import org.mockito.internal.util.collections.Sets;
 import uk.co.flax.luwak.termextractor.querytree.AnyNode;
 import uk.co.flax.luwak.termextractor.querytree.ConjunctionNode;
 import uk.co.flax.luwak.termextractor.querytree.DisjunctionNode;

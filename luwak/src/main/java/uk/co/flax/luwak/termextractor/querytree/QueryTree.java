@@ -1,7 +1,5 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import uk.co.flax.luwak.termextractor.QueryTerm;

@@ -1,9 +1,6 @@
 package uk.co.flax.luwak.termextractor.querytree;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.function.ToDoubleFunction;
 
 import org.apache.lucene.index.Term;
 import uk.co.flax.luwak.termextractor.QueryTerm;

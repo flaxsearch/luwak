@@ -35,7 +35,6 @@ import uk.co.flax.luwak.presearcher.MultipassTermFilteredPresearcher;
 import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.presearcher.WildcardNGramPresearcherComponent;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 public class StandardBenchmark {
 
