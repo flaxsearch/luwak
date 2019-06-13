@@ -2,10 +2,18 @@ package uk.co.flax.luwak.termextractor;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queries.TermsQuery;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
+import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.TermInSetQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.junit.Test;
-import uk.co.flax.luwak.presearcher.TermFilteredPresearcher;
 import uk.co.flax.luwak.termextractor.treebuilder.RegexpNGramTermQueryTreeBuilder;
 import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 import uk.co.flax.luwak.termextractor.weights.TokenLengthNorm;
@@ -52,25 +60,6 @@ public class TestExtractors {
         assertThat(builder.collectTerms(new RegexpQuery(new Term("field", "hel?o")), WEIGHTOR))
                 .containsExactly(new QueryTerm("field", "heXX", QueryTerm.Type.CUSTOM, "WILDCARD"));
 
-    }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    public void testRangeQueriesReturnAnyToken() {
-
-        LegacyNumericRangeQuery<Long> nrq = LegacyNumericRangeQuery.newLongRange("field", 0l, 10l, true, true);
-
-        assertThat(treeBuilder.collectTerms(nrq, WEIGHTOR))
-                .hasSize(1)
-                .extracting("type")
-                .containsExactly(QueryTerm.Type.ANY);
-
-        BooleanQuery.Builder bq = new BooleanQuery.Builder();
-        bq.add(nrq, BooleanClause.Occur.MUST);
-        bq.add(new TermQuery(new Term("field", "term")), BooleanClause.Occur.MUST);
-
-        assertThat(treeBuilder.collectTerms(bq.build(), WEIGHTOR))
-                .containsExactly(new QueryTerm("field", "term", QueryTerm.Type.EXACT));
     }
 
     @Test
@@ -122,10 +111,10 @@ public class TestExtractors {
     }
 
     @Test
-    public void testTermsQueryExtractor() {
-        Query q = new TermsQuery(new Term("f1", "t1"), new Term("f2", "t2"));
+    public void testTermInSetQueryExtractor() {
+        Query q = new TermInSetQuery("f1", new BytesRef("t1"), new BytesRef("t2"));
         assertThat(treeBuilder.collectTerms(q, WEIGHTOR))
-                .containsOnly(new QueryTerm("f1", "t1", QueryTerm.Type.EXACT), new QueryTerm("f2", "t2", QueryTerm.Type.EXACT));
+                .containsOnly(new QueryTerm("f1", "t1", QueryTerm.Type.EXACT), new QueryTerm("f1", "t2", QueryTerm.Type.EXACT));
     }
 
     @Test

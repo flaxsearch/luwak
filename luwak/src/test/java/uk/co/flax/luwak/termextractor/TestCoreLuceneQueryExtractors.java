@@ -44,7 +44,8 @@ public class TestCoreLuceneQueryExtractors {
             "org.apache.lucene.search.FieldValueQuery",
             "org.apache.lucene.search.BlendedTermQuery",
             "org.apache.lucene.search.AutomatonQuery",
-            "org.apache.lucene.queries.BoostingQuery"
+            "org.apache.lucene.queries.BoostingQuery",
+            "org.apache.lucene.search.intervals.IntervalQuery"
     );
 
     public static Set<String> unhandledQueries = ImmutableSet.of(
@@ -64,7 +65,10 @@ public class TestCoreLuceneQueryExtractors {
             "org.apache.lucene.queries.function.FunctionQuery",
             "org.apache.lucene.queries.function.FunctionMatchQuery",
             "org.apache.lucene.search.IndexOrDocValuesQuery",
-            "org.apache.lucene.search.LegacyNumericRangeQuery"
+            "org.apache.lucene.search.LegacyNumericRangeQuery",
+            "org.apache.lucene.search.NormsFieldExistsQuery",
+            "org.apache.lucene.search.DocValuesFieldExistsQuery",
+            "org.apache.lucene.search.CoveringQuery"
     );
 
     public static Set<String> unhandledTypes = ImmutableSet.of(

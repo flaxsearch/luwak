@@ -1,20 +1,32 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.io.IOException;
-
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.DocumentBatch;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Matches;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.QueryTermFilter;
+import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
+import java.io.IOException;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -76,6 +88,20 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
     }
 
     @Test
+    public void testMultipleFields() throws IOException, UpdateException {
+
+        monitor.update(new MonitorQuery("1", "field1:(foo OR bar) AND field2:cormorant"));
+        InputDocument doc = InputDocument.builder("doc1")
+                .addField("field1", "a badger walked into a bar", WHITESPACE)
+                .addField("field2", "cormorant", WHITESPACE)
+                .build();
+
+        assertThat(monitor.match(doc, SimpleMatcher.FACTORY))
+                .hasQueriesRunCount(1)
+                .hasMatchCount("doc1", 1);
+    }
+
+    @Test
     public void testQueryBuilder() throws IOException, UpdateException {
 
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
@@ -96,11 +122,11 @@ public class TestMultipassPresearcher extends PresearcherTestBase {
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(docs.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
                         .add(should(new BooleanQuery.Builder()
-                                        .add(must(new TermsQuery(new Term("f_0", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_1", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_2", "test"))))
-                                        .add(must(new TermsQuery(new Term("f_3", "test"))))
-                                        .build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_0", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_1", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_2", new BytesRef("test")))).build()))
+                                .add(must(new BooleanQuery.Builder().add(should(new TermInSetQuery("f_3", new BytesRef("test")))).build()))
+                                .build()))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();
 

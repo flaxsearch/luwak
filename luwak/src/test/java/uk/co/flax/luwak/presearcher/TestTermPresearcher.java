@@ -1,25 +1,37 @@
 package uk.co.flax.luwak.presearcher;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.*;
-import org.apache.lucene.queries.TermsQuery;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefHash;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import uk.co.flax.luwak.*;
+import uk.co.flax.luwak.DocumentBatch;
+import uk.co.flax.luwak.InputDocument;
+import uk.co.flax.luwak.Matches;
+import uk.co.flax.luwak.Monitor;
+import uk.co.flax.luwak.MonitorQuery;
+import uk.co.flax.luwak.Presearcher;
+import uk.co.flax.luwak.QueryMatch;
+import uk.co.flax.luwak.QueryTermFilter;
+import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
 import uk.co.flax.luwak.queryparsers.LuceneQueryParser;
 import uk.co.flax.luwak.termextractor.querytree.QueryTree;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
+
+import java.io.IOException;
+import java.util.Map;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
@@ -122,7 +134,7 @@ public class TestTermPresearcher extends PresearcherTestBase {
 
                 BooleanQuery q = (BooleanQuery) presearcher.buildQuery(batch.getIndexReader(), new QueryTermFilter(reader));
                 BooleanQuery expected = new BooleanQuery.Builder()
-                        .add(should(new TermsQuery(new Term("f", "test"))))
+                        .add(should(new BooleanQuery.Builder().add(should(new TermInSetQuery("f", new BytesRef("test")))).build()))
                         .add(should(new TermQuery(new Term("__anytokenfield", "__ANYTOKEN__"))))
                         .build();
 
