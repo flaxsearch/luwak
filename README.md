@@ -3,6 +3,8 @@ Luwak - stored query engine from Flax
 [![Build
 Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=master)](https://travis-ci.org/flaxsearch/luwak)
 
+*Luwak is now part of the Apache Lucene library as of the v8.2.0 release - see the details [here](https://lucene.apache.org/core/8_2_0/changes/Changes.html#v8.2.0.new_features).*
+
 What is Luwak?
 --------------
 
