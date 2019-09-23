@@ -253,7 +253,7 @@ public class Monitor implements Closeable {
             throw new IOException("Error populating cache - some queries couldn't be parsed:" + parseErrors);
     }
 
-    private void commit(List<Indexable> updates) throws IOException {
+    protected void commit(List<Indexable> updates) throws IOException {
         beforeCommit(updates);
         queryIndex.commit(updates);
         afterCommit(updates);
@@ -364,7 +364,7 @@ public class Monitor implements Closeable {
             throw new UpdateException(errors);
     }
 
-    private Iterable<QueryCacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
+    protected Iterable<QueryCacheEntry> decomposeQuery(MonitorQuery query) throws Exception {
 
         Query q = queryParser.parse(query.getQuery(), query.getMetadata());
 
