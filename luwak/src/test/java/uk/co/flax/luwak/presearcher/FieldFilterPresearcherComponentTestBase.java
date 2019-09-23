@@ -9,7 +9,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import uk.co.flax.luwak.*;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static org.assertj.core.api.Fail.fail;
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;

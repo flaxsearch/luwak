@@ -14,7 +14,6 @@ import uk.co.flax.luwak.Presearcher;
 import uk.co.flax.luwak.UpdateException;
 import uk.co.flax.luwak.assertions.TokenStreamAssert;
 import uk.co.flax.luwak.matchers.SimpleMatcher;
-import uk.co.flax.luwak.termextractor.weights.TermWeightor;
 
 import static uk.co.flax.luwak.assertions.MatchesAssert.assertThat;
 
