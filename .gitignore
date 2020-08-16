@@ -8,5 +8,6 @@ bin/
 .classpath
 .settings/
 .vscode
+.java-version
 Dockerfile
 docker-compose.yml
