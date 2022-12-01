@@ -112,7 +112,7 @@ public abstract class ConcurrentMatcherTestBase {
             Matches<QueryMatch> matches = monitor.match(batch, factory);
             assertThat(matches.getMatchCount("doc1"))
                     .isEqualTo(3);
-            assertThat(matches.getSlowLog().toString())
+            assertThat(monitor.match(batch, factory).getSlowLog().toString())
                 .contains("1 [")
                 .contains("3 [")
                 .doesNotContain("2 [");
