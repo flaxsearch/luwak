@@ -3,6 +3,9 @@ Luwak - stored query engine from Flax
 [![Build
 Status](https://travis-ci.org/flaxsearch/luwak.svg?branch=master)](https://travis-ci.org/flaxsearch/luwak)
 
+*Luwak is now part of the Apache Lucene library as of the v8.2.0 release - see the details [here](https://lucene.apache.org/core/8_2_0/changes/Changes.html#v8.2.0.new_features).*
+=================================================================================================
+
 What is Luwak?
 --------------
 
@@ -10,7 +13,7 @@ Based on the open source Lucene search library, Luwak is a high performance stor
 
 You can find out a bit more about how Flax use Luwak for media monitoring applications in 
 this video from Lucene Revolution 2013 http://www.youtube.com/watch?v=rmRCsrJp2A8 and this video
-from Berlin Buzzwords 2014 http://berlinbuzzwords.de/session/turning-search-upside-down-search-queries-documents and how we combined it with Apache Samza (including a great illustration of how Luwak internals work) http://www.flax.co.uk/blog/2015/08/26/real-time-full-text-search-with-luwak-and-samza/
+from Berlin Buzzwords 2014 https://www.youtube.com/watch?v=M3c5_7DxpIk and how we combined it with Apache Samza (including a great illustration of how Luwak internals work) http://www.flax.co.uk/blog/2015/08/26/real-time-full-text-search-with-luwak-and-samza/
 
 Here's some tests we did to compare Luwak to Elasticsearch Percolator:
 http://www.flax.co.uk/blog/2015/07/27/a-performance-comparison-of-streamed-search-implementations/
